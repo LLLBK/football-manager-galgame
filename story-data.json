@@ -1,0 +1,1114 @@
+{
+  "meta": {
+    "title": "岚城联：赛季前夜",
+    "version": "0.2",
+    "unit": "万元",
+    "description": "足球经理剧情交互 MVP。财务是硬约束，经营状态通过剧情传导到竞技状态。"
+  },
+  "initial": {
+    "clubName": "岚城联",
+    "finance": {
+      "cash": 4200,
+      "wageCommitment": 3600,
+      "transferInstallments": 0,
+      "bonusCommitment": 0,
+      "restrictedYouthFund": 0,
+      "futurePayables": [
+        { "id": "month_wage_1", "label": "首月工资", "amount": 600, "dueStage": 4 },
+        { "id": "home_ops", "label": "主场运营与安保", "amount": 300, "dueStage": 7 },
+        { "id": "away_trip", "label": "客场差旅与后勤", "amount": 200, "dueStage": 10 }
+      ]
+    },
+    "operations": {
+      "青训体系": 50,
+      "球探网络": 50,
+      "球迷信任": 50,
+      "社区连接": 50,
+      "管理层耐心": 50,
+      "媒体关系": 50,
+      "俱乐部文化": 50,
+      "队内权力平衡": 50,
+      "商业吸引力": 50
+    },
+    "pitch": {
+      "球员水平": 50,
+      "阵容厚度": 50,
+      "战术熟练度": 50,
+      "体能健康": 50,
+      "更衣室凝聚力": 50,
+      "心理稳定性": 50,
+      "教练临场能力": 50,
+      "主场气势": 50
+    },
+    "flags": {
+      "coreStarInTeam": true,
+      "signedVeteran": false,
+      "promotedYouth": false,
+      "headCoach": "current",
+      "openingPath": "unset",
+      "sponsorPath": "unset",
+      "homeResult": "unset",
+      "awayResult": "unset"
+    },
+    "tags": []
+  },
+  "stages": [
+    {
+      "id": 1,
+      "title": "上任定位",
+      "eventPool": [
+        {
+          "id": "opening_board",
+          "title": "董事会会议：岚城联到底要成为什么球队？",
+          "default": true,
+          "speaker": "主席",
+          "scene": "你上任的第一天，董事会、球迷代表和商业顾问都坐在会议室里。岚城联已经连续三年排名中游，球迷觉得球队没有方向，董事会觉得投入没有回报。",
+          "prompt": "主席问你：这个赛季，我们到底要走哪条路？",
+          "choices": [
+            {
+              "id": "opening_stable",
+              "label": "稳健重建，先建立俱乐部原则",
+              "visibleFinance": "无立即支出",
+              "hint": "短期不一定最强，但会让球队方向更清楚。",
+              "effects": {
+                "operations": { "俱乐部文化": 8, "管理层耐心": 6, "球迷信任": 3, "商业吸引力": -2 },
+                "pitch": { "心理稳定性": 2, "更衣室凝聚力": 2 },
+                "flags": { "openingPath": "stable" },
+                "tags": ["稳健重建型"]
+              }
+            },
+            {
+              "id": "opening_ambition",
+              "label": "明确冲击成绩，优先让球队变强",
+              "visibleFinance": "当前现金 +800；赛季目标提高",
+              "hint": "现在钱更多，但董事会会更快要求成绩。",
+              "effects": {
+                "finance": { "cash": 800 },
+                "operations": { "管理层耐心": -8, "商业吸引力": 5, "球迷信任": 4, "俱乐部文化": -3 },
+                "flags": { "openingPath": "ambition" },
+                "tags": ["冲刺成绩型"]
+              }
+            },
+            {
+              "id": "opening_community",
+              "label": "回到本地社区，重建球迷连接",
+              "visibleFinance": "当前现金 -150",
+              "hint": "不直接提高实力，但能修复俱乐部和城市的关系。",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 150 }],
+              "effects": {
+                "finance": { "cash": -150 },
+                "operations": { "社区连接": 10, "球迷信任": 7, "商业吸引力": 2, "管理层耐心": -2 },
+                "pitch": { "主场气势": 4, "心理稳定性": 1 },
+                "flags": { "openingPath": "community" },
+                "tags": ["社区团结型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["会员制俱乐部", "德国 50+1", "资本型俱乐部"],
+            "point": "球队不是抽象资产。谁拥有球队，谁就定义了球队的时间尺度、容错空间和价值排序。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "赛季预算",
+      "eventPool": [
+        {
+          "id": "budget_ambition",
+          "title": "加压预算会：董事会要看到成绩",
+          "priority": 3,
+          "trigger": [{ "path": "flags.openingPath", "op": "==", "value": "ambition" }],
+          "speaker": "财务主管",
+          "scene": "董事会追加了短期预算，但附带条件也写进了会议纪要：球队必须尽快打出成绩。每一笔钱都会被追问效果。",
+          "prompt": "你要把第一笔预算投向哪里？",
+          "choices": [
+            {
+              "id": "budget_first_team_push",
+              "label": "重压之下继续加码一线队",
+              "visibleFinance": "当前现金 -1400",
+              "hint": "短期战力提升最大，但董事会耐心继续下降。",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 1400 }],
+              "effects": {
+                "finance": { "cash": -1400 },
+                "operations": { "球探网络": 4, "商业吸引力": 4, "管理层耐心": -4, "青训体系": -3 },
+                "pitch": { "球员水平": 8, "阵容厚度": 3 },
+                "tags": ["高压冲刺型"]
+              }
+            },
+            {
+              "id": "budget_balance_under_pressure",
+              "label": "保留一部分预算，做平衡投入",
+              "visibleFinance": "当前现金 -900",
+              "hint": "不完全迎合董事会，但保留后续操作空间。",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 900 }],
+              "effects": {
+                "finance": { "cash": -900 },
+                "operations": { "青训体系": 4, "球探网络": 5, "管理层耐心": -1 },
+                "pitch": { "球员水平": 3, "阵容厚度": 3, "体能健康": 2 }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["AC 米兰战略混乱", "巴萨高工资压力"],
+            "point": "短期目标会改变预算纪律。钱变多不等于选择变简单。"
+          }
+        },
+        {
+          "id": "budget_community",
+          "title": "社区预算会：球迷代表也坐进了房间",
+          "priority": 3,
+          "trigger": [{ "path": "flags.openingPath", "op": "==", "value": "community" }],
+          "speaker": "球迷代表",
+          "scene": "社区活动带来热烈反响，本地学校和球迷协会希望看到长期承诺。董事会提醒你：情感很重要，但球队还要赢球。",
+          "prompt": "你要如何分配第一笔预算？",
+          "choices": [
+            {
+              "id": "budget_youth_community",
+              "label": "青训与社区联合投入",
+              "visibleFinance": "当前现金 -850；第 8 阶段前设施尾款 250",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 850 }],
+              "hint": "强化身份认同，也给年轻球员上升通道。",
+              "effects": {
+                "finance": { "cash": -850, "futurePayables": [{ "id": "youth_facility_tail", "label": "青训设施尾款", "amount": 250, "dueStage": 8 }] },
+                "operations": { "青训体系": 12, "社区连接": 6, "球迷信任": 5, "商业吸引力": -1 },
+                "pitch": { "阵容厚度": 2, "主场气势": 2 },
+                "tags": ["青训重建型"]
+              }
+            },
+            {
+              "id": "budget_respect_fans_buy_player",
+              "label": "买一名本地出身球员回归",
+              "visibleFinance": "当前现金 -1000；工资承诺 +220",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 1000 }],
+              "hint": "兼顾实力和情感，但性价比不一定最高。",
+              "effects": {
+                "finance": { "cash": -1000, "wageCommitment": 220 },
+                "operations": { "社区连接": 5, "球迷信任": 6, "商业吸引力": 2 },
+                "pitch": { "球员水平": 4, "阵容厚度": 2, "心理稳定性": 2 }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["巴萨身份叙事", "本地球员与球迷连接"],
+            "point": "社区路线不是不要成绩，而是让成绩与城市身份绑定。"
+          }
+        },
+        {
+          "id": "budget_default",
+          "title": "赛季预算分配",
+          "default": true,
+          "speaker": "财务主管",
+          "scene": "球队不是没钱，但也没有多到可以所有项目一起做。你必须决定第一笔大额预算投向哪里。",
+          "prompt": "你的预算重点是什么？",
+          "choices": [
+            {
+              "id": "budget_first_team",
+              "label": "优先补强一线队",
+              "visibleFinance": "当前现金 -1200",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 1200 }],
+              "hint": "短期最容易见效。",
+              "effects": {
+                "finance": { "cash": -1200 },
+                "operations": { "球探网络": 3, "商业吸引力": 3, "青训体系": -2, "社区连接": -2 },
+                "pitch": { "球员水平": 6, "阵容厚度": 3 },
+                "tags": ["即战力优先型"]
+              }
+            },
+            {
+              "id": "budget_youth",
+              "label": "优先青训和训练基地",
+              "visibleFinance": "当前现金 -900；第 8 阶段前设施尾款 300",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 900 }],
+              "hint": "短期见效慢，但以后会出现更便宜的年轻球员选项。",
+              "effects": {
+                "finance": { "cash": -900, "futurePayables": [{ "id": "facility_tail", "label": "训练基地尾款", "amount": 300, "dueStage": 8 }] },
+                "operations": { "青训体系": 12, "俱乐部文化": 4, "球迷信任": 2, "商业吸引力": -1 },
+                "pitch": { "阵容厚度": 2, "体能健康": 1 },
+                "tags": ["青训重建型"]
+              }
+            },
+            {
+              "id": "budget_balanced",
+              "label": "平衡投入",
+              "visibleFinance": "当前现金 -1000",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 1000 }],
+              "hint": "没有单项特别突出，但不容易留下明显短板。",
+              "effects": {
+                "finance": { "cash": -1000 },
+                "operations": { "青训体系": 5, "球探网络": 5, "社区连接": 3, "管理层耐心": 2 },
+                "pitch": { "球员水平": 3, "阵容厚度": 3, "体能健康": 2 },
+                "tags": ["平衡经营型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["AC 米兰重建", "拜仁财务纪律"],
+            "point": "预算分配不是会计题，而是组织战略题。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "球员来源",
+      "eventPool": [
+        {
+          "id": "recruit_youth_path",
+          "title": "青训主管敲门：梯队里有个孩子可以试试",
+          "priority": 4,
+          "trigger": [{ "path": "operations.青训体系", "op": ">=", "value": 58 }],
+          "speaker": "青训主管",
+          "scene": "你的青训投入已经被梯队看见。一名年轻前锋在训练中表现突出，工资很低，但还没有成年队经验。",
+          "prompt": "你要给年轻人机会，还是继续寻找外部球员？",
+          "choices": [
+            {
+              "id": "recruit_promote_youth",
+              "label": "提拔青训前锋",
+              "visibleFinance": "当前现金 -80",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 80 }],
+              "hint": "成本最低，但稳定性不足。",
+              "effects": {
+                "finance": { "cash": -80 },
+                "operations": { "青训体系": 4, "俱乐部文化": 5, "社区连接": 3, "球迷信任": 2 },
+                "pitch": { "阵容厚度": 3, "心理稳定性": -2, "球员水平": 1 },
+                "flags": { "promotedYouth": true },
+                "tags": ["青训提拔型"]
+              }
+            },
+            {
+              "id": "recruit_young_player",
+              "label": "买入年轻潜力球员",
+              "visibleFinance": "当前现金 -650；工资承诺 +180",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 650 }],
+              "hint": "长期空间更好，也不会完全依赖梯队运气。",
+              "effects": {
+                "finance": { "cash": -650, "wageCommitment": 180 },
+                "operations": { "青训体系": 3, "球探网络": 5, "俱乐部文化": 2, "球迷信任": -1 },
+                "pitch": { "球员水平": 3, "阵容厚度": 5, "心理稳定性": -1 },
+                "tags": ["年轻资产型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["拉玛西亚", "阿贾克斯", "南安普顿"],
+            "point": "青训不是免费球员，而是一套长期生产球员和身份认同的系统。"
+          }
+        },
+        {
+          "id": "recruit_default",
+          "title": "青训新人与即战力引援",
+          "default": true,
+          "speaker": "球探主管",
+          "scene": "球探部门带来三个方案：一个马上能进球的老将，一个潜力很高但需要培养的年轻人，还有一个租借来的体系型球员。",
+          "prompt": "你要选择哪类球员？",
+          "choices": [
+            {
+              "id": "recruit_veteran",
+              "label": "签下成名老将前锋",
+              "visibleFinance": "当前现金 -1100；工资承诺 +500",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 1100 }],
+              "hint": "短期进攻提升明显，但工资和地位都会变高。",
+              "effects": {
+                "finance": { "cash": -1100, "wageCommitment": 500 },
+                "operations": { "商业吸引力": 6, "球迷信任": 4, "队内权力平衡": -5, "青训体系": -2 },
+                "pitch": { "球员水平": 8, "阵容厚度": 2, "更衣室凝聚力": -2 },
+                "flags": { "signedVeteran": true },
+                "tags": ["巨星依赖型"]
+              }
+            },
+            {
+              "id": "recruit_young_default",
+              "label": "买入年轻潜力球员",
+              "visibleFinance": "当前现金 -650；工资承诺 +180",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 650 }],
+              "hint": "现在不一定立刻爆发，但长期空间更好。",
+              "effects": {
+                "finance": { "cash": -650, "wageCommitment": 180 },
+                "operations": { "青训体系": 3, "球探网络": 5, "俱乐部文化": 2, "球迷信任": -1 },
+                "pitch": { "球员水平": 3, "阵容厚度": 5, "心理稳定性": -1 },
+                "tags": ["年轻资产型"]
+              }
+            },
+            {
+              "id": "recruit_loan",
+              "label": "租借体系型球员",
+              "visibleFinance": "当前现金 -350",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 350 }],
+              "hint": "便宜、适配，但不属于长期资产。",
+              "effects": {
+                "finance": { "cash": -350 },
+                "operations": { "球探网络": 2, "管理层耐心": 1 },
+                "pitch": { "战术熟练度": 4, "阵容厚度": 3, "球员水平": 1 },
+                "tags": ["租借补强型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["皇马银河战舰", "巴萨青训", "布莱顿球探模型"],
+            "point": "球员来源决定球队结构。买巨星买确定性和曝光，培养新人买时间和未来。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "核心问题",
+      "eventPool": [
+        {
+          "id": "star_new_veteran",
+          "title": "新援高薪刺激核心不满",
+          "priority": 5,
+          "trigger": [{ "path": "flags.signedVeteran", "op": "==", "value": true }],
+          "speaker": "经纪人",
+          "scene": "新来的老将工资很高。队长林骁的经纪人立刻找上门：如果一个刚来的球员都能拿顶薪，为什么队史核心不可以？",
+          "prompt": "你如何处理核心球星的地位和薪资？",
+          "choices": [
+            {
+              "id": "star_match_wage",
+              "label": "匹配顶薪，安抚核心",
+              "visibleFinance": "当前现金 -500；工资承诺 +800；奖金承诺 +300",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 500 }],
+              "hint": "保住球星，但队内工资秩序会更脆弱。",
+              "effects": {
+                "finance": { "cash": -500, "wageCommitment": 800, "bonusCommitment": 300 },
+                "operations": { "球迷信任": 7, "商业吸引力": 4, "队内权力平衡": -14, "管理层耐心": -3 },
+                "pitch": { "球员水平": 5, "心理稳定性": 3, "更衣室凝聚力": -4 },
+                "tags": ["高薪双核型"]
+              }
+            },
+            {
+              "id": "star_refuse_after_veteran",
+              "label": "拒绝涨薪，强调合同纪律",
+              "visibleFinance": "无立即支出",
+              "hint": "保住账面，但这次拒绝会更难被理解。",
+              "effects": {
+                "operations": { "队内权力平衡": 4, "管理层耐心": 4, "球迷信任": -8, "媒体关系": -4, "俱乐部文化": 1 },
+                "pitch": { "球员水平": -4, "更衣室凝聚力": -5, "心理稳定性": -3 },
+                "tags": ["工资纪律型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["巴黎巨星权力结构", "拜仁工资纪律"],
+            "point": "一个高薪合同会成为下一个合同谈判的参照物。"
+          }
+        },
+        {
+          "id": "star_support_rebuild",
+          "title": "核心愿意支持重建，但要看到长期计划",
+          "priority": 4,
+          "trigger": [{ "path": "operations.俱乐部文化", "op": ">=", "value": 58 }],
+          "speaker": "林骁",
+          "scene": "林骁没有第一时间谈钱。他说自己愿意陪球队重建，但希望管理层承诺：年轻球员、训练基地和打法路线不能一年一变。",
+          "prompt": "你要怎样把核心球星纳入重建？",
+          "choices": [
+            {
+              "id": "star_rebuild_captain",
+              "label": "让他成为重建队长，奖金与长期目标绑定",
+              "visibleFinance": "当前现金 -150；奖金承诺 +350",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 150 }],
+              "hint": "不立刻打破工资结构，但给出尊重和长期角色。",
+              "effects": {
+                "finance": { "cash": -150, "bonusCommitment": 350 },
+                "operations": { "俱乐部文化": 4, "球迷信任": 3, "队内权力平衡": 1 },
+                "pitch": { "心理稳定性": 3, "更衣室凝聚力": 3 },
+                "tags": ["文化重建型"]
+              }
+            },
+            {
+              "id": "star_sell_for_future",
+              "label": "坦诚告知重建计划，允许他离队争冠",
+              "visibleFinance": "当前现金 +1600；工资承诺 -450",
+              "hint": "资金回来了，但球队失去标志性人物。",
+              "effects": {
+                "finance": { "cash": 1600, "wageCommitment": -450 },
+                "operations": { "管理层耐心": 3, "球迷信任": -8, "商业吸引力": -5, "俱乐部文化": 1, "队内权力平衡": 6 },
+                "pitch": { "球员水平": -7, "心理稳定性": -3, "阵容厚度": 1 },
+                "flags": { "coreStarInTeam": false },
+                "tags": ["时代切换型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["皇马与 C 罗时代切换", "阿森纳长期重建"],
+            "point": "长期主义不是一句口号，需要核心人物相信路线稳定。"
+          }
+        },
+        {
+          "id": "star_default",
+          "title": "核心球星续约危机",
+          "default": true,
+          "speaker": "经纪人",
+          "scene": "队长兼核心前腰林骁提出续约要求：涨薪、签字费、战术核心地位。他是本地球迷最喜欢的球员，也是过去几年少数真正能决定比赛的人。",
+          "prompt": "你如何处理这份续约要求？",
+          "choices": [
+            {
+              "id": "star_full_contract",
+              "label": "满足全部要求",
+              "visibleFinance": "当前现金 -500；工资承诺 +700；奖金承诺 +300",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 500 }],
+              "hint": "留下核心，但他会在队内拥有更大话语权。",
+              "effects": {
+                "finance": { "cash": -500, "wageCommitment": 700, "bonusCommitment": 300 },
+                "operations": { "球迷信任": 7, "商业吸引力": 4, "队内权力平衡": -10, "管理层耐心": -2 },
+                "pitch": { "球员水平": 5, "心理稳定性": 3, "更衣室凝聚力": -3 },
+                "tags": ["核心续约型"]
+              }
+            },
+            {
+              "id": "star_wage_discipline",
+              "label": "拒绝涨薪，坚持工资结构",
+              "visibleFinance": "无立即支出",
+              "hint": "保住工资秩序，但可能激怒核心和球迷。",
+              "effects": {
+                "operations": { "队内权力平衡": 5, "管理层耐心": 4, "球迷信任": -6, "媒体关系": -3, "俱乐部文化": 2 },
+                "pitch": { "球员水平": -3, "更衣室凝聚力": -4, "心理稳定性": -2 },
+                "tags": ["工资纪律型"]
+              }
+            },
+            {
+              "id": "star_delay_talks",
+              "label": "承诺赛季后重谈",
+              "visibleFinance": "当前现金 -150；若前两场至少一胜，奖金承诺 +350",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 150 }],
+              "hint": "暂时稳住局面，但成绩会变成谈判筹码。",
+              "effects": {
+                "finance": { "cash": -150 },
+                "operations": { "管理层耐心": 1, "球迷信任": -1, "队内权力平衡": -2 },
+                "pitch": { "心理稳定性": 1, "更衣室凝聚力": 1 },
+                "flags": { "delayedStarTalks": true }
+              }
+            },
+            {
+              "id": "star_sell",
+              "label": "主动出售核心，开启时代更替",
+              "visibleFinance": "当前现金 +1600；工资承诺 -450",
+              "hint": "钱回来了，但球队失去标志性人物。",
+              "effects": {
+                "finance": { "cash": 1600, "wageCommitment": -450 },
+                "operations": { "管理层耐心": 3, "球迷信任": -12, "商业吸引力": -5, "俱乐部文化": -4, "队内权力平衡": 6 },
+                "pitch": { "球员水平": -8, "心理稳定性": -4, "阵容厚度": 1 },
+                "flags": { "coreStarInTeam": false },
+                "tags": ["时代切换型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["梅西离开巴萨", "C 罗离开皇马", "拜仁工资纪律"],
+            "point": "伟大球星同时是资产、身份、权力中心和情感纽带。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "教练路线",
+      "eventPool": [
+        {
+          "id": "coach_youth",
+          "title": "青年队教练得到更衣室支持",
+          "priority": 4,
+          "trigger": [{ "path": "operations.青训体系", "op": ">=", "value": 58 }],
+          "speaker": "技术总监",
+          "scene": "青训路线已经启动，青年队教练熟悉梯队球员，也愿意统一一线队和梯队打法。问题是，他几乎没有顶级联赛经验。",
+          "prompt": "你要让他上位吗？",
+          "choices": [
+            {
+              "id": "coach_promote_youth",
+              "label": "提拔青年队教练",
+              "visibleFinance": "当前现金 -150",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 150 }],
+              "hint": "便宜，理念统一，但经验不足。",
+              "effects": {
+                "finance": { "cash": -150 },
+                "operations": { "青训体系": 5, "俱乐部文化": 5, "球迷信任": 1, "媒体关系": -2 },
+                "pitch": { "战术熟练度": 3, "教练临场能力": -3, "阵容厚度": 2 },
+                "flags": { "headCoach": "youth" },
+                "tags": ["青训教练型"]
+              }
+            },
+            {
+              "id": "coach_current_with_youth_staff",
+              "label": "保留现任教练，让青年队教练进一线队教练组",
+              "visibleFinance": "当前现金 -300",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 300 }],
+              "hint": "更稳，但改革速度较慢。",
+              "effects": {
+                "finance": { "cash": -300 },
+                "operations": { "青训体系": 3, "俱乐部文化": 3, "管理层耐心": 2 },
+                "pitch": { "战术熟练度": 5, "体能健康": 2, "教练临场能力": 1 },
+                "flags": { "headCoach": "current" }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["阿尔特塔重建", "俱乐部统一打法"],
+            "point": "教练路线要和球员来源、管理层耐心、俱乐部文化匹配。"
+          }
+        },
+        {
+          "id": "coach_default",
+          "title": "主教练与战术路线",
+          "default": true,
+          "speaker": "主席",
+          "scene": "现任主教练合同还剩一年。他熟悉球队，但成绩平淡。董事会问你：是换一个更有名的教练，还是给现任团队更多支持？",
+          "prompt": "你的教练路线是什么？",
+          "choices": [
+            {
+              "id": "coach_star",
+              "label": "聘请名帅，立刻改造打法",
+              "visibleFinance": "当前现金 -900；工资承诺 +300",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 900 }],
+              "hint": "上限更高，但磨合成本也高。",
+              "effects": {
+                "finance": { "cash": -900, "wageCommitment": 300 },
+                "operations": { "商业吸引力": 5, "管理层耐心": -3, "媒体关系": 3, "俱乐部文化": -2 },
+                "pitch": { "教练临场能力": 8, "战术熟练度": -5, "心理稳定性": -1 },
+                "flags": { "headCoach": "star" },
+                "tags": ["名帅改造型"]
+              }
+            },
+            {
+              "id": "coach_support_current",
+              "label": "保留现任教练，强化教练组",
+              "visibleFinance": "当前现金 -450",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 450 }],
+              "hint": "变化没那么戏剧化，但体系更稳定。",
+              "effects": {
+                "finance": { "cash": -450 },
+                "operations": { "管理层耐心": 2, "俱乐部文化": 3, "媒体关系": -1 },
+                "pitch": { "战术熟练度": 6, "体能健康": 3, "教练临场能力": 2 },
+                "flags": { "headCoach": "current" },
+                "tags": ["战术稳定型"]
+              }
+            },
+            {
+              "id": "coach_promote_default",
+              "label": "提拔青年队教练",
+              "visibleFinance": "当前现金 -150",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 150 }],
+              "hint": "便宜，理念统一，但经验不足。",
+              "effects": {
+                "finance": { "cash": -150 },
+                "operations": { "青训体系": 5, "俱乐部文化": 5, "球迷信任": 1, "媒体关系": -2 },
+                "pitch": { "战术熟练度": 3, "教练临场能力": -4, "阵容厚度": 2 },
+                "flags": { "headCoach": "youth" },
+                "tags": ["青训教练型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["曼联后弗格森时代", "曼城围绕瓜迪奥拉建构打法"],
+            "point": "教练不是万能按钮。教练能力要通过球员结构和组织耐心释放。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "赞助与社区",
+      "eventPool": [
+        {
+          "id": "sponsor_cash_tight",
+          "title": "现金紧张：赞助商知道你需要钱",
+          "priority": 5,
+          "trigger": [{ "path": "finance.cash", "op": "<", "value": 1200 }],
+          "speaker": "商务总监",
+          "scene": "你的现金已经偏紧。大型赞助商提出更苛刻条件：钱可以马上到账，但他们要更多球场权益和商业活动。",
+          "prompt": "你是否接受？",
+          "choices": [
+            {
+              "id": "sponsor_forced_big",
+              "label": "接受高条件商业赞助",
+              "visibleFinance": "当前现金 +1500；商业活动义务 +2",
+              "hint": "解决眼前现金，但球迷会感到被忽视。",
+              "effects": {
+                "finance": { "cash": 1500 },
+                "operations": { "商业吸引力": 12, "社区连接": -10, "球迷信任": -7, "媒体关系": 2 },
+                "pitch": { "主场气势": -3 },
+                "flags": { "sponsorPath": "big" },
+                "tags": ["商业冲刺型"]
+              }
+            },
+            {
+              "id": "sponsor_hold_tight",
+              "label": "拒绝苛刻条件，继续压缩开支",
+              "visibleFinance": "无立即收入",
+              "hint": "保住身份，但后面可能选不了昂贵方案。",
+              "effects": {
+                "operations": { "俱乐部文化": 3, "社区连接": 2, "管理层耐心": -5, "商业吸引力": -2 },
+                "pitch": { "心理稳定性": -1 },
+                "tags": ["财政紧缩型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["商业化与球迷身份冲突", "欧洲超级联赛风波"],
+            "point": "缺钱时谈判地位会下降，赞助不是白送钱。"
+          }
+        },
+        {
+          "id": "sponsor_default",
+          "title": "赞助商与社区关系",
+          "default": true,
+          "speaker": "商务总监",
+          "scene": "三家赞助商给出报价。最大的一家愿意给很多钱，但要求更改主场看台命名，并减少部分社区公益票。本地企业给钱较少，却愿意长期支持青训和社区活动。",
+          "prompt": "你选择哪种赞助路线？",
+          "choices": [
+            {
+              "id": "sponsor_big",
+              "label": "接受大型商业赞助",
+              "visibleFinance": "当前现金 +1400",
+              "hint": "钱很多，但球迷可能觉得俱乐部越来越不像自己的球队。",
+              "effects": {
+                "finance": { "cash": 1400 },
+                "operations": { "商业吸引力": 10, "社区连接": -8, "球迷信任": -5, "媒体关系": 2 },
+                "pitch": { "主场气势": -2 },
+                "flags": { "sponsorPath": "big" },
+                "tags": ["商业冲刺型"]
+              }
+            },
+            {
+              "id": "sponsor_local",
+              "label": "选择本地联合赞助",
+              "visibleFinance": "当前现金 +650；青训专项资金 +200",
+              "hint": "钱少一些，但和城市关系更稳。",
+              "effects": {
+                "finance": { "cash": 650, "restrictedYouthFund": 200 },
+                "operations": { "青训体系": 2, "社区连接": 8, "球迷信任": 5, "商业吸引力": 3, "俱乐部文化": 3 },
+                "pitch": { "主场气势": 3, "心理稳定性": 1 },
+                "flags": { "sponsorPath": "local" },
+                "tags": ["社区赞助型"]
+              }
+            },
+            {
+              "id": "sponsor_wait",
+              "label": "暂不签主赞助，等成绩出来再谈",
+              "visibleFinance": "无立即收入",
+              "hint": "保留谈判空间，但现在少了一笔钱。",
+              "effects": {
+                "operations": { "管理层耐心": -4, "商业吸引力": 1, "球迷信任": 1 },
+                "flags": { "sponsorPath": "wait" },
+                "tags": ["延迟谈判型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["曼联球迷抗议", "巴萨身份叙事"],
+            "point": "赞助购买的是俱乐部的注意力、空间、身份和未来叙事。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "更衣室",
+      "eventPool": [
+        {
+          "id": "locker_star_power",
+          "title": "球星权力过大：替补开始抱怨",
+          "priority": 5,
+          "trigger": [{ "path": "operations.队内权力平衡", "op": "<=", "value": 42 }],
+          "speaker": "记者",
+          "scene": "一名替补球员在采访中说：有些人不训练也能首发，因为他们名气大。媒体立刻把这句话放上头条。",
+          "prompt": "你如何处理更衣室裂痕？",
+          "choices": [
+            {
+              "id": "locker_back_coach",
+              "label": "公开支持主教练，树立纪律",
+              "visibleFinance": "无立即支出",
+              "hint": "权威清楚，但可能让部分球员不满。",
+              "effects": {
+                "operations": { "队内权力平衡": 6, "管理层耐心": 3, "媒体关系": -2 },
+                "pitch": { "战术熟练度": 2, "更衣室凝聚力": -4, "心理稳定性": -1 },
+                "tags": ["纪律优先型"]
+              }
+            },
+            {
+              "id": "locker_captains_meeting",
+              "label": "组织队长会议，内部调解",
+              "visibleFinance": "当前现金 -80",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 80 }],
+              "hint": "温和，但不一定立刻解决。",
+              "effects": {
+                "finance": { "cash": -80 },
+                "operations": { "俱乐部文化": 3, "队内权力平衡": 2, "媒体关系": -1 },
+                "pitch": { "更衣室凝聚力": 5, "心理稳定性": 2 }
+              }
+            },
+            {
+              "id": "locker_protect_stars",
+              "label": "安抚球星，牺牲替补球员",
+              "visibleFinance": "无立即支出",
+              "hint": "短期保护核心，但替补和年轻球员会受影响。",
+              "effects": {
+                "operations": { "队内权力平衡": -7, "球迷信任": 1, "俱乐部文化": -5, "青训体系": -3 },
+                "pitch": { "球员水平": 2, "阵容厚度": -5, "更衣室凝聚力": -3 },
+                "tags": ["更衣室失衡型"]
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["豪门球星权力", "替补与青训上升通道"],
+            "point": "更衣室是权力结构。你支持谁，就在告诉其他人球队按什么规则运行。"
+          }
+        },
+        {
+          "id": "locker_default",
+          "title": "更衣室裂痕",
+          "default": true,
+          "speaker": "助理教练",
+          "scene": "热身赛前，一名替补球员抱怨出场时间。教练希望你公开支持他，队长则希望私下解决。",
+          "prompt": "你选择哪种处理方式？",
+          "choices": [
+            {
+              "id": "locker_back_coach_default",
+              "label": "公开支持主教练，树立纪律",
+              "visibleFinance": "无立即支出",
+              "effects": {
+                "operations": { "队内权力平衡": 6, "管理层耐心": 3, "媒体关系": -2 },
+                "pitch": { "战术熟练度": 2, "更衣室凝聚力": -3, "心理稳定性": -1 }
+              }
+            },
+            {
+              "id": "locker_internal_default",
+              "label": "组织队长会议，内部调解",
+              "visibleFinance": "当前现金 -80",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 80 }],
+              "effects": {
+                "finance": { "cash": -80 },
+                "operations": { "俱乐部文化": 3, "队内权力平衡": 2, "媒体关系": -1 },
+                "pitch": { "更衣室凝聚力": 5, "心理稳定性": 2 }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["教练权威与球员信任"],
+            "point": "纪律和信任都重要，但它们经常需要不同的管理动作。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "伤病与医疗",
+      "eventPool": [
+        {
+          "id": "injury_depth_test",
+          "title": "轮换阵容经受考验",
+          "priority": 4,
+          "trigger": [{ "path": "pitch.阵容厚度", "op": ">=", "value": 56 }],
+          "speaker": "队医",
+          "scene": "主力后腰肌肉疲劳，但替补和年轻球员训练状态不错。教练认为这也许是检验阵容深度的机会。",
+          "prompt": "你如何处理赛前疲劳？",
+          "choices": [
+            {
+              "id": "injury_rotate_confident",
+              "label": "主动轮换，保护主力",
+              "visibleFinance": "当前现金 -120",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 120 }],
+              "hint": "牺牲热身赛完整度，换来健康和替补信心。",
+              "effects": {
+                "finance": { "cash": -120 },
+                "operations": { "俱乐部文化": 2, "媒体关系": -1 },
+                "pitch": { "体能健康": 6, "阵容厚度": 3, "战术熟练度": -1 }
+              }
+            },
+            {
+              "id": "injury_keep_main_depth",
+              "label": "让主力继续磨合",
+              "visibleFinance": "无立即支出",
+              "hint": "阵容厚度不错，但主力仍有疲劳风险。",
+              "effects": {
+                "operations": { "管理层耐心": 1 },
+                "pitch": { "战术熟练度": 4, "体能健康": -5 }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["密集赛程轮换", "阵容深度"],
+            "point": "有阵容厚度时，风险处理会多出选择。"
+          }
+        },
+        {
+          "id": "injury_default",
+          "title": "伤病与医疗投入",
+          "default": true,
+          "speaker": "队医",
+          "scene": "第一场正式比赛前十天，主力后腰肌肉疲劳，核心前腰也有轻微不适。教练希望他们继续参加最后一场热身赛找状态，队医建议减负。",
+          "prompt": "你如何处理伤病风险？",
+          "choices": [
+            {
+              "id": "injury_medical",
+              "label": "投入医疗与恢复团队",
+              "visibleFinance": "当前现金 -550",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 550 }],
+              "hint": "贵，但能降低赛季初伤病风险。",
+              "effects": {
+                "finance": { "cash": -550 },
+                "operations": { "管理层耐心": -1 },
+                "pitch": { "体能健康": 9, "阵容厚度": 1, "心理稳定性": 1 },
+                "tags": ["健康管理型"]
+              }
+            },
+            {
+              "id": "injury_rotate",
+              "label": "轮换主力，放弃热身赛成绩",
+              "visibleFinance": "当前现金 -180",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 180 }],
+              "hint": "保护球员，但外界会质疑状态。",
+              "effects": {
+                "finance": { "cash": -180 },
+                "operations": { "媒体关系": -2, "管理层耐心": -2, "俱乐部文化": 2 },
+                "pitch": { "体能健康": 6, "战术熟练度": -2, "阵容厚度": 2 }
+              }
+            },
+            {
+              "id": "injury_push",
+              "label": "让主力坚持比赛，争取磨合",
+              "visibleFinance": "无立即支出",
+              "hint": "省钱且可能提升状态，但伤病风险增加。",
+              "effects": {
+                "operations": { "管理层耐心": 1, "媒体关系": 1 },
+                "pitch": { "战术熟练度": 4, "体能健康": -6 },
+                "flags": { "injuryRisk": true }
+              }
+            }
+          ],
+          "teacherCard": {
+            "cases": ["利物浦 2020-21 伤病", "高强度赛程轮换"],
+            "point": "伤病看似随机，但常常来自轮换、阵容厚度、医疗投入和赛程选择。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "第一场主场",
+      "eventPool": [
+        {
+          "id": "home_commercial_cold",
+          "title": "商业化冷场：主场不再像从前",
+          "priority": 4,
+          "trigger": [{ "path": "flags.sponsorPath", "op": "==", "value": "big" }],
+          "speaker": "球迷协会",
+          "scene": "主场更换了商业看台名，部分老球迷在社交媒体上表达不满。比赛还没开始，球场气氛已经带着一点隔阂。",
+          "prompt": "主场首战前，你要如何运营？",
+          "choices": [
+            {
+              "id": "home_fan_repair",
+              "label": "追加球迷动员与公益票",
+              "visibleFinance": "当前现金 -260",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 260 }],
+              "hint": "修复气氛，但商业收益会被抵消一部分。",
+              "effects": {
+                "finance": { "cash": -260 },
+                "operations": { "球迷信任": 5, "社区连接": 3 },
+                "pitch": { "主场气势": 8, "心理稳定性": 2 }
+              },
+              "matchPlan": "home"
+            },
+            {
+              "id": "home_commercial_continue",
+              "label": "继续商业活动，保证收入",
+              "visibleFinance": "当前现金 +260",
+              "hint": "收入更高，但主场气势继续下降。",
+              "effects": {
+                "finance": { "cash": 260 },
+                "operations": { "商业吸引力": 3, "球迷信任": -3, "社区连接": -1 },
+                "pitch": { "主场气势": -3 }
+              },
+              "matchPlan": "home"
+            }
+          ],
+          "teacherCard": {
+            "cases": ["商业化与主场身份"],
+            "point": "主场不是场地租赁空间，而是球迷身份的现场。"
+          }
+        },
+        {
+          "id": "home_default",
+          "title": "第一场主场比赛",
+          "default": true,
+          "speaker": "比赛运营主管",
+          "scene": "新赛季第一场正式比赛，岚城联主场迎战北原竞技。对手实力接近，但防守强硬。",
+          "prompt": "赛前你如何安排主场氛围？",
+          "choices": [
+            {
+              "id": "home_fan_day",
+              "label": "球迷动员日",
+              "visibleFinance": "当前现金 -220",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 220 }],
+              "hint": "提升主场氛围，增强球员信心。",
+              "effects": {
+                "finance": { "cash": -220 },
+                "operations": { "球迷信任": 4, "社区连接": 2 },
+                "pitch": { "主场气势": 8, "心理稳定性": 2 }
+              },
+              "matchPlan": "home"
+            },
+            {
+              "id": "home_business",
+              "label": "商业包厢与赞助商活动",
+              "visibleFinance": "当前现金 +260",
+              "hint": "增加收入，但普通球迷感受一般。",
+              "effects": {
+                "finance": { "cash": 260 },
+                "operations": { "商业吸引力": 3, "球迷信任": -2, "社区连接": -1 },
+                "pitch": { "主场气势": -2 }
+              },
+              "matchPlan": "home"
+            },
+            {
+              "id": "home_normal",
+              "label": "正常办赛",
+              "visibleFinance": "无额外收支",
+              "hint": "不制造额外波动。",
+              "effects": {},
+              "matchPlan": "home"
+            }
+          ],
+          "teacherCard": {
+            "cases": ["安菲尔德", "威斯特法伦", "曼联球迷抗议"],
+            "point": "主场优势来自球迷、城市、叙事、心理和对手压力。"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "第一场客场",
+      "eventPool": [
+        {
+          "id": "away_fatigue",
+          "title": "体能透支：客场前夜的艰难选择",
+          "priority": 4,
+          "trigger": [{ "path": "pitch.体能健康", "op": "<=", "value": 46 }],
+          "speaker": "体能教练",
+          "scene": "主场之后，几名主力恢复数据不理想。三天后就是客场挑战江湾城，你必须决定是硬拼连贯性，还是保护主力。",
+          "prompt": "你如何安排客场？",
+          "choices": [
+            {
+              "id": "away_rotate_tired",
+              "label": "大轮换，保护主力",
+              "visibleFinance": "无立即支出",
+              "hint": "保护身体，但可能牺牲结果。",
+              "effects": {
+                "operations": { "俱乐部文化": 1, "媒体关系": -2 },
+                "pitch": { "体能健康": 5, "球员水平": -4 }
+              },
+              "matchPlan": "away"
+            },
+            {
+              "id": "away_push_tired",
+              "label": "延续首发，追求连贯性",
+              "visibleFinance": "无立即支出",
+              "hint": "争取成绩连续性，但疲劳风险更高。",
+              "effects": {
+                "pitch": { "战术熟练度": 3, "球员水平": 2, "体能健康": -5 },
+                "flags": { "injuryRisk": true }
+              },
+              "matchPlan": "away"
+            }
+          ],
+          "teacherCard": {
+            "cases": ["密集赛程", "轮换与争胜"],
+            "point": "一场比赛的最强阵容，不一定是一个赛季的最优选择。"
+          }
+        },
+        {
+          "id": "away_default",
+          "title": "第一场客场比赛",
+          "default": true,
+          "speaker": "领队",
+          "scene": "三天后，岚城联客场挑战江湾城。这是一支年轻、跑动能力强的球队。球队刚经历主场首战，体能、士气和舆论都在变化。",
+          "prompt": "你如何安排客场准备？",
+          "choices": [
+            {
+              "id": "away_premium",
+              "label": "高规格客场后勤",
+              "visibleFinance": "当前现金 -260",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 260 }],
+              "hint": "减少旅途消耗，保证备战质量。",
+              "effects": {
+                "finance": { "cash": -260 },
+                "operations": { "管理层耐心": -1 },
+                "pitch": { "体能健康": 4, "心理稳定性": 3, "战术熟练度": 1 }
+              },
+              "matchPlan": "away"
+            },
+            {
+              "id": "away_save",
+              "label": "节省差旅，正常出行",
+              "visibleFinance": "当前现金 -80",
+              "requires": [{ "path": "finance.cash", "op": ">=", "value": 80 }],
+              "hint": "省钱，但客场状态更依赖随机发挥。",
+              "effects": {
+                "finance": { "cash": -80 },
+                "pitch": { "体能健康": -1, "心理稳定性": -1 }
+              },
+              "matchPlan": "away"
+            },
+            {
+              "id": "away_rotate",
+              "label": "大轮换，保护主力",
+              "visibleFinance": "无立即支出",
+              "hint": "保护身体，但可能牺牲结果。",
+              "effects": {
+                "operations": { "俱乐部文化": 1, "媒体关系": -2 },
+                "pitch": { "体能健康": 5, "球员水平": -4 }
+              },
+              "matchPlan": "away"
+            },
+            {
+              "id": "away_push",
+              "label": "延续主场首发，追求连胜",
+              "visibleFinance": "无立即支出",
+              "hint": "争取成绩连续性，但疲劳风险更高。",
+              "effects": {
+                "pitch": { "战术熟练度": 3, "球员水平": 2, "体能健康": -5 },
+                "flags": { "injuryRisk": true }
+              },
+              "matchPlan": "away"
+            }
+          ],
+          "teacherCard": {
+            "cases": ["欧战客场", "长途旅行", "客场心理压力"],
+            "point": "客场比赛不只是换个球场，也是在管理体能、心理和后勤。"
+          }
+        }
+      ]
+    }
+  ],
+  "matchRules": {
+    "home": {
+      "opponent": "北原竞技",
+      "opponentBase": 54,
+      "randomRange": 8,
+      "weights": {
+        "球员水平": 0.25,
+        "战术熟练度": 0.2,
+        "体能健康": 0.15,
+        "更衣室凝聚力": 0.15,
+        "心理稳定性": 0.1,
+        "教练临场能力": 0.1,
+        "主场气势": 0.05
+      }
+    },
+    "away": {
+      "opponent": "江湾城",
+      "opponentBase": 55,
+      "randomRange": 10,
+      "weights": {
+        "球员水平": 0.25,
+        "战术熟练度": 0.2,
+        "体能健康": 0.15,
+        "更衣室凝聚力": 0.15,
+        "心理稳定性": 0.15,
+        "教练临场能力": 0.1
+      }
+    }
+  }
+}

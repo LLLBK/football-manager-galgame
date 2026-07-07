@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>岚城联：赛季前夜</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="startScreen" class="start-screen">
+        <div class="start-copy">
+          <p class="eyebrow">Football Club Manager</p>
+          <h1>岚城联：赛季前夜</h1>
+          <p>你将作为新任足球事务经理，在有限现金、董事会压力、球迷期待和竞技风险之间做选择。每次选择都会塑造一支不同的球队。</p>
+        </div>
+        <form id="startForm" class="start-form">
+          <label>
+            经理人姓名
+            <input id="managerName" name="managerName" autocomplete="name" placeholder="例如：陈同学" required />
+          </label>
+          <label>
+            球队名称
+            <input id="teamName" name="teamName" placeholder="默认：岚城联" />
+          </label>
+          <button type="submit">开始经营</button>
+        </form>
+      </section>
+
+      <section id="gameScreen" class="game-screen hidden">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Season Build</p>
+            <h1 id="clubTitle">岚城联</h1>
+          </div>
+          <div class="topbar-actions">
+            <button id="restartBtn" class="ghost-btn" type="button">重新开始</button>
+            <button id="exportBtn" class="ghost-btn" type="button">导出数据</button>
+          </div>
+        </header>
+
+        <div class="layout">
+          <aside class="side-panel">
+            <section class="panel finance-panel">
+              <div class="panel-title">
+                <span>财务面板</span>
+                <strong id="cashValue">4200 万</strong>
+              </div>
+              <div class="finance-grid">
+                <div>
+                  <span>工资承诺</span>
+                  <strong id="wageValue">3600 万</strong>
+                </div>
+                <div>
+                  <span>奖金承诺</span>
+                  <strong id="bonusValue">0 万</strong>
+                </div>
+                <div>
+                  <span>转会分期</span>
+                  <strong id="installmentValue">0 万</strong>
+                </div>
+                <div>
+                  <span>青训专项</span>
+                  <strong id="restrictedValue">0 万</strong>
+                </div>
+              </div>
+              <div class="payables">
+                <h2>未来应付款</h2>
+                <ul id="payablesList"></ul>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-title">
+                <span>经营状态</span>
+              </div>
+              <div id="operationsStats" class="stat-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-title">
+                <span>竞技状态</span>
+              </div>
+              <div id="pitchStats" class="stat-list"></div>
+            </section>
+          </aside>
+
+          <section class="story-panel">
+            <div class="stage-strip">
+              <div>
+                <span id="stageCounter">阶段 1 / 10</span>
+                <strong id="stageTitle">上任定位</strong>
+              </div>
+              <div id="routeTags" class="route-tags"></div>
+            </div>
+
+            <article id="eventCard" class="event-card">
+              <p id="eventSpeaker" class="speaker">主席</p>
+              <h2 id="eventTitle">董事会会议</h2>
+              <p id="eventScene"></p>
+              <p id="eventPrompt" class="prompt"></p>
+            </article>
+
+            <div id="choiceList" class="choice-list"></div>
+
+            <section id="matchReport" class="match-report hidden"></section>
+          </section>
+
+          <aside class="history-panel">
+            <section class="panel">
+              <div class="panel-title">
+                <span>经营记录</span>
+              </div>
+              <ol id="historyList" class="history-list"></ol>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="result-screen hidden">
+        <div class="result-head">
+          <p class="eyebrow">Club Report</p>
+          <h1 id="resultTitle">球队报告</h1>
+          <p id="resultSummary"></p>
+        </div>
+        <div class="result-layout">
+          <section class="panel">
+            <div class="panel-title">
+              <span>最终标签</span>
+            </div>
+            <div id="finalTags" class="route-tags"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-title">
+              <span>球队数据码</span>
+            </div>
+            <textarea id="exportText" readonly></textarea>
+            <button id="copyBtn" type="button">复制数据</button>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
