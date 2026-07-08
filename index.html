@@ -46,6 +46,7 @@
                 <span>财务面板</span>
                 <strong id="cashValue">4200 万</strong>
               </div>
+              <p id="financeScale" class="panel-note"></p>
               <div class="finance-grid">
                 <div>
                   <span>工资承诺</span>
@@ -74,6 +75,7 @@
               <div class="panel-title">
                 <span>经营状态</span>
               </div>
+              <p class="panel-note">50 约等于联赛中游俱乐部平均线。低于 45 是隐患，高于 60 才算稳定强项。</p>
               <div id="operationsStats" class="stat-list"></div>
             </section>
 
@@ -81,11 +83,14 @@
               <div class="panel-title">
                 <span>竞技状态</span>
               </div>
+              <p class="panel-note">比赛只直接读取这些竞技状态；经营选择会通过剧情把影响传导到这里。</p>
               <div id="pitchStats" class="stat-list"></div>
             </section>
           </aside>
 
           <section class="story-panel">
+            <section id="clubDossier" class="dossier-panel"></section>
+
             <div class="stage-strip">
               <div>
                 <span id="stageCounter">阶段 1 / 10</span>
@@ -99,6 +104,7 @@
               <h2 id="eventTitle">董事会会议</h2>
               <p id="eventScene"></p>
               <p id="eventPrompt" class="prompt"></p>
+              <div id="eventContext" class="event-context"></div>
             </article>
 
             <div id="choiceList" class="choice-list"></div>
