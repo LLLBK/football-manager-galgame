@@ -8,6 +8,10 @@ GitHub Pages 发布地址：
 https://lllbk.github.io/football-manager-galgame/
 ```
 
+项目文档：
+
+- [剧情分支树](docs/story-branch-tree.md)
+
 本地预览地址：
 
 ```text
