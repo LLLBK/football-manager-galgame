@@ -36,9 +36,10 @@ const EVENT_NARRATIVES = {
     body: [
       "你第一次走进主席办公室时，窗外正能看到岚城体育场的旧看台。墙上挂着十年前冲上顶级联赛时的照片，照片里的球迷挤满了看台，而现在的上座率已经连续三年下滑。",
       "主席把三份剪报推到你面前：一份写着“岚城联又一年中游”，一份写着“年轻球迷正在流失”，还有一份质疑董事会只会喊口号。球迷代表坐在沙发另一端，没有寒暄，只问了一句：“你们这次到底想把球队带到哪里？”",
+      "主席随后拿出三份可以当场签字的会议纪要：不追加预算、换取三年重建期；追加 800 万、但必须承诺联赛前四；或者先从现有现金拨 150 万恢复球迷组织。现在你选择的不是一句口号，而是一组立刻生效的权利和义务。",
       "这场对话参考了会员制俱乐部和资本型俱乐部之间的张力：球队究竟是社区身份，还是成绩机器，决定了之后每一笔钱的意义。"
     ],
-    prompt: "主席看着你：“这个赛季的第一句话，你来定。”"
+    prompt: "三份会议纪要摆在桌上。你签哪一份？"
   },
   budget_ambition: {
     title: "财务会议室：追加预算不是免费午餐",
@@ -48,7 +49,7 @@ const EVENT_NARRATIVES = {
       "主席说：“钱可以先给，但球迷、媒体和投资人都在看。我们不能花完以后还说需要时间。”你想起一些豪门重建失败的故事：钱花出去容易，路线混乱时，钱也会变成压力。",
       "这类场景参考了高投入俱乐部在短期成绩和长期纪律之间的矛盾。"
     ],
-    prompt: "第一笔真正的大钱，要投向哪里？"
+    prompt: "你确认 1400 万的两笔即战力交易，还是只执行 900 万的轮换球员与体能设备方案？"
   },
   budget_community: {
     title: "球迷协会会议室：城市也在等你的答案",
@@ -58,7 +59,7 @@ const EVENT_NARRATIVES = {
       "财务主管提醒你，情感不能替代预算；球迷代表反问，成绩如果和这座城市没有关系，赢球还剩下什么？你夹在两种语言中间：一边是现金表，一边是看台记忆。",
       "这个母题来自巴萨、毕尔巴鄂、德国 50+1 以及许多地方俱乐部的身份政治。"
     ],
-    prompt: "你要把预算投向更快见效的成绩，还是更深的城市连接？"
+    prompt: "你签青训基地与学校共建方案，还是把预算用于签回本地球员周航？"
   },
   budget_default: {
     title: "预算白板：三支笔，只能先圈一块",
@@ -68,7 +69,7 @@ const EVENT_NARRATIVES = {
       "球探主管说市场上有合适球员，但不会一直等你；青训主管说训练基地的草皮已经影响孩子们的训练；主教练则只问一句：“如果不补强，我拿什么踢第一场？”",
       "这不是选择一个部门，而是选择球队先承认哪一个短板。"
     ],
-    prompt: "你把第一笔大额预算批给谁？"
+    prompt: "三份执行预算已经列出项目和报价。你批准哪一份？"
   },
   recruit_youth_path: {
     title: "青训基地：那个孩子一直在等机会",
@@ -78,7 +79,7 @@ const EVENT_NARRATIVES = {
       "“他还没准备好成为救世主，”青训主管说，“但如果永远不给机会，青训就只是宣传册上的词。”主教练站在远处，没有反对，也没有点头。",
       "这个场景参考了拉玛西亚、阿贾克斯和南安普顿式的青训路线：年轻球员便宜，但代价是波动和耐心。"
     ],
-    prompt: "你要让年轻人进入一线队，还是继续从外面买更稳的球员？"
+    prompt: "你给陈野一线队合同和替补名额，还是花 650 万签下已有成年队经验的罗钧？"
   },
   recruit_default: {
     title: "球探会议室：三份录像，三种未来",
@@ -88,7 +89,7 @@ const EVENT_NARRATIVES = {
       "球探主管说老将能立刻卖球衣，年轻人可能升值，租借最便宜但留不住。财务主管补了一句：“每一种便宜，都有它的隐藏价格。”",
       "这个母题来自皇马巨星战略、布莱顿球探模型和中小球队租借补强的现实选择。"
     ],
-    prompt: "你要怎样补上阵容的第一块缺口？"
+    prompt: "韩拓、罗钧和顾南的合同条件都在桌上。你签谁？"
   },
   star_new_veteran: {
     title: "停车场边：新援的工资传到了队长耳朵里",
@@ -98,7 +99,7 @@ const EVENT_NARRATIVES = {
       "“林骁在这里踢了九年，”经纪人说，“如果刚来的人都能拿这个数，你们准备怎么解释核心的价值？”远处，林骁坐在车里，没有下车。",
       "这个场景参考了巴黎式巨星权力结构和拜仁式工资纪律之间的冲突。"
     ],
-    prompt: "你要用钱安抚核心，还是用纪律压住工资结构？"
+    prompt: "你让林骁追平新援顶薪，还是维持他的原合同并取消首发特权扩张？"
   },
   star_support_rebuild: {
     title: "训练场夜灯下：核心没有先谈钱",
@@ -108,7 +109,7 @@ const EVENT_NARRATIVES = {
       "他说话很慢，像是在给你机会，也像是在给自己找理由相信这支球队。你意识到，核心球员要的不只是工资，还有他是否愿意把最后几年交给你的路线。",
       "这个母题参考了皇马与 C 罗的时代切换，也参考了许多球队围绕老核心转型时的艰难谈判。"
     ],
-    prompt: "你如何把核心球员纳入重建，而不是让他变成重建的阻碍？"
+    prompt: "你把林骁写进重建计划并设置目标奖金，还是接受 1600 万报价让他离队争冠？"
   },
   star_default: {
     title: "经纪人办公室：传奇不是免费的",
@@ -118,7 +119,7 @@ const EVENT_NARRATIVES = {
       "你知道球迷喜欢他，也知道球队过去几年太依赖他。留下他会稳定很多东西，也会让未来继续围绕他转；放走他会拿回空间，也会像切断一段球队记忆。",
       "这个场景参考了梅西离开巴萨、C 罗离开皇马以及豪门处理队史核心时的不同路径。"
     ],
-    prompt: "你如何处理这份续约要求？"
+    prompt: "经纪人等你对四份方案表态：续约、履行旧约、短期补充协议，还是立即出售？"
   },
   coach_youth: {
     title: "战术分析室：青年队教练拿着同一套训练图",
@@ -128,7 +129,7 @@ const EVENT_NARRATIVES = {
       "主教练组有人担心经验，青训主管则说：“如果我们总说年轻人要有通道，那教练也一样。”这不是单纯换一个人，而是决定俱乐部上下是否真的统一路线。",
       "这个母题来自阿贾克斯、巴萨和许多强调统一打法的俱乐部。"
     ],
-    prompt: "你要让青年队教练上位，还是先把他放进一线队体系？"
+    prompt: "你立即任命赵恺为主教练，还是保留现任主帅并让赵恺先担任助教？"
   },
   coach_default: {
     title: "战术会议：稳定和上限站在白板两边",
@@ -138,7 +139,7 @@ const EVENT_NARRATIVES = {
       "主席问得很直接：“如果换帅，你能保证更好吗？”你不能。主教练也知道你不能。他只是看着白板，没有说话。",
       "这个场景参考了曼联后弗格森时代的反复换帅，也参考了曼城围绕瓜迪奥拉重构整个足球部门的路线。"
     ],
-    prompt: "你要怎样处理教练与战术路线？"
+    prompt: "你支付换帅成本请顾维、补强现任教练组，还是内部提拔赵恺？"
   },
   sponsor_cash_tight: {
     title: "主场包厢：缺钱时，赞助商说话更大声",
@@ -148,7 +149,7 @@ const EVENT_NARRATIVES = {
       "你明白对方为什么敢这样开价。现金紧张时，谈判桌会变长，而你坐的位置会变低。",
       "这个母题来自商业资本进入足球后，赞助、命名权和球迷身份之间的冲突。"
     ],
-    prompt: "你要接受这笔救急的钱吗？"
+    prompt: "你交出看台命名和两场球员活动换取 1500 万，还是拒签并冻结非必要开支？"
   },
   sponsor_default: {
     title: "三份赞助合同：钱、城市和未来曝光",
@@ -158,7 +159,7 @@ const EVENT_NARRATIVES = {
       "商务总监只看现金，球迷代表只看主场名字，青训主管盯着本地企业那一栏。你忽然发现，赞助买走的不只是广告位，还有俱乐部怎样讲述自己的权利。",
       "这个母题参考了曼联球迷抗议、巴萨身份叙事和欧洲超级联赛风波。"
     ],
-    prompt: "你选择哪一种赞助路线？"
+    prompt: "三份方案的现金和权益边界都已列明。你签大型赞助、本地联合赞助，还是暂缓两个月？"
   },
   locker_star_power: {
     title: "更衣室门外：一句采访变成了头条",
@@ -168,7 +169,7 @@ const EVENT_NARRATIVES = {
       "你站在更衣室门外，听见里面突然安静下来。足球队不是公司群聊，球员每天要一起训练、一起输赢，裂痕不会因为公告消失。",
       "这个母题来自豪门更衣室权力、替补上升通道和球星特权之间的长期矛盾。"
     ],
-    prompt: "你要树立纪律，调解内部，还是先保护球星？"
+    prompt: "你发布纪律声明、让队长组重订规则，还是保留球星特权并把抱怨者挂牌？"
   },
   locker_default: {
     title: "热身赛名单：替补第一次把不满说出口",
@@ -178,7 +179,7 @@ const EVENT_NARRATIVES = {
       "主教练希望你站出来维护权威，队长则建议私下谈。你知道这件事不大，但更衣室里很多大问题，最开始都只是这样一句话。",
       "这个母题来自教练权威、球员信任和替补角色管理。"
     ],
-    prompt: "你如何处理这道裂缝？"
+    prompt: "你公开确认教练的名单权，还是让队长组先与替补确认未来三场轮换计划？"
   },
   injury_depth_test: {
     title: "队医办公室：有厚度时，轮换才是真选择",
@@ -188,7 +189,7 @@ const EVENT_NARRATIVES = {
       "你第一次真正感到阵容厚度的意义：它不是名单上多几个人，而是在风险出现时，球队有没有资格不硬扛。",
       "这个母题来自密集赛程里强队轮换和中小球队硬拼主力的差异。"
     ],
-    prompt: "你要主动轮换，还是继续让主力找状态？"
+    prompt: "你让后腰休战并购买专项恢复服务，还是让他首发 60 分钟继续磨合？"
   },
   injury_default: {
     title: "恢复室：疲劳不会自己消失",
@@ -198,7 +199,7 @@ const EVENT_NARRATIVES = {
       "你知道伤病像天气一样有随机性，但它也常常从这些小选择里长出来：多踢十分钟，少休一天，少花一笔恢复预算。",
       "这个母题参考了利物浦 2020-21 伤病潮和现代高强度赛程下的轮换管理。"
     ],
-    prompt: "你如何处理伤病风险？"
+    prompt: "你组建赛季医疗小组、让两名主力休战恢复，还是维持全主力训练和比赛？"
   },
   home_commercial_cold: {
     title: "主场入口：广告牌亮了，看台却沉了一点",
@@ -208,7 +209,7 @@ const EVENT_NARRATIVES = {
       "运营主管说赞助商活动必须保证，球迷代表则问你：“第一场主场，普通球迷到底还在不在画面里？”球员热身时，也能感觉到看台的气氛有些迟疑。",
       "这个母题来自商业化主场和传统球迷身份之间的冲突。"
     ],
-    prompt: "你要修复主场气氛，还是继续保证商业活动？"
+    prompt: "你拿出 260 万恢复公益票和看台展示，还是执行赞助商首战套餐收取 260 万？"
   },
   home_default: {
     title: "联赛首轮：岚城体育场重新开灯",
@@ -218,7 +219,7 @@ const EVENT_NARRATIVES = {
       "运营主管问你要不要做球迷动员日，商务总监提醒包厢还有赞助商。你站在球员通道口，忽然意识到主场不是背景板，它会影响球员第一脚触球时的心跳。",
       "这个母题来自安菲尔德、威斯特法伦和许多强主场球队对心理优势的塑造。"
     ],
-    prompt: "主场首战前，你如何安排球场氛围？"
+    prompt: "你举办球迷日、出售企业活动套餐，还是完全按常规方案办赛？"
   },
   away_fatigue: {
     title: "客场酒店：三天后的腿不会说谎",
@@ -228,7 +229,7 @@ const EVENT_NARRATIVES = {
       "主教练想延续首发保持连贯性，队医建议大轮换。你知道客场比赛从来不只是 90 分钟，它从旅途、睡眠和疲劳里就已经开始了。",
       "这个母题来自欧战客场、密集赛程和短恢复周期下的轮换选择。"
     ],
-    prompt: "你如何安排这场疲劳状态下的客场？"
+    prompt: "恢复数据已经低于安全线。你更换 5 名首发，还是沿用主场阵容？"
   },
   away_default: {
     title: "第一次客场：陌生球场没有人等你适应",
@@ -238,7 +239,7 @@ const EVENT_NARRATIVES = {
       "领队问是否提高后勤规格，体能教练建议谨慎轮换，主教练则还在考虑能不能延续主场首发。你发现，客场的每个小安排都会被比赛放大。",
       "这个母题来自长途旅行、客场心理压力和赛程管理。"
     ],
-    prompt: "你如何准备第一次客场？"
+    prompt: "基础差旅已经支付。你升级后勤、维持普通出行，还是通过轮换或延续首发调整比赛投入？"
   }
 };
 
@@ -625,16 +626,22 @@ function buildChoiceAfterScene(choice, stage) {
   const ops = effects.operations || {};
   const pitch = effects.pitch || {};
 
+  if (choice.afterScene) {
+    parts.push(choice.afterScene);
+  } else if (choice.action) {
+    parts.push(`你在会议纪要上确认了决定：${choice.action} 从签字这一刻起，这不再是一句态度，而是俱乐部必须执行的安排。`);
+  }
+
   if (finance.cash < 0) {
     parts.push(`财务主管在付款单上盖章时停顿了一下：“这笔 ${Math.abs(finance.cash)} 万会马上出去，后面的空间会变窄。”你听见打印机吐出新的现金表，纸张边缘还带着热。`);
   } else if (finance.cash > 0) {
-    parts.push(`到账短信几乎是当场弹出来的。${finance.cash} 万让办公室的气氛松了一点，但你知道，愿意给钱的人通常也会要走一些东西。`);
+    parts.push(`财务主管确认，${finance.cash} 万将按刚刚签下的协议进入账户。办公室里的气氛松了一点，但合同里换出去的权益、球员或成绩承诺也从这一刻开始生效。`);
   } else {
     parts.push("账面现金没有变化，但会议室里的气氛变了。有人觉得你守住了原则，也有人觉得你只是把问题推迟到了下一次谈判。");
   }
 
   if (ops["球迷信任"] > 0 || ops["社区连接"] > 0) {
-    parts.push("傍晚的球迷论坛里，有人开始转发你的决定。并不是所有人都满意，但至少有人相信，俱乐部还记得这座城市。");
+    parts.push("傍晚的球迷论坛里，有人开始转发你的决定。有人认可路线终于说清楚了，也有人提醒其他人：真正的评价要等承诺兑现以后再做。");
   }
   if (ops["球迷信任"] < 0 || ops["社区连接"] < 0) {
     parts.push("看台老球迷的群聊很快热闹起来。有人问：岚城联是不是又一次把球迷的感受放在了最后？");
@@ -720,7 +727,9 @@ function renderChoices(choices) {
     button.innerHTML = `
       <strong>${escapeHtml(choice.label)}</strong>
       <span class="cost">${escapeHtml(choice.visibleFinance || "无直接财务变化")}</span>
-      <p>${escapeHtml(choice.hint || "")}</p>
+      ${choice.action ? `<p class="choice-explanation"><b>你会做什么：</b>${escapeHtml(choice.action)}</p>` : ""}
+      ${choice.priceBasis ? `<p class="choice-explanation"><b>金额怎么来：</b>${escapeHtml(choice.priceBasis)}</p>` : ""}
+      <p class="choice-explanation"><b>代价与收益：</b>${escapeHtml(choice.hint || "低波动处理，但仍会影响后续关系。")}</p>
       ${renderChoiceContext(choice)}
       ${availability.ok ? "" : `<p class="disabled-reason">${escapeHtml(availability.reason)}</p>`}
     `;
@@ -1011,8 +1020,9 @@ function simulateMatch(type) {
 
   applyMatchConsequences(result.outcome, isHome);
 
-  const strong = topStat(app.state.pitch, true);
-  const weak = topStat(app.state.pitch, false);
+  const matchStats = Object.keys(rule.weights);
+  const strong = topStat(app.state.pitch, true, matchStats);
+  const weak = topStat(app.state.pitch, false, matchStats);
   const title = isHome
     ? `${app.teamName} ${score.team}-${score.opponent} ${rule.opponent}`
     : `${rule.opponent} ${score.opponent}-${score.team} ${app.teamName}`;
@@ -1223,8 +1233,10 @@ function getPath(source, path) {
   return path.split(".").reduce((value, key) => (value == null ? undefined : value[key]), source);
 }
 
-function topStat(stats, high) {
-  return Object.entries(stats).sort((a, b) => (high ? b[1] - a[1] : a[1] - b[1]))[0];
+function topStat(stats, high, keys = Object.keys(stats)) {
+  return Object.entries(stats)
+    .filter(([key]) => keys.includes(key))
+    .sort((a, b) => (high ? b[1] - a[1] : a[1] - b[1]))[0];
 }
 
 function randomInt(min, max) {

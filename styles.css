@@ -607,6 +607,15 @@ textarea:focus {
   line-height: 1.65;
 }
 
+.choice-card .choice-explanation {
+  margin-top: 7px;
+  color: #475467;
+}
+
+.choice-card .choice-explanation b {
+  color: #1d2939;
+}
+
 .choice-context {
   display: grid;
   gap: 10px;
