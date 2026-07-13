@@ -91,6 +91,8 @@
           <section class="story-panel">
             <section id="clubDossier" class="dossier-panel"></section>
 
+            <nav id="seasonProgress" class="season-progress" aria-label="赛季阶段"></nav>
+
             <div class="stage-strip">
               <div>
                 <span id="stageCounter">阶段 1 / 10</span>
@@ -101,14 +103,16 @@
 
             <article id="eventCard" class="event-card">
               <p id="eventSpeaker" class="speaker">主席</p>
+              <p id="eventMeta" class="event-meta"></p>
               <h2 id="eventTitle">董事会会议</h2>
-              <p id="eventScene"></p>
+              <div id="eventScene" class="scene-body"></div>
               <p id="eventPrompt" class="prompt"></p>
               <div id="eventContext" class="event-context"></div>
             </article>
 
             <div id="choiceList" class="choice-list"></div>
 
+            <section id="feedbackScene" class="feedback-scene hidden"></section>
             <section id="matchReport" class="match-report hidden"></section>
           </section>
 
@@ -129,6 +133,7 @@
           <h1 id="resultTitle">球队报告</h1>
           <p id="resultSummary"></p>
         </div>
+        <section id="epilogueScene" class="epilogue-scene"></section>
         <div class="result-layout">
           <section class="panel">
             <div class="panel-title">
