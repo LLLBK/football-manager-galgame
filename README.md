@@ -11,6 +11,7 @@ https://lllbk.github.io/football-manager-galgame/
 项目文档：
 
 - [剧情分支树](docs/story-branch-tree.md)
+- [设计思路](docs/设计思路.md)
 
 本地预览地址：
 
