@@ -1,157 +1,190 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>岚城联：赛季前夜</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="一款关于足球俱乐部经营、承诺与后果的沉浸式叙事游戏。" />
+    <title>岚城联：一季之内</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section id="startScreen" class="start-screen">
         <div class="start-copy">
-          <p class="eyebrow">Football Club Manager</p>
-          <h1>岚城联：赛季前夜</h1>
-          <p>你将作为新任足球事务经理，在有限现金、董事会压力、球迷期待和竞技风险之间做选择。每次选择都会塑造一支不同的球队。</p>
+          <p class="eyebrow">FOOTBALL CLUB STORY</p>
+          <h1>岚城联：一季之内</h1>
+          <p class="start-lede">
+            你将接手一家有4200万现金、旧账、伤员、共同记忆和许多彼此冲突承诺的足球俱乐部。
+            这里没有显示“最佳答案”的属性按钮。你能看到事实、合同与人说过的话，却只能在信息不完整时作决定。
+          </p>
+          <div class="start-features" aria-label="游戏特点">
+            <div><strong>十集</strong><span>跨越一个完整赛季</span></div>
+            <div><strong>三十次</strong><span>只能选择其中两条的追问</span></div>
+            <div><strong>延迟后果</strong><span>承诺会在几个月后回来</span></div>
+          </div>
+          <blockquote>“你决定的不是一个数字怎么变，而是以后谁还愿意把坏消息告诉你。”</blockquote>
         </div>
+
         <form id="startForm" class="start-form">
+          <div>
+            <p class="eyebrow">任命书</p>
+            <h2>开始你的任期</h2>
+            <p>游戏约需30—45分钟。浏览器会在本机保存当前进度。</p>
+          </div>
           <label>
-            经理人姓名
-            <input id="managerName" name="managerName" autocomplete="name" placeholder="例如：陈同学" required />
+            你的名字
+            <input id="managerName" name="managerName" maxlength="16" value="苏屿" autocomplete="off" />
           </label>
           <label>
-            球队名称
-            <input id="teamName" name="teamName" placeholder="默认：岚城联" />
+            俱乐部名称
+            <input id="teamName" name="teamName" maxlength="18" value="岚城联" autocomplete="off" />
           </label>
-          <button type="submit">开始经营</button>
+          <button type="submit">走进董事会议室</button>
+          <button type="button" id="resumeBtn" class="text-btn hidden">继续上次的赛季</button>
         </form>
       </section>
 
       <section id="gameScreen" class="game-screen hidden">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Season Build</p>
+            <p class="eyebrow" id="seasonLabel">2026—27赛季</p>
             <h1 id="clubTitle">岚城联</h1>
           </div>
           <div class="topbar-actions">
-            <button id="restartBtn" class="ghost-btn" type="button">重新开始</button>
-            <button id="exportBtn" class="ghost-btn" type="button">导出数据</button>
+            <button id="exportBtn" class="ghost-btn" type="button">导出任期记录</button>
+            <button id="restartBtn" class="ghost-btn danger" type="button">重新开始</button>
           </div>
         </header>
 
         <div class="layout">
-          <aside class="side-panel">
+          <aside class="side-panel" aria-label="俱乐部经营信息">
             <section class="panel finance-panel">
-              <div class="panel-title">
-                <span>财务面板</span>
-                <strong id="cashValue">4200 万</strong>
-              </div>
-              <p id="financeScale" class="panel-note"></p>
+              <div class="panel-title"><span>可动用现金</span><strong id="cashValue">—</strong></div>
+              <p class="panel-note">现金是明确事实；其余关系与竞技状态只会通过人的行为显现。</p>
               <div class="finance-grid">
-                <div>
-                  <span>工资承诺</span>
-                  <strong id="wageValue">3600 万</strong>
-                </div>
-                <div>
-                  <span>奖金承诺</span>
-                  <strong id="bonusValue">0 万</strong>
-                </div>
-                <div>
-                  <span>转会分期</span>
-                  <strong id="installmentValue">0 万</strong>
-                </div>
-                <div>
-                  <span>青训专项</span>
-                  <strong id="restrictedValue">0 万</strong>
-                </div>
+                <div><span>年度工资承诺</span><strong id="wageValue">—</strong></div>
+                <div><span>转会分期余额</span><strong id="installmentValue">—</strong></div>
+                <div><span>受限资金</span><strong id="restrictedValue">—</strong></div>
+                <div><span>赛季成绩</span><strong id="recordValue">尚未开赛</strong></div>
               </div>
               <div class="payables">
-                <h2>未来应付款</h2>
+                <h2>接下来必须支付</h2>
                 <ul id="payablesList"></ul>
               </div>
             </section>
 
             <section class="panel">
-              <div class="panel-title">
-                <span>经营状态</span>
-              </div>
-              <p class="panel-note">50 约等于联赛中游俱乐部平均线。低于 45 是隐患，高于 60 才算稳定强项。</p>
-              <div id="operationsStats" class="stat-list"></div>
+              <div class="panel-title"><span>你已经说过的话</span><b id="promiseCount">0</b></div>
+              <p class="panel-note">承诺不是增益效果。到期时，人们会按原话理解你。</p>
+              <div id="promiseList" class="promise-list"></div>
             </section>
 
             <section class="panel">
-              <div class="panel-title">
-                <span>竞技状态</span>
-              </div>
-              <p class="panel-note">比赛只直接读取这些竞技状态；经营选择会通过剧情把影响传导到这里。</p>
-              <div id="pitchStats" class="stat-list"></div>
+              <div class="panel-title"><span>尚未解决</span><b id="threadCount">0</b></div>
+              <div id="threadList" class="thread-list"></div>
             </section>
           </aside>
 
           <section class="story-panel">
-            <section id="clubDossier" class="dossier-panel"></section>
-
-            <nav id="seasonProgress" class="season-progress" aria-label="赛季阶段"></nav>
-
-            <div class="stage-strip">
-              <div>
-                <span id="stageCounter">阶段 1 / 10</span>
-                <strong id="stageTitle">上任定位</strong>
+            <div class="season-progress-card">
+              <div class="season-progress-copy">
+                <span id="stageCounter">第一集 / 共十集</span>
+                <strong id="stageTitle">你受谁委任</strong>
+                <span id="stageMeta">7月1日 · 岚城联董事会议室</span>
               </div>
-              <div id="routeTags" class="route-tags"></div>
+              <div class="season-progress-track"><span id="seasonProgress"></span></div>
+              <div id="episodeStrip" class="episode-strip" aria-label="赛季章节"></div>
             </div>
 
+            <div id="echoArea" class="echo-area hidden" aria-live="polite"></div>
+
             <article id="eventCard" class="event-card">
-              <p id="eventSpeaker" class="speaker">主席</p>
-              <p id="eventMeta" class="event-meta"></p>
-              <h2 id="eventTitle">董事会会议</h2>
-              <div id="eventScene" class="scene-body"></div>
-              <p id="eventPrompt" class="prompt"></p>
-              <div id="eventContext" class="event-context"></div>
+              <header class="event-head">
+                <div>
+                  <p id="eventSpeaker" class="speaker">—</p>
+                  <p id="eventMeta" class="event-meta">—</p>
+                </div>
+                <span id="sceneType" class="scene-type">现场</span>
+              </header>
+              <h2 id="eventTitle">—</h2>
+              <div id="eventScene" class="event-scene"></div>
+              <div id="knowledgeCard" class="knowledge-card hidden"></div>
+              <div id="eventPrompt" class="event-prompt hidden"></div>
+              <p id="inquiryStatus" class="inquiry-status hidden"></p>
+              <div id="choiceList" class="choice-list"></div>
+              <button id="continueBtn" class="primary-btn hidden" type="button">继续</button>
             </article>
 
-            <div id="choiceList" class="choice-list"></div>
-
-            <section id="feedbackScene" class="feedback-scene hidden"></section>
-            <section id="matchReport" class="match-report hidden"></section>
+            <article id="feedbackScene" class="feedback-scene hidden" aria-live="polite"></article>
+            <article id="matchReport" class="match-report hidden" aria-live="polite"></article>
           </section>
 
-          <aside class="history-panel">
-            <section class="panel">
-              <div class="panel-title">
-                <span>经营记录</span>
-              </div>
-              <ol id="historyList" class="history-list"></ol>
+          <aside class="history-panel" aria-label="人物与任期记录">
+            <section class="panel dossier-panel">
+              <div class="panel-title"><span>总经理案头</span></div>
+              <div id="clubDossier" class="club-dossier"></div>
+            </section>
+            <section class="panel people-panel">
+              <div class="panel-title"><span>与你直接相关的人</span></div>
+              <p class="panel-note">没有好感度数字。你只能从他们是否直说、是否出现、是否绕过你来判断关系。</p>
+              <div id="characterList" class="character-list"></div>
+            </section>
+            <section class="panel history-card">
+              <div class="panel-title"><span>任期记录</span></div>
+              <div id="historyList" class="history-list"></div>
             </section>
           </aside>
         </div>
       </section>
 
       <section id="resultScreen" class="result-screen hidden">
-        <div class="result-head">
-          <p class="eyebrow">Club Report</p>
-          <h1 id="resultTitle">球队报告</h1>
-          <p id="resultSummary"></p>
-        </div>
-        <section id="epilogueScene" class="epilogue-scene"></section>
-        <div class="result-layout">
-          <section class="panel">
-            <div class="panel-title">
-              <span>最终标签</span>
-            </div>
-            <div id="finalTags" class="route-tags"></div>
+        <div class="result-shell">
+          <header class="result-head">
+            <p class="eyebrow">SEASON REVIEW</p>
+            <h1 id="resultTitle">一季结束</h1>
+            <p id="resultSubtitle"></p>
+          </header>
+
+          <section class="verdict-card">
+            <p class="eyebrow">董事会不会替你概括这一季</p>
+            <h2 id="verdictTitle"></h2>
+            <div id="verdictBody"></div>
+            <div id="finalStats" class="final-stats"></div>
           </section>
-          <section class="panel">
-            <div class="panel-title">
-              <span>球队数据码</span>
+
+          <div class="result-grid">
+            <section class="result-card">
+              <h2>人们记住的事</h2>
+              <div id="epilogueList" class="epilogue-list"></div>
+            </section>
+            <section class="result-card">
+              <h2>承诺结算</h2>
+              <div id="promiseReview" class="promise-review"></div>
+            </section>
+          </div>
+
+          <section class="result-card debrief-card">
+            <p class="eyebrow">赛后复盘</p>
+            <h2>这些困境为什么像真实足球</h2>
+            <p>以下案例框架只在赛季结束后出现。它们用于复盘，不用于告诉玩家当时应该选什么。</p>
+            <div id="debriefList" class="debrief-list"></div>
+          </section>
+
+          <section class="export-card">
+            <div>
+              <h2>保留这次任期</h2>
+              <p>可导出完整决定、已知信息、比赛结果和人物关系，用于课堂讨论或再次比较。</p>
             </div>
-            <textarea id="exportText" readonly></textarea>
-            <button id="copyBtn" type="button">复制数据</button>
+            <div class="result-actions">
+              <button id="resultExportBtn" class="primary-btn" type="button">导出 JSON</button>
+              <button id="resultRestartBtn" class="ghost-btn" type="button">重新开始</button>
+            </div>
           </section>
         </div>
       </section>
     </main>
 
+    <noscript>这个游戏需要启用 JavaScript。</noscript>
     <script src="app.js"></script>
   </body>
 </html>
