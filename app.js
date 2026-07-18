@@ -1,7 +1,9 @@
 const SAVE_KEY = "lancheng-season-v2";
 
 let gameData = null;
+let visualData = null;
 let state = null;
+let activeVisualPage = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -36,6 +38,11 @@ const ui = {
   episodeStrip: $("episodeStrip"),
   echoArea: $("echoArea"),
   eventCard: $("eventCard"),
+  eventNarrative: $("eventNarrative"),
+  visualStage: $("visualStage"),
+  visualBackground: $("visualBackground"),
+  visualCharacter: $("visualCharacter"),
+  visualLocation: $("visualLocation"),
   eventSpeaker: $("eventSpeaker"),
   eventMeta: $("eventMeta"),
   sceneType: $("sceneType"),
@@ -83,6 +90,8 @@ function createInitialState(managerName, clubName) {
     currentEpisode: 0,
     phase: "scenes",
     sceneIndex: 0,
+    visualBeatKey: null,
+    visualBeatIndex: 0,
     activeReply: null,
     questions: {},
     decisions: {},
@@ -182,7 +191,11 @@ function getSceneQueue(episode) {
     .slice(0, 3)
     .map((item) => ({ ...item, kind: "旧决定的回声" }));
   const notices = state.paymentNotices[episode.number] || [];
-  const openings = episode.opening.map((item) => ({ ...item, kind: "现场" }));
+  const openings = episode.opening.map((item, index) => ({
+    ...item,
+    kind: "现场",
+    visualKey: `${episode.id}.opening.${index}`
+  }));
   return [openings[0], ...notices, ...echoes, ...openings.slice(1)].filter(Boolean);
 }
 
@@ -356,6 +369,7 @@ function renderHistory() {
 }
 
 function resetStoryPanels() {
+  activeVisualPage = null;
   ui.eventCard.classList.remove("hidden");
   ui.feedbackScene.classList.add("hidden");
   ui.matchReport.classList.add("hidden");
@@ -393,25 +407,109 @@ function renderPhase() {
   }
 }
 
-function setSceneContent({ speaker, title, body, kind = "现场" }, meta) {
+function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visualKey = null) {
   ui.eventSpeaker.textContent = speaker;
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
-  ui.eventScene.innerHTML = body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+  const visual = getVisualScene(visualKey);
+  let visibleBody = body;
+
+  if (visual && body.length) {
+    if (state.visualBeatKey !== visualKey) {
+      state.visualBeatKey = visualKey;
+      state.visualBeatIndex = 0;
+    }
+    const beatIndex = Math.min(state.visualBeatIndex || 0, body.length - 1);
+    const beat = { ...visual, ...(visual.beats?.[beatIndex] || {}) };
+    visibleBody = [body[beatIndex]];
+    activeVisualPage = {
+      key: visualKey,
+      hasNext: beatIndex < body.length - 1
+    };
+    renderVisualStage(beat, meta);
+  } else {
+    state.visualBeatKey = null;
+    state.visualBeatIndex = 0;
+    hideVisualStage();
+  }
+
+  ui.eventScene.innerHTML = visibleBody
+    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+    .join("");
 }
 
 function showContinue(label, handler) {
-  ui.continueBtn.textContent = label;
-  ui.continueBtn.onclick = handler;
+  if (activeVisualPage?.hasNext) {
+    ui.continueBtn.textContent = "继续";
+    ui.continueBtn.onclick = () => {
+      state.visualBeatIndex = (state.visualBeatIndex || 0) + 1;
+      saveGame();
+      render();
+      scrollToStory();
+    };
+  } else {
+    ui.continueBtn.textContent = label;
+    ui.continueBtn.onclick = handler;
+  }
   ui.continueBtn.classList.remove("hidden");
+}
+
+function getVisualScene(key) {
+  if (!key || currentEpisode()?.id !== "e1") return null;
+  return visualData?.scenes?.[key] || null;
+}
+
+function hideVisualStage() {
+  ui.visualStage.classList.add("hidden");
+  ui.eventCard.classList.remove("visual-event");
+  ui.visualCharacter.classList.add("hidden");
+}
+
+function renderVisualStage(scene, meta) {
+  const background = visualData.backgrounds?.[scene.background];
+  if (!background) {
+    hideVisualStage();
+    return;
+  }
+
+  ui.eventCard.classList.add("visual-event");
+  ui.visualStage.classList.remove("hidden");
+  ui.visualStage.dataset.tone = scene.tone || "story";
+  ui.visualBackground.hidden = false;
+  ui.visualBackground.alt = background.alt || "剧情背景";
+  if (!ui.visualBackground.src.endsWith(background.src)) {
+    ui.visualBackground.src = background.src;
+    restartAnimation(ui.visualBackground, "visual-fade");
+  }
+  ui.visualLocation.textContent = meta;
+
+  const character = scene.character ? visualData.characters?.[scene.character] : null;
+  const portrait = character?.expressions?.[scene.expression];
+  if (!portrait) {
+    ui.visualCharacter.classList.add("hidden");
+    ui.visualCharacter.removeAttribute("src");
+    return;
+  }
+
+  ui.eventSpeaker.textContent = character.name;
+  ui.visualCharacter.alt = `${character.name}，${scene.expression || "当前"}神态`;
+  ui.visualCharacter.className = `visual-character position-${scene.position || "center"}`;
+  ui.visualCharacter.src = portrait;
+  restartAnimation(ui.visualCharacter, `motion-${scene.motion || "focus"}`);
+}
+
+function restartAnimation(element, className) {
+  element.classList.remove("visual-fade", "motion-enter", "motion-focus", "motion-tense", className);
+  void element.offsetWidth;
+  element.classList.add(className);
 }
 
 function renderScene() {
   const episode = currentEpisode();
   const scenes = getSceneQueue(episode);
   const scene = scenes[state.sceneIndex] || scenes[0];
-  setSceneContent(scene, `${episode.date} · ${episode.location}`);
+  setSceneContent(scene, `${episode.date} · ${episode.location}`, scene.visualKey);
   const last = state.sceneIndex >= scenes.length - 1;
   showContinue(last ? "开始了解冲突" : "继续", () => {
     if (last) {
@@ -435,7 +533,8 @@ function renderInquiry() {
   if (active) {
     setSceneContent(
       { speaker: active.speaker, title: active.title, body: active.body, kind: "谈话记录" },
-      `${episode.date} · 只对你说`
+      `${episode.date} · 只对你说`,
+      `${episode.id}.inquiry.${active.id}`
     );
     ui.knowledgeCard.innerHTML = `<strong>你现在确认了一件事</strong><p>${escapeHtml(active.knowledge)}</p>`;
     ui.knowledgeCard.classList.remove("hidden");
@@ -457,7 +556,8 @@ function renderInquiry() {
       body: [inquiry.prompt],
       kind: "有限追问"
     },
-    `${episode.date} · 决策前`
+    `${episode.date} · 决策前`,
+    `${episode.id}.inquiry.menu`
   );
   ui.inquiryStatus.textContent = `可以追问 ${inquiry.max} 人 · 已问 ${selected.length} 人`;
   ui.inquiryStatus.classList.remove("hidden");
@@ -506,7 +606,8 @@ function renderDecision() {
       body: [episode.decision.prompt],
       kind: "不可逆决定"
     },
-    `${episode.date} · ${episode.phase}`
+    `${episode.date} · ${episode.phase}`,
+    `${episode.id}.decision`
   );
   ui.eventPrompt.innerHTML = "<strong>你会公开做什么</strong><span>选择后，决定会立即进入任期记录。</span>";
   ui.eventPrompt.classList.remove("hidden");
@@ -600,7 +701,8 @@ function renderAftermath() {
 
   setSceneContent(
     { ...option.aftermath, kind: "决定后的现场" },
-    `${episode.date} · 决定已无法撤回`
+    `${episode.date} · 决定已无法撤回`,
+    `${episode.id}.aftermath.${option.id}`
   );
   const addedPromises = option.effects?.promisesAdd || [];
   ui.feedbackScene.innerHTML = `
@@ -955,6 +1057,16 @@ function toChineseNumber(number) {
 }
 
 function bindEvents() {
+  ui.visualBackground.addEventListener("error", () => {
+    ui.visualBackground.hidden = true;
+    ui.visualStage.classList.add("visual-fallback");
+  });
+  ui.visualBackground.addEventListener("load", () => {
+    ui.visualStage.classList.remove("visual-fallback");
+  });
+  ui.visualCharacter.addEventListener("error", () => {
+    ui.visualCharacter.classList.add("hidden");
+  });
   ui.startForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const managerName = ui.managerName.value.trim() || "无名经理";
@@ -988,6 +1100,15 @@ async function boot() {
     const response = await fetch("story-data.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     gameData = await response.json();
+    try {
+      const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
+      if (visualResponse.ok) {
+        visualData = await visualResponse.json();
+        preloadPrologueVisuals();
+      }
+    } catch (visualError) {
+      console.warn("序章视觉素材未载入，继续使用文字模式。", visualError);
+    }
     bindEvents();
     if (readSave()) ui.resumeBtn.classList.remove("hidden");
   } catch (error) {
@@ -997,6 +1118,19 @@ async function boot() {
       <code>python3 -m http.server 8173</code>`;
     console.error(error);
   }
+}
+
+function preloadPrologueVisuals() {
+  const sources = [
+    ...Object.values(visualData?.backgrounds || {}).map((item) => item.src),
+    ...Object.values(visualData?.characters || {}).flatMap((character) =>
+      Object.values(character.expressions || {})
+    )
+  ];
+  sources.forEach((src) => {
+    const image = new Image();
+    image.src = src;
+  });
 }
 
 boot();

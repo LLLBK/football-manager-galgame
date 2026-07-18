@@ -1,13 +1,29 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
 const data = JSON.parse(await readFile(new URL("story-data.json", root), "utf8"));
 const appSource = await readFile(new URL("app.js", root), "utf8");
 const html = await readFile(new URL("index.html", root), "utf8");
+const visuals = JSON.parse(await readFile(new URL("visual-data.json", root), "utf8"));
 
 assert.equal(data.episodes.length, 10, "游戏必须包含十集");
 assert.equal(new Set(data.episodes.map((episode) => episode.id)).size, 10, "章节 ID 必须唯一");
+assert.deepEqual(visuals.scope, ["e1"], "视觉化范围必须严格限制在第一集");
+assert.ok(
+  Object.keys(visuals.scenes).every((key) => key.startsWith("e1.")),
+  "视觉配置不得包含第二至第十集"
+);
+
+const visualAssetPaths = [
+  ...Object.values(visuals.backgrounds).map((background) => background.src),
+  ...Object.values(visuals.characters).flatMap((character) =>
+    Object.values(character.expressions)
+  )
+];
+for (const assetPath of visualAssetPaths) {
+  await access(new URL(assetPath, root));
+}
 
 const decisionIds = new Set();
 const promiseIds = new Set();

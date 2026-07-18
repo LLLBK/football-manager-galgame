@@ -99,20 +99,29 @@
             <div id="echoArea" class="echo-area hidden" aria-live="polite"></div>
 
             <article id="eventCard" class="event-card">
-              <header class="event-head">
-                <div>
-                  <p id="eventSpeaker" class="speaker">—</p>
-                  <p id="eventMeta" class="event-meta">—</p>
-                </div>
-                <span id="sceneType" class="scene-type">现场</span>
-              </header>
-              <h2 id="eventTitle">—</h2>
-              <div id="eventScene" class="event-scene"></div>
-              <div id="knowledgeCard" class="knowledge-card hidden"></div>
-              <div id="eventPrompt" class="event-prompt hidden"></div>
-              <p id="inquiryStatus" class="inquiry-status hidden"></p>
-              <div id="choiceList" class="choice-list"></div>
-              <button id="continueBtn" class="primary-btn hidden" type="button">继续</button>
+              <div id="visualStage" class="visual-stage hidden" aria-hidden="true">
+                <img id="visualBackground" class="visual-background" alt="" />
+                <div class="visual-shade"></div>
+                <img id="visualCharacter" class="visual-character hidden" alt="" />
+                <span id="visualLocation" class="visual-location"></span>
+                <span class="visual-prologue-mark">PROLOGUE · 动漫画面</span>
+              </div>
+              <div id="eventNarrative" class="event-narrative">
+                <header class="event-head">
+                  <div>
+                    <p id="eventSpeaker" class="speaker">—</p>
+                    <p id="eventMeta" class="event-meta">—</p>
+                  </div>
+                  <span id="sceneType" class="scene-type">现场</span>
+                </header>
+                <h2 id="eventTitle">—</h2>
+                <div id="eventScene" class="event-scene"></div>
+                <div id="knowledgeCard" class="knowledge-card hidden"></div>
+                <div id="eventPrompt" class="event-prompt hidden"></div>
+                <p id="inquiryStatus" class="inquiry-status hidden"></p>
+                <div id="choiceList" class="choice-list"></div>
+                <button id="continueBtn" class="primary-btn hidden" type="button">继续</button>
+              </div>
             </article>
 
             <article id="feedbackScene" class="feedback-scene hidden" aria-live="polite"></article>

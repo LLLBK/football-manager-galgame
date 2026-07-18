@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "scope": ["e1"],
+  "backgrounds": {
+    "boardroom_morning": {
+      "src": "assets/visuals/backgrounds/boardroom-morning.webp",
+      "alt": "上午的岚城联董事会议室，玻璃窗外能看到训练场"
+    },
+    "boardroom_stairwell": {
+      "src": "assets/visuals/backgrounds/boardroom-stairwell.webp",
+      "alt": "董事会议室门外通向训练基地的楼梯口"
+    },
+    "training_ground_afternoon": {
+      "src": "assets/visuals/backgrounds/training-ground-afternoon.webp",
+      "alt": "下午训练中的岚城联训练场"
+    },
+    "press_room": {
+      "src": "assets/visuals/backgrounds/press-room.webp",
+      "alt": "岚城联上任新闻发布会现场"
+    },
+    "finance_office": {
+      "src": "assets/visuals/backgrounds/finance-office.webp",
+      "alt": "发布会后的俱乐部财务办公室"
+    }
+  },
+  "characters": {
+    "shen": {
+      "name": "沈岳",
+      "expressions": {
+        "neutral": "assets/visuals/characters/shen/neutral.webp",
+        "approving": "assets/visuals/characters/shen/approving.webp",
+        "stern": "assets/visuals/characters/shen/stern.webp"
+      }
+    },
+    "tang": {
+      "name": "唐敏",
+      "expressions": {
+        "guarded": "assets/visuals/characters/tang/guarded.webp",
+        "resolute": "assets/visuals/characters/tang/resolute.webp",
+        "hopeful": "assets/visuals/characters/tang/hopeful.webp"
+      }
+    },
+    "he": {
+      "name": "贺峥",
+      "expressions": {
+        "focused": "assets/visuals/characters/he/focused.webp",
+        "guarded": "assets/visuals/characters/he/guarded.webp",
+        "frustrated": "assets/visuals/characters/he/frustrated.webp"
+      }
+    },
+    "qiao": {
+      "name": "乔岚",
+      "expressions": {
+        "neutral": "assets/visuals/characters/qiao/neutral.webp",
+        "concerned": "assets/visuals/characters/qiao/concerned.webp",
+        "exacting": "assets/visuals/characters/qiao/exacting.webp"
+      }
+    }
+  },
+  "scenes": {
+    "e1.opening.0": {
+      "background": "boardroom_morning",
+      "character": "shen",
+      "position": "center",
+      "expression": "neutral",
+      "beats": [
+        { "expression": "neutral", "motion": "enter" },
+        { "expression": "stern", "motion": "focus" }
+      ]
+    },
+    "e1.opening.1": {
+      "background": "boardroom_stairwell",
+      "character": "tang",
+      "position": "center",
+      "expression": "guarded",
+      "beats": [
+        { "expression": "guarded", "motion": "enter" },
+        { "expression": "resolute", "motion": "focus" }
+      ]
+    },
+    "e1.inquiry.menu": {
+      "background": "boardroom_morning",
+      "character": null,
+      "tone": "quiet"
+    },
+    "e1.inquiry.ask_shen": {
+      "background": "boardroom_morning",
+      "character": "shen",
+      "position": "center",
+      "expression": "stern",
+      "motion": "focus"
+    },
+    "e1.inquiry.ask_tang": {
+      "background": "boardroom_stairwell",
+      "character": "tang",
+      "position": "center",
+      "expression": "resolute",
+      "motion": "focus"
+    },
+    "e1.inquiry.ask_he": {
+      "background": "training_ground_afternoon",
+      "character": "he",
+      "position": "center",
+      "expression": "guarded",
+      "motion": "focus"
+    },
+    "e1.decision": {
+      "background": "press_room",
+      "character": null,
+      "tone": "decision"
+    },
+    "e1.aftermath.board_mandate": {
+      "background": "press_room",
+      "character": "shen",
+      "position": "right",
+      "expression": "approving",
+      "beats": [
+        { "background": "press_room", "character": "shen", "expression": "approving", "position": "right", "motion": "focus" },
+        { "background": "training_ground_afternoon", "character": "he", "expression": "frustrated", "position": "center", "motion": "tense" }
+      ]
+    },
+    "e1.aftermath.club_charter": {
+      "background": "finance_office",
+      "character": "qiao",
+      "position": "center",
+      "expression": "exacting",
+      "beats": [
+        { "background": "finance_office", "character": "qiao", "expression": "exacting", "position": "center", "motion": "focus" },
+        { "background": "boardroom_stairwell", "character": "tang", "expression": "hopeful", "position": "center", "motion": "focus" }
+      ]
+    },
+    "e1.aftermath.sporting_control": {
+      "background": "press_room",
+      "character": "shen",
+      "position": "center",
+      "expression": "stern",
+      "beats": [
+        { "background": "press_room", "character": "shen", "expression": "stern", "position": "center", "motion": "tense" },
+        { "background": "training_ground_afternoon", "character": "he", "expression": "guarded", "position": "center", "motion": "enter" }
+      ]
+    }
+  }
+}
