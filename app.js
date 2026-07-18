@@ -320,12 +320,18 @@ function renderCharacters() {
 
   ui.characterList.innerHTML = people
     .map((person) => {
+      const changedCoach = getDecision("e6") === "hire_gu";
+      let role = person.role;
       let status = relationText(state.characterTrust[person.id] ?? 50);
-      if (person.id === "he" && getDecision("e6") === "hire_gu") status = "已经离任，影响仍留在队内";
-      if (person.id === "gu" && getDecision("e6") !== "hire_gu") status = "仍在俱乐部之外等待机会";
+      if (person.id === "he" && changedCoach) {
+        role = "前一线队主教练";
+        status = "已经离任，影响仍留在队内";
+      }
+      if (person.id === "gu" && changedCoach) role = "一线队主教练";
+      if (person.id === "gu" && !changedCoach) status = "仍在俱乐部之外等待机会";
       return `
         <details class="character-item" ${activeIds.has(person.id) ? "open" : ""}>
-          <summary><span><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></span></summary>
+          <summary><span><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(role)}</small></span></summary>
           <p>${escapeHtml(person.bio)}</p>
           <em>${escapeHtml(status)}</em>
         </details>`;
@@ -826,11 +832,11 @@ function buildEpilogues(finalChoice) {
 
   const stand = getDecision("e5");
   if (stand === "full_naming") {
-    result.push({ who: "东看台", text: "工程完成，漏雨停止，黑金标识覆盖了大部分旧墙。球迷仍进场，但第十二分钟的沉默成了每个主场固定的提醒。" });
+    result.push({ who: "东看台", text: "工程完成，漏雨停止，黑金标识覆盖了大部分旧墙。球迷仍进场，但87%反对改名的公投结果与第十二分钟的沉默一起，成了每个主场固定的提醒。" });
   } else if (stand === "hybrid_naming") {
-    result.push({ who: "东看台", text: "联合名称仍常被念错，合同也仍需争执执行。可壁画、低价票和商业标识第一次被迫在同一画面里相处。" });
+    result.push({ who: "东看台", text: "联合名称仍常被念错，合同也仍需争执执行。可壁画、低价票和商业标识第一次被迫在同一画面里相处，每季的企业票数量也必须向会员报告。" });
   } else {
-    result.push({ who: "东看台", text: "会员债券没有轻松解决钱，却让数千名球迷成为需要被正式回答的人。看台不再只是一项待处置资产。" });
+    result.push({ who: "东看台", text: "会员债券没有轻松解决钱，却让六个季票区联合选出了看台事务董事。出钱多的人没有多一票，看台也不再只是一项待处置资产。" });
   }
 
   const coach = getDecision("e6");
@@ -872,7 +878,7 @@ function evaluatePromise(id, position) {
     chen_pathway: () => getDecision("e8") === "hold_course" ? kept("陈野获得明确轮换。") : getDecision("e8") === "sell_chen" ? broken("陈野离队获得比赛，但岚城的一线队承诺未兑现。") : open("是否形成真实轮换仍取决于下赛季。"),
     winter_captain_talk: () => kept("一月的谈话按期发生，尽管答案未必令人满意。"),
     east_stand_floor: () => kept("本季合同保留了名称、壁画与低价票底线。"),
-    supporter_board_seat: () => getDecision("e10") === "institutionalize" ? kept("席位进入正式治理结构。") : open("本季获得参与，长期表决权仍需制度确认。"),
+    supporter_board_seat: () => kept("会员完成看台事务董事选举，并在本季获得正式表决权。"),
     coach_to_end: () => kept("主教练执教至赛季结束。"),
     three_game_review: () => kept("评估完成，但期限留下的心理影响没有自动消失。"),
     injury_pay_protection: () => kept("本季后续伤情报告按保护规则处理。"),

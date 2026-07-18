@@ -54,6 +54,23 @@ assert.equal(
   "应有 30 条可追问信息"
 );
 
+const episodeText = (id) => JSON.stringify(data.episodes.find((episode) => episode.id === id));
+assert.match(episodeText("e2"), /1:4/, "第二集应呈现财务整改期的1:4注册约束");
+assert.match(episodeText("e3"), /中低位站位/, "第三集应说明贺峥的控制型打法");
+assert.match(episodeText("e3"), /顾维.*防线前压/, "第三集应说明顾维的主动高压打法");
+assert.match(episodeText("e5"), /一人一票/, "球迷线应包含会员一人一票的治理机制");
+assert.match(episodeText("e5"), /会员大会/, "球迷线应包含联合表决组织");
+assert.equal(episodeText("e7").includes("教练刚换过"), false, "未换帅路线不得显示教练已更换");
+for (const coachDecision of ["hire_gu", "back_coach", "three_game_review"]) {
+  assert.ok(
+    data.episodes.find((episode) => episode.id === "e7").echoes.some(
+      (echo) => echo.when?.decision?.e6 === coachDecision
+    ),
+    `第七集缺少 ${coachDecision} 换帅状态回声`
+  );
+}
+assert.match(appSource, /前一线队主教练/, "换帅后人物栏应更新贺峥身份");
+
 const staticIds = new Set([...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]));
 const referencedIds = new Set([...appSource.matchAll(/\$\("([^"]+)"\)/g)].map((match) => match[1]));
 for (const id of referencedIds) {
