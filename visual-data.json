@@ -123,17 +123,17 @@
     "lin": {
       "name": "林骁",
       "expressions": {
-        "steady": "assets/visuals/characters/lin/steady.webp",
-        "vulnerable": "assets/visuals/characters/lin/vulnerable.webp",
-        "resolute": "assets/visuals/characters/lin/resolute.webp"
+        "steady": "assets/visuals/characters/lin/steady-v2.webp",
+        "vulnerable": "assets/visuals/characters/lin/vulnerable-v2.webp",
+        "resolute": "assets/visuals/characters/lin/resolute-v2.webp"
       }
     },
     "zhao": {
       "name": "赵恺",
       "expressions": {
-        "patient": "assets/visuals/characters/zhao/patient.webp",
-        "concerned": "assets/visuals/characters/zhao/concerned.webp",
-        "firm": "assets/visuals/characters/zhao/firm.webp"
+        "patient": "assets/visuals/characters/zhao/patient-v2.webp",
+        "concerned": "assets/visuals/characters/zhao/concerned-v2.webp",
+        "firm": "assets/visuals/characters/zhao/firm-v2.webp"
       }
     },
     "chen": {
@@ -147,33 +147,33 @@
     "jiang": {
       "name": "江黎",
       "expressions": {
-        "clinical": "assets/visuals/characters/jiang/clinical.webp",
-        "concerned": "assets/visuals/characters/jiang/concerned.webp",
-        "resolute": "assets/visuals/characters/jiang/resolute.webp"
+        "clinical": "assets/visuals/characters/jiang/clinical-v2.webp",
+        "concerned": "assets/visuals/characters/jiang/concerned-v2.webp",
+        "resolute": "assets/visuals/characters/jiang/resolute-v2.webp"
       }
     },
     "gu": {
       "name": "顾维",
       "expressions": {
-        "composed": "assets/visuals/characters/gu/composed.webp",
-        "intense": "assets/visuals/characters/gu/intense.webp",
-        "confident": "assets/visuals/characters/gu/confident.webp"
+        "composed": "assets/visuals/characters/gu/composed-v2.webp",
+        "intense": "assets/visuals/characters/gu/intense-v2.webp",
+        "confident": "assets/visuals/characters/gu/confident-v2.webp"
       }
     },
     "analyst": {
       "name": "数据分析师",
       "expressions": {
-        "neutral": "assets/visuals/characters/analyst/neutral.webp",
-        "concerned": "assets/visuals/characters/analyst/concerned.webp",
-        "firm": "assets/visuals/characters/analyst/firm.webp"
+        "neutral": "assets/visuals/characters/analyst/neutral-v2.webp",
+        "concerned": "assets/visuals/characters/analyst/concerned-v2.webp",
+        "firm": "assets/visuals/characters/analyst/firm-v2.webp"
       }
     },
     "sponsor": {
       "name": "曜石集团代表",
       "expressions": {
-        "courteous": "assets/visuals/characters/sponsor/courteous.webp",
-        "calculating": "assets/visuals/characters/sponsor/calculating.webp",
-        "pragmatic": "assets/visuals/characters/sponsor/pragmatic.webp"
+        "courteous": "assets/visuals/characters/sponsor/courteous-v2.webp",
+        "calculating": "assets/visuals/characters/sponsor/calculating-v2.webp",
+        "pragmatic": "assets/visuals/characters/sponsor/pragmatic-v2.webp"
       }
     },
     "player": {
