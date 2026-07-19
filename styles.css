@@ -596,6 +596,23 @@ input {
   letter-spacing: 0.08em;
 }
 
+.visual-stage.visual-loading::before {
+  content: "正在载入当前画面…";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.visual-background.asset-pending,
+.visual-character.asset-pending {
+  visibility: hidden;
+}
+
 .visual-background,
 .visual-shade,
 .visual-ambience,

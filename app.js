@@ -6,6 +6,9 @@ let gameData = null;
 let visualData = null;
 let state = null;
 let activeVisualPage = null;
+let visualRenderEpoch = 0;
+let episodePreloadEpoch = 0;
+const visualAssetCache = new Map();
 
 const $ = (id) => document.getElementById(id);
 
@@ -267,6 +270,7 @@ function beginEpisode(index, { fresh = true } = {}) {
   }
   saveGame();
   render();
+  scheduleEpisodeVisualPreload(episode.id);
 }
 
 function render() {
@@ -547,7 +551,9 @@ function getVisualScene(key) {
 }
 
 function hideVisualStage() {
+  visualRenderEpoch += 1;
   ui.visualStage.classList.add("hidden");
+  ui.visualStage.classList.remove("visual-loading", "visual-fallback");
   ui.eventCard.classList.remove("visual-event");
   ui.visualCharacter.classList.add("hidden");
   ui.visualCharacterGhost.classList.add("hidden");
@@ -566,18 +572,8 @@ function renderVisualStage(scene, meta) {
   ui.visualStage.dataset.tone = scene.tone || "story";
   ui.visualStage.dataset.light = resolveVisualLight(scene.background, scene.light);
   ui.visualStage.dataset.atmosphere = resolveVisualAtmosphere(scene.background, scene.atmosphere);
-  ui.visualBackground.hidden = false;
-  ui.visualBackground.alt = background.alt || "剧情背景";
-  const currentBackground = ui.visualBackground.getAttribute("src");
-  if (currentBackground && currentBackground !== background.src) {
-    ui.visualBackgroundPrevious.src = currentBackground;
-    ui.visualBackgroundPrevious.classList.remove("hidden");
-    restartAnimation(ui.visualBackgroundPrevious, "background-exit");
-  }
-  if (currentBackground !== background.src) {
-    ui.visualBackground.src = background.src;
-    restartAnimation(ui.visualBackground, "background-enter");
-  }
+  const renderEpoch = ++visualRenderEpoch;
+  updateVisualBackground(background, renderEpoch);
   ui.visualLocation.textContent = meta;
   ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number}`;
 
@@ -596,7 +592,7 @@ function renderVisualStage(scene, meta) {
   const supportingPortrait = supportingCharacter?.expressions?.[supportingExpression];
 
   if (!portrait) {
-    createPortraitExit(ui.visualCharacter);
+    ui.visualCharacterGhost.classList.add("hidden");
     ui.visualCharacter.classList.add("hidden");
     ui.visualCharacter.removeAttribute("src");
   } else {
@@ -610,7 +606,8 @@ function renderVisualStage(scene, meta) {
       position,
       framing,
       motion: scene.motion || "focus",
-      role: "active"
+      role: "active",
+      renderEpoch
     });
   }
 
@@ -632,10 +629,92 @@ function renderVisualStage(scene, meta) {
       position: supportingPosition,
       framing: resolveVisualFraming(scene.supportingFraming || "wide"),
       motion: scene.supportingMotion || "enter",
-      role: "listening"
+      role: "listening",
+      renderEpoch
     });
   }
   return true;
+}
+
+function loadVisualAsset(src, priority = "auto") {
+  if (!src) return Promise.reject(new Error("视觉素材路径为空"));
+  const cached = visualAssetCache.get(src);
+  if (cached) {
+    if (priority === "high" && cached.image && "fetchPriority" in cached.image) {
+      cached.image.fetchPriority = "high";
+    }
+    return cached.promise;
+  }
+
+  const image = new Image();
+  image.decoding = "async";
+  if ("fetchPriority" in image) image.fetchPriority = priority;
+  const record = { image, status: "loading", promise: null };
+  record.promise = new Promise((resolve, reject) => {
+    image.addEventListener("load", async () => {
+      try {
+        await image.decode();
+      } catch (error) {
+        // onload 已确认图片可用；部分浏览器会拒绝重复 decode。
+      }
+      record.status = "ready";
+      resolve(src);
+    }, { once: true });
+    image.addEventListener("error", () => {
+      record.status = "error";
+      visualAssetCache.delete(src);
+      reject(new Error(`视觉素材载入失败：${src}`));
+    }, { once: true });
+  });
+  visualAssetCache.set(src, record);
+  image.src = src;
+  return record.promise;
+}
+
+function isVisualAssetReady(src) {
+  return visualAssetCache.get(src)?.status === "ready";
+}
+
+function updateVisualBackground(background, renderEpoch) {
+  const element = ui.visualBackground;
+  const nextSource = background.src;
+  const currentSource = element.getAttribute("src");
+  if (currentSource === nextSource && element.complete && element.naturalWidth > 0) {
+    element.classList.remove("asset-pending");
+    ui.visualStage.classList.remove("visual-loading", "visual-fallback");
+    return;
+  }
+
+  const canCrossfadeImmediately = isVisualAssetReady(nextSource);
+  element.dataset.pendingSrc = nextSource;
+  element.classList.add("asset-pending");
+  ui.visualStage.classList.add("visual-loading");
+  if (!canCrossfadeImmediately && currentSource !== nextSource) {
+    element.removeAttribute("src");
+    ui.visualBackgroundPrevious.classList.add("hidden");
+  }
+
+  loadVisualAsset(nextSource, "high").then(() => {
+    if (renderEpoch !== visualRenderEpoch || element.dataset.pendingSrc !== nextSource) return;
+    const outgoing = element.getAttribute("src");
+    if (outgoing && outgoing !== nextSource) {
+      ui.visualBackgroundPrevious.src = outgoing;
+      ui.visualBackgroundPrevious.classList.remove("hidden");
+      restartAnimation(ui.visualBackgroundPrevious, "background-exit");
+    }
+    element.alt = background.alt || "剧情背景";
+    element.hidden = false;
+    element.src = nextSource;
+    element.classList.remove("asset-pending");
+    ui.visualStage.classList.remove("visual-loading", "visual-fallback");
+    restartAnimation(element, "background-enter");
+  }).catch(() => {
+    if (renderEpoch !== visualRenderEpoch || element.dataset.pendingSrc !== nextSource) return;
+    element.removeAttribute("src");
+    element.classList.add("asset-pending");
+    ui.visualStage.classList.remove("visual-loading");
+    ui.visualStage.classList.add("visual-fallback");
+  });
 }
 
 const defaultCharacterPositions = {
@@ -680,14 +759,90 @@ function createPortraitExit(element) {
 function updatePortrait(element, descriptor) {
   const currentPortrait = element.getAttribute("src");
   const changed = currentPortrait !== descriptor.portrait;
-  if (element === ui.visualCharacter && changed) createPortraitExit(element);
+  const sameCharacter = element.dataset.character === descriptor.characterId;
+  const className = `visual-character position-${descriptor.position} framing-${descriptor.framing} is-${descriptor.role}`;
   element.alt = `${descriptor.name}，${descriptor.expression || "当前"}神态`;
   element.dataset.character = descriptor.characterId;
   element.dataset.position = descriptor.position;
   element.dataset.framing = descriptor.framing;
-  element.className = `visual-character position-${descriptor.position} framing-${descriptor.framing} is-${descriptor.role}`;
-  element.src = descriptor.portrait;
-  restartAnimation(element, `motion-${changed ? descriptor.motion : "focus"}`);
+
+  if (!changed && element.complete && element.naturalWidth > 0) {
+    element.className = className;
+    restartAnimation(element, "motion-focus");
+    return;
+  }
+
+  const canSwapImmediately = isVisualAssetReady(descriptor.portrait);
+  if (element === ui.visualCharacter && changed && sameCharacter && canSwapImmediately) {
+    createPortraitExit(element);
+  }
+  element.dataset.pendingSrc = descriptor.portrait;
+  element.className = `${className} asset-pending`;
+  if (!canSwapImmediately) element.removeAttribute("src");
+
+  loadVisualAsset(descriptor.portrait, "high").then(() => {
+    if (
+      descriptor.renderEpoch !== visualRenderEpoch ||
+      element.dataset.pendingSrc !== descriptor.portrait
+    ) return;
+    element.src = descriptor.portrait;
+    element.className = className;
+    restartAnimation(element, `motion-${changed ? descriptor.motion : "focus"}`);
+  }).catch(() => {
+    if (
+      descriptor.renderEpoch !== visualRenderEpoch ||
+      element.dataset.pendingSrc !== descriptor.portrait
+    ) return;
+    element.removeAttribute("src");
+    element.classList.add("hidden");
+  });
+}
+
+function visualLayerSources(scene) {
+  const sources = [];
+  const background = visualData?.backgrounds?.[scene.background]?.src;
+  if (background) sources.push(background);
+  const characterId = scene.character?.startsWith("$") ? null : scene.character;
+  const portrait = characterId
+    ? visualData?.characters?.[characterId]?.expressions?.[scene.expression]
+    : null;
+  if (portrait) sources.push(portrait);
+  const supportingId = scene.supportingCharacter?.startsWith("$")
+    ? null
+    : scene.supportingCharacter;
+  const supportingPortrait = supportingId
+    ? visualData?.characters?.[supportingId]?.expressions?.[scene.supportingExpression]
+    : null;
+  if (supportingPortrait) sources.push(supportingPortrait);
+  return sources;
+}
+
+function collectEpisodeVisualSources(episodeId) {
+  const sources = [];
+  for (const [key, scene] of Object.entries(visualData?.scenes || {})) {
+    if (!key.startsWith(`${episodeId}.`)) continue;
+    sources.push(...visualLayerSources(scene));
+    for (const beat of scene.beats || []) {
+      sources.push(...visualLayerSources({ ...scene, ...beat }));
+    }
+  }
+  return [...new Set(sources)];
+}
+
+function scheduleEpisodeVisualPreload(episodeId) {
+  if (!visualData || !episodeId) return;
+  const preloadEpoch = ++episodePreloadEpoch;
+  const sources = collectEpisodeVisualSources(episodeId);
+  Promise.resolve().then(async () => {
+    for (const src of sources) {
+      if (preloadEpoch !== episodePreloadEpoch) return;
+      try {
+        await loadVisualAsset(src, "low");
+      } catch (error) {
+        console.warn("视觉素材预取失败。", src);
+      }
+    }
+  });
 }
 
 function resolveVisualLight(backgroundId, explicitLight) {
@@ -1508,7 +1663,7 @@ async function boot() {
       const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
       if (visualResponse.ok) {
         visualData = await visualResponse.json();
-        preloadVisuals();
+        scheduleEpisodeVisualPreload(visualData.scope?.[0]);
       }
     } catch (visualError) {
       console.warn("视觉素材未载入，继续使用文字模式。", visualError);
@@ -1523,19 +1678,6 @@ async function boot() {
       <code>python3 -m http.server 8173</code>`;
     console.error(error);
   }
-}
-
-function preloadVisuals() {
-  const sources = [
-    ...Object.values(visualData?.backgrounds || {}).map((item) => item.src),
-    ...Object.values(visualData?.characters || {}).flatMap((character) =>
-      Object.values(character.expressions || {})
-    )
-  ];
-  sources.forEach((src) => {
-    const image = new Image();
-    image.src = src;
-  });
 }
 
 boot();
