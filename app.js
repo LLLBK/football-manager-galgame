@@ -43,6 +43,7 @@ const ui = {
   visualBackground: $("visualBackground"),
   visualCharacter: $("visualCharacter"),
   visualLocation: $("visualLocation"),
+  visualEpisodeMark: $("visualEpisodeMark"),
   eventSpeaker: $("eventSpeaker"),
   eventMeta: $("eventMeta"),
   sceneType: $("sceneType"),
@@ -181,15 +182,20 @@ function processDuePayments(episodeNumber) {
     body: [
       `${formatMoney(item.amount)}已从账户划走。这不是新的选择，而是过去的选择在今天兑现。付款后的可动用现金为${formatMoney(state.finance.cash)}。`
     ],
-    kind: "到期付款"
+    kind: "到期付款",
+    visualKey: `${currentEpisode().id}.payment`
   }));
 }
 
 function getSceneQueue(episode) {
   const echoes = (episode.echoes || [])
+    .map((item, index) => ({
+      ...item,
+      kind: "旧决定的回声",
+      visualKey: `${episode.id}.echo.${index}`
+    }))
     .filter((item) => matchesCondition(item.when))
-    .slice(0, 3)
-    .map((item) => ({ ...item, kind: "旧决定的回声" }));
+    .slice(0, 3);
   const notices = state.paymentNotices[episode.number] || [];
   const openings = episode.opening.map((item, index) => ({
     ...item,
@@ -422,12 +428,16 @@ function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visual
     }
     const beatIndex = Math.min(state.visualBeatIndex || 0, body.length - 1);
     const beat = { ...visual, ...(visual.beats?.[beatIndex] || {}) };
-    visibleBody = [body[beatIndex]];
-    activeVisualPage = {
-      key: visualKey,
-      hasNext: beatIndex < body.length - 1
-    };
-    renderVisualStage(beat, meta);
+    if (renderVisualStage(beat, meta)) {
+      visibleBody = [body[beatIndex]];
+      activeVisualPage = {
+        key: visualKey,
+        hasNext: beatIndex < body.length - 1
+      };
+    } else {
+      state.visualBeatKey = null;
+      state.visualBeatIndex = 0;
+    }
   } else {
     state.visualBeatKey = null;
     state.visualBeatIndex = 0;
@@ -456,7 +466,8 @@ function showContinue(label, handler) {
 }
 
 function getVisualScene(key) {
-  if (!key || currentEpisode()?.id !== "e1") return null;
+  const episodeId = currentEpisode()?.id;
+  if (!key || !visualData?.scope?.includes(episodeId)) return null;
   return visualData?.scenes?.[key] || null;
 }
 
@@ -470,7 +481,7 @@ function renderVisualStage(scene, meta) {
   const background = visualData.backgrounds?.[scene.background];
   if (!background) {
     hideVisualStage();
-    return;
+    return false;
   }
 
   ui.eventCard.classList.add("visual-event");
@@ -483,20 +494,39 @@ function renderVisualStage(scene, meta) {
     restartAnimation(ui.visualBackground, "visual-fade");
   }
   ui.visualLocation.textContent = meta;
+  ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number} · 动漫画面`;
 
-  const character = scene.character ? visualData.characters?.[scene.character] : null;
-  const portrait = character?.expressions?.[scene.expression];
+  const characterId = resolveVisualCharacterId(scene.character);
+  const character = characterId ? visualData.characters?.[characterId] : null;
+  const expression = resolveVisualExpression(scene.expression, characterId);
+  const portrait = character?.expressions?.[expression];
   if (!portrait) {
     ui.visualCharacter.classList.add("hidden");
     ui.visualCharacter.removeAttribute("src");
-    return;
+    return true;
   }
 
   ui.eventSpeaker.textContent = character.name;
-  ui.visualCharacter.alt = `${character.name}，${scene.expression || "当前"}神态`;
+  ui.visualCharacter.alt = `${character.name}，${expression || "当前"}神态`;
   ui.visualCharacter.className = `visual-character position-${scene.position || "center"}`;
   ui.visualCharacter.src = portrait;
   restartAnimation(ui.visualCharacter, `motion-${scene.motion || "focus"}`);
+  return true;
+}
+
+function resolveVisualCharacterId(characterId) {
+  if (characterId === "$coach") {
+    return state.decisions.e6 === "hire_gu" ? "gu" : "he";
+  }
+  if (characterId === "$captain") {
+    return state.decisions.e4 === "sell_captain" ? null : "lin";
+  }
+  return characterId;
+}
+
+function resolveVisualExpression(expression, characterId) {
+  if (expression === "$coach_focus") return characterId === "gu" ? "intense" : "focused";
+  return expression;
 }
 
 function restartAnimation(element, className) {
@@ -1104,10 +1134,10 @@ async function boot() {
       const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
       if (visualResponse.ok) {
         visualData = await visualResponse.json();
-        preloadPrologueVisuals();
+        preloadVisuals();
       }
     } catch (visualError) {
-      console.warn("序章视觉素材未载入，继续使用文字模式。", visualError);
+      console.warn("视觉素材未载入，继续使用文字模式。", visualError);
     }
     bindEvents();
     if (readSave()) ui.resumeBtn.classList.remove("hidden");
@@ -1120,7 +1150,7 @@ async function boot() {
   }
 }
 
-function preloadPrologueVisuals() {
+function preloadVisuals() {
   const sources = [
     ...Object.values(visualData?.backgrounds || {}).map((item) => item.src),
     ...Object.values(visualData?.characters || {}).flatMap((character) =>

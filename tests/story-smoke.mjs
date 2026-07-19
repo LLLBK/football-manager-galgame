@@ -9,11 +9,67 @@ const visuals = JSON.parse(await readFile(new URL("visual-data.json", root), "ut
 
 assert.equal(data.episodes.length, 10, "游戏必须包含十集");
 assert.equal(new Set(data.episodes.map((episode) => episode.id)).size, 10, "章节 ID 必须唯一");
-assert.deepEqual(visuals.scope, ["e1"], "视觉化范围必须严格限制在第一集");
-assert.ok(
-  Object.keys(visuals.scenes).every((key) => key.startsWith("e1.")),
-  "视觉配置不得包含第二至第十集"
+const episodeIds = data.episodes.map((episode) => episode.id);
+assert.deepEqual(visuals.scope, episodeIds, "视觉化范围必须覆盖完整十集且顺序一致");
+
+const expectedVisualKeys = new Set();
+const payableEpisodeNumbers = new Set(data.initial.payables.map((item) => item.dueEpisode));
+for (const episode of data.episodes) {
+  for (const option of episode.decision.options) {
+    for (const payable of option.effects?.payablesAdd || []) {
+      payableEpisodeNumbers.add(payable.dueEpisode);
+    }
+  }
+}
+for (const episode of data.episodes) {
+  episode.opening.forEach((_, index) => expectedVisualKeys.add(`${episode.id}.opening.${index}`));
+  (episode.echoes || []).forEach((_, index) => expectedVisualKeys.add(`${episode.id}.echo.${index}`));
+  if (payableEpisodeNumbers.has(episode.number)) expectedVisualKeys.add(`${episode.id}.payment`);
+  expectedVisualKeys.add(`${episode.id}.inquiry.menu`);
+  for (const inquiry of episode.inquiry.options) {
+    expectedVisualKeys.add(`${episode.id}.inquiry.${inquiry.id}`);
+  }
+  expectedVisualKeys.add(`${episode.id}.decision`);
+  for (const option of episode.decision.options) {
+    expectedVisualKeys.add(`${episode.id}.aftermath.${option.id}`);
+  }
+}
+assert.deepEqual(
+  new Set(Object.keys(visuals.scenes)),
+  expectedVisualKeys,
+  "每个现场、旧决定回声、付款、核实谈话、决定与专属余波都必须有且只有一个视觉映射"
 );
+
+const dynamicCharacters = new Set(["$coach", "$captain"]);
+const dynamicExpressions = new Set(["$coach_focus"]);
+const forbiddenNarrativeKeys = new Set(["body", "title", "speaker", "text", "dialogue", "choice"]);
+
+function validateVisualLayer(scene, key, label = "主画面") {
+  assert.ok(visuals.backgrounds[scene.background], `${key}/${label} 引用了不存在的背景`);
+  if (scene.character && !dynamicCharacters.has(scene.character)) {
+    assert.ok(visuals.characters[scene.character], `${key}/${label} 引用了不存在的角色`);
+    if (scene.expression && !dynamicExpressions.has(scene.expression)) {
+      assert.ok(
+        visuals.characters[scene.character].expressions[scene.expression],
+        `${key}/${label} 引用了不存在的神态`
+      );
+    }
+  }
+  for (const property of Object.keys(scene)) {
+    assert.equal(
+      forbiddenNarrativeKeys.has(property),
+      false,
+      `${key}/${label} 不得复制或改写剧情字段 ${property}`
+    );
+  }
+}
+
+for (const [key, scene] of Object.entries(visuals.scenes)) {
+  validateVisualLayer(scene, key);
+  for (const [index, beat] of (scene.beats || []).entries()) {
+    validateVisualLayer({ ...scene, ...beat }, key, `节拍${index + 1}`);
+  }
+}
 
 const visualAssetPaths = [
   ...Object.values(visuals.backgrounds).map((background) => background.src),
