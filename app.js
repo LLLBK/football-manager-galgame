@@ -1,4 +1,5 @@
 const SAVE_KEY = "lancheng-season-v2";
+const FOCUS_MODE_KEY = "lancheng-story-focus";
 const PROACTIVE_INQUIRY_LIMIT = 4;
 
 let gameData = null;
@@ -18,6 +19,7 @@ const ui = {
   resultScreen: $("resultScreen"),
   restartBtn: $("restartBtn"),
   exportBtn: $("exportBtn"),
+  focusModeBtn: $("focusModeBtn"),
   resultExportBtn: $("resultExportBtn"),
   resultRestartBtn: $("resultRestartBtn"),
   seasonLabel: $("seasonLabel"),
@@ -42,7 +44,10 @@ const ui = {
   eventNarrative: $("eventNarrative"),
   visualStage: $("visualStage"),
   visualBackground: $("visualBackground"),
+  visualBackgroundPrevious: $("visualBackgroundPrevious"),
   visualCharacter: $("visualCharacter"),
+  visualCharacterGhost: $("visualCharacterGhost"),
+  visualCharacterSecondary: $("visualCharacterSecondary"),
   visualLocation: $("visualLocation"),
   visualEpisodeMark: $("visualEpisodeMark"),
   eventSpeaker: $("eventSpeaker"),
@@ -90,6 +95,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
+    contentRevision: 3,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -135,6 +141,12 @@ function readSave() {
     saved.proactiveQuestions ||= {};
     saved.proactiveRemaining ??= PROACTIVE_INQUIRY_LIMIT;
     saved.phaseBeforeProactive ??= null;
+    if ((saved.contentRevision || 0) < 3) {
+      const previousMinCash = saved.minCash ?? saved.finance.cash;
+      saved.finance.cash -= 600;
+      saved.minCash = previousMinCash - 600;
+      saved.contentRevision = 3;
+    }
     repairSavedMatchScores(saved);
     return saved;
   } catch (error) {
@@ -223,18 +235,25 @@ function getSceneQueue(episode) {
   const echoes = (episode.echoes || [])
     .map((item, index) => ({
       ...item,
+      sourceIndex: index,
       kind: "旧决定的回声",
       visualKey: `${episode.id}.echo.${index}`
     }))
     .filter((item) => matchesCondition(item.when))
-    .slice(0, 3);
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.sourceIndex - b.sourceIndex)
+    .slice(0, episode.echoLimit || 3);
   const notices = state.paymentNotices[episode.number] || [];
   const openings = episode.opening.map((item, index) => ({
-    ...item,
+    ...resolveSceneVariant(item),
     kind: "现场",
     visualKey: `${episode.id}.opening.${index}`
   }));
   return [openings[0], ...notices, ...echoes, ...openings.slice(1)].filter(Boolean);
+}
+
+function resolveSceneVariant(scene) {
+  const variant = (scene.variants || []).find((item) => matchesCondition(item.when));
+  return variant ? { ...scene, ...variant, variants: undefined, when: undefined } : scene;
 }
 
 function beginEpisode(index, { fresh = true } = {}) {
@@ -350,7 +369,8 @@ function renderDossier() {
       }
     </div>`;
 
-  const canUseNow = state.phase === "scenes";
+  const scenes = getSceneQueue(episode);
+  const canUseNow = state.phase === "scenes" && state.sceneIndex >= scenes.length - 1;
   const usedThisEpisode = proactiveSelected.length > 0;
   ui.proactiveInquiryCount.textContent = `${state.proactiveRemaining} / ${PROACTIVE_INQUIRY_LIMIT}`;
   ui.proactiveInquiryBtn.disabled = !canUseNow || usedThisEpisode || state.proactiveRemaining <= 0;
@@ -362,7 +382,7 @@ function renderDossier() {
   } else if (usedThisEpisode) {
     ui.proactiveInquiryNote.textContent = "本集已经主动找过一人；剩余机会留给之后的赛季节点。";
   } else if (!canUseNow) {
-    ui.proactiveInquiryNote.textContent = "主动了解应发生在事件推进中，而不是等决定摆到桌上以后。";
+    ui.proactiveInquiryNote.textContent = "先看完当前现场。等事实浮出来后，你才能主动找人谈。";
   } else {
     ui.proactiveInquiryNote.textContent = "现在可主动找一人谈；不占随后两次决策前核实名额。";
   }
@@ -501,6 +521,7 @@ function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visual
   ui.eventScene.innerHTML = visibleBody
     .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
     .join("");
+  restartAnimation(ui.eventNarrative, "narrative-enter");
 }
 
 function showContinue(label, handler) {
@@ -529,6 +550,8 @@ function hideVisualStage() {
   ui.visualStage.classList.add("hidden");
   ui.eventCard.classList.remove("visual-event");
   ui.visualCharacter.classList.add("hidden");
+  ui.visualCharacterGhost.classList.add("hidden");
+  ui.visualCharacterSecondary.classList.add("hidden");
 }
 
 function renderVisualStage(scene, meta) {
@@ -541,31 +564,147 @@ function renderVisualStage(scene, meta) {
   ui.eventCard.classList.add("visual-event");
   ui.visualStage.classList.remove("hidden");
   ui.visualStage.dataset.tone = scene.tone || "story";
+  ui.visualStage.dataset.light = resolveVisualLight(scene.background, scene.light);
+  ui.visualStage.dataset.atmosphere = resolveVisualAtmosphere(scene.background, scene.atmosphere);
   ui.visualBackground.hidden = false;
   ui.visualBackground.alt = background.alt || "剧情背景";
-  if (!ui.visualBackground.src.endsWith(background.src)) {
+  const currentBackground = ui.visualBackground.getAttribute("src");
+  if (currentBackground && currentBackground !== background.src) {
+    ui.visualBackgroundPrevious.src = currentBackground;
+    ui.visualBackgroundPrevious.classList.remove("hidden");
+    restartAnimation(ui.visualBackgroundPrevious, "background-exit");
+  }
+  if (currentBackground !== background.src) {
     ui.visualBackground.src = background.src;
-    restartAnimation(ui.visualBackground, "visual-fade");
+    restartAnimation(ui.visualBackground, "background-enter");
   }
   ui.visualLocation.textContent = meta;
-  ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number} · 动漫画面`;
+  ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number}`;
 
   const characterId = resolveVisualCharacterId(scene.character);
   const character = characterId ? visualData.characters?.[characterId] : null;
   const expression = resolveVisualExpression(scene.expression, characterId);
   const portrait = character?.expressions?.[expression];
+  const supportingCharacterId = resolveVisualCharacterId(scene.supportingCharacter);
+  const supportingCharacter = supportingCharacterId
+    ? visualData.characters?.[supportingCharacterId]
+    : null;
+  const supportingExpression = resolveVisualExpression(
+    scene.supportingExpression,
+    supportingCharacterId
+  );
+  const supportingPortrait = supportingCharacter?.expressions?.[supportingExpression];
+
   if (!portrait) {
+    createPortraitExit(ui.visualCharacter);
     ui.visualCharacter.classList.add("hidden");
     ui.visualCharacter.removeAttribute("src");
-    return true;
+  } else {
+    const position = resolveVisualPosition(scene.position, characterId, Boolean(supportingPortrait));
+    const framing = resolveVisualFraming(scene.framing, scene.motion);
+    updatePortrait(ui.visualCharacter, {
+      characterId,
+      name: character.name,
+      expression,
+      portrait,
+      position,
+      framing,
+      motion: scene.motion || "focus",
+      role: "active"
+    });
   }
 
-  ui.eventSpeaker.textContent = character.name;
-  ui.visualCharacter.alt = `${character.name}，${expression || "当前"}神态`;
-  ui.visualCharacter.className = `visual-character position-${scene.position || "center"}`;
-  ui.visualCharacter.src = portrait;
-  restartAnimation(ui.visualCharacter, `motion-${scene.motion || "focus"}`);
+  if (!supportingPortrait) {
+    ui.visualCharacterSecondary.classList.add("hidden");
+    ui.visualCharacterSecondary.removeAttribute("src");
+  } else {
+    const supportingPosition = resolveVisualPosition(
+      scene.supportingPosition || oppositePosition(scene.position),
+      supportingCharacterId,
+      true,
+      true
+    );
+    updatePortrait(ui.visualCharacterSecondary, {
+      characterId: supportingCharacterId,
+      name: supportingCharacter.name,
+      expression: supportingExpression,
+      portrait: supportingPortrait,
+      position: supportingPosition,
+      framing: resolveVisualFraming(scene.supportingFraming || "wide"),
+      motion: scene.supportingMotion || "enter",
+      role: "listening"
+    });
+  }
   return true;
+}
+
+const defaultCharacterPositions = {
+  shen: "left",
+  tang: "right",
+  he: "left",
+  qiao: "right",
+  lin: "left",
+  zhao: "right",
+  chen: "left",
+  jiang: "right",
+  gu: "left",
+  analyst: "right",
+  sponsor: "right",
+  player: "left"
+};
+
+function resolveVisualPosition(position, characterId, hasPartner = false, isSupporting = false) {
+  if (position && position !== "auto") return position;
+  if (hasPartner) return isSupporting ? "right" : "left";
+  return defaultCharacterPositions[characterId] || "center";
+}
+
+function oppositePosition(position) {
+  if (position === "right") return "left";
+  return "right";
+}
+
+function resolveVisualFraming(framing, motion = "focus") {
+  if (framing) return framing;
+  return motion === "tense" ? "close" : "medium";
+}
+
+function createPortraitExit(element) {
+  const currentPortrait = element.getAttribute("src");
+  if (!currentPortrait || element.classList.contains("hidden")) return;
+  ui.visualCharacterGhost.src = currentPortrait;
+  ui.visualCharacterGhost.className = `visual-character visual-character-ghost position-${element.dataset.position || "center"} framing-${element.dataset.framing || "medium"}`;
+  restartAnimation(ui.visualCharacterGhost, "portrait-exit");
+}
+
+function updatePortrait(element, descriptor) {
+  const currentPortrait = element.getAttribute("src");
+  const changed = currentPortrait !== descriptor.portrait;
+  if (element === ui.visualCharacter && changed) createPortraitExit(element);
+  element.alt = `${descriptor.name}，${descriptor.expression || "当前"}神态`;
+  element.dataset.character = descriptor.characterId;
+  element.dataset.position = descriptor.position;
+  element.dataset.framing = descriptor.framing;
+  element.className = `visual-character position-${descriptor.position} framing-${descriptor.framing} is-${descriptor.role}`;
+  element.src = descriptor.portrait;
+  restartAnimation(element, `motion-${changed ? descriptor.motion : "focus"}`);
+}
+
+function resolveVisualLight(backgroundId, explicitLight) {
+  if (explicitLight) return explicitLight;
+  if (/winter|snow|medical/.test(backgroundId)) return "cold";
+  if (/night|evening|video_room|sponsor_studio/.test(backgroundId)) return "night";
+  if (/morning|finance_office|boardroom/.test(backgroundId)) return "warm";
+  return "day";
+}
+
+function resolveVisualAtmosphere(backgroundId, explicitAtmosphere) {
+  if (explicitAtmosphere) return explicitAtmosphere;
+  if (/rain/.test(backgroundId)) return "rain";
+  if (/winter|snow/.test(backgroundId)) return "snow";
+  if (/sponsor_studio/.test(backgroundId)) return "studio";
+  if (/dusk/.test(backgroundId)) return "dusk";
+  return "still";
 }
 
 function resolveVisualCharacterId(characterId) {
@@ -584,7 +723,17 @@ function resolveVisualExpression(expression, characterId) {
 }
 
 function restartAnimation(element, className) {
-  element.classList.remove("visual-fade", "motion-enter", "motion-focus", "motion-tense", className);
+  element.classList.remove(
+    "visual-fade",
+    "background-enter",
+    "background-exit",
+    "portrait-exit",
+    "motion-enter",
+    "motion-focus",
+    "motion-tense",
+    "narrative-enter",
+    className
+  );
   void element.offsetWidth;
   element.classList.add(className);
 }
@@ -622,8 +771,7 @@ function renderInquiry() {
       `${episode.date} · 只对你说`,
       `${episode.id}.inquiry.${active.id}`
     );
-    ui.knowledgeCard.innerHTML = `<strong>你现在确认了一件事</strong><p>${escapeHtml(active.knowledge)}</p>`;
-    ui.knowledgeCard.classList.remove("hidden");
+    renderInquiryReceipt(active, "记录在案");
     const reachedMax = selected.length >= inquiry.max;
     showContinue(reachedMax ? "带着这些信息作决定" : "返回，再问一个人", () => {
       state.activeReply = null;
@@ -709,8 +857,7 @@ function renderProactiveInquiry() {
       `${episode.date} · 由你发起`,
       `${episode.id}.inquiry.${active.id}`
     );
-    ui.knowledgeCard.innerHTML = `<strong>主动了解所得</strong><p>${escapeHtml(active.knowledge)}</p>`;
-    ui.knowledgeCard.classList.remove("hidden");
+    renderInquiryReceipt(active, "带回案头的硬信息");
     showContinue("结束谈话，回到现场", closeProactiveInquiry);
     return;
   }
@@ -740,6 +887,12 @@ function renderProactiveInquiry() {
     });
 
   showContinue("暂时不找人，回到现场", closeProactiveInquiry);
+}
+
+function renderInquiryReceipt(item, label) {
+  if (!item.receipt) return;
+  ui.knowledgeCard.innerHTML = `<strong>${escapeHtml(label)}</strong><p>${escapeHtml(item.receipt)}</p>`;
+  ui.knowledgeCard.classList.remove("hidden");
 }
 
 function selectProactiveInquiry(option) {
@@ -782,13 +935,15 @@ function renderDecision() {
   ui.eventPrompt.classList.remove("hidden");
 
   episode.decision.options.forEach((option) => {
+    const spokenLine = option.line || decisionLine(option.id);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "decision-choice";
     button.innerHTML = `
       <span class="decision-label">${escapeHtml(option.label)}</span>
+      ${spokenLine ? `<span class="decision-line">“${escapeHtml(spokenLine)}”</span>` : ""}
       <span class="decision-action">${escapeHtml(option.action)}</span>
-      <span class="known-title">你在签字前能确认</span>
+      <span class="known-title">签字前案头信息</span>
       <ul>${option.known.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
     button.addEventListener("click", () => chooseDecision(option));
     ui.choiceList.appendChild(button);
@@ -874,9 +1029,11 @@ function renderAftermath() {
     `${episode.id}.aftermath.${option.id}`
   );
   const addedPromises = option.effects?.promisesAdd || [];
+  const spokenLine = option.line || decisionLine(option.id);
   ui.feedbackScene.innerHTML = `
     <p class="eyebrow">记录在案</p>
     <h3>${escapeHtml(option.label)}</h3>
+    ${spokenLine ? `<blockquote>“${escapeHtml(spokenLine)}”</blockquote>` : ""}
     <p>${escapeHtml(option.action)}</p>
     ${
       addedPromises.length
@@ -897,6 +1054,21 @@ function renderAftermath() {
       advanceEpisode();
     }
   });
+}
+
+function decisionLine(optionId) {
+  const lines = {
+    sell_captain: "把报价交给林骁。新闻稿不许写‘双方共同决定’。",
+    renew_captain: "两年，不保首发。角色要变，先由我们当面告诉他。",
+    last_dance: "踢完这季。一月第一周，我亲自来找你。",
+    medical_veto: "江黎签不了可出场，他就不上。比分由我来解释。",
+    informed_choice: "先把奖金和位置从这个问题里拿走，再问他一次。",
+    play_and_shoot: "把风险逐条写清。他若仍然要踢，我批准。",
+    institutionalize: "我留下。但今年站在门外的人，明年要有椅子。",
+    personal_project: "给我三年和最终决定权。结果只找我。",
+    leave_record: "我不续约。交接文件从没兑现的承诺开始写。"
+  };
+  return lines[optionId] || "";
 }
 
 function ensureMatchReport(episode) {
@@ -1097,6 +1269,24 @@ function renderResult() {
 
 function buildEpilogues(finalChoice) {
   const result = [];
+
+  const summerBudget = getDecision("e2");
+  if (summerBudget === "liquidity_first") {
+    result.push({ who: "夏天的三只文件夹", text: "青训宿舍住进了第一批孩子。一线队整季都缺那名中卫，但一月的付款日没有变成紧急董事会。" });
+  } else if (summerBudget === "first_team_push") {
+    result.push({ who: "夏天的三只文件夹", text: "新中卫完成了一个主力赛季，他的下一笔分期也已写进夏窗首日。那两个被清走的柜子没有在账面上回来。" });
+  } else {
+    result.push({ who: "夏天的三只文件夹", text: "医疗与数据团队不能直接进球，却让两次坏消息提前到了桌上。下赛季要不要继续为这种‘没出事’付钱，仍在预算会里。" });
+  }
+
+  const footballModel = getDecision("e3");
+  if (footballModel === "back_he") {
+    result.push({ who: "训练场", text: "中低位的三条横线还留在战术板上。球队知道哪种错误可以犯，也知道落后时仍然缺少自己抬高速度的办法。" });
+  } else if (footballModel === "pressing_identity") {
+    result.push({ who: "训练场", text: "U19和一线队继续使用同一套压迫词汇。六周保护期过去后，俱乐部仍要回答：下一次连输时，还允不允许这种错误。" });
+  } else {
+    result.push({ who: "训练场", text: "那三条共同原则被重新打印了一次。它们没有消除教练与管理层的分歧，却让下一次分歧不必从零开始。" });
+  }
   const captain = getDecision("e4");
   if (captain === "sell_captain") {
     result.push({ who: "林骁", text: "他在江东完成了一个稳定赛季。岚城更衣室最终选出新队长，但那只袖标花了几个月才停止像借来的。" });
@@ -1129,6 +1319,24 @@ function buildEpilogues(finalChoice) {
     result.push({ who: "陈野", text: "他在租借队得到连续首发。岚城拥有回购条款，但是否还拥有一条真正的青训路径，要等下一名孩子来验证。" });
   } else {
     result.push({ who: "陈野", text: "他不再只是海报上的未来。失误、替补和有限出场终于组成一条可理解的成长路径。" });
+  }
+
+  const medical = getDecision("e7");
+  if (medical === "medical_veto") {
+    result.push({ who: "诊疗室", text: "门内侧的否决规则没有被撕掉。球员报告小伤的时间提前了，主教练仍然不喜欢在比赛日收到它。" });
+  } else if (medical === "informed_choice") {
+    result.push({ who: "诊疗室", text: "奖金与位置保护被写进新模板。那名球员仍说不准自己在0比1落后时能不能真正说不。" });
+  } else {
+    result.push({ who: "诊疗室", text: "那份知情书仍夹在病历里。人们不再争论它是否合法，但球员在诊疗室里的回答比以前更短。" });
+  }
+
+  const runIn = getDecision("e9");
+  if (runIn === "bonus_push") {
+    result.push({ who: "最后五场", text: "奖金名单上有装备管理员的名字。无论最终名次如何，那五场都被每个人清楚地换算过价格。" });
+  } else if (runIn === "quiet_process") {
+    result.push({ who: "最后五场", text: "记者后来不再期待你给出新标题。球队输赢都用同一张复盘表，它很无聊，也因此终于有用。" });
+  } else {
+    result.push({ who: "最后五场", text: "1987年的十二名队员重新出现在年度会员报告里，不再只是商业活动的背景。下赛季的赞助版位仍会继续争执。" });
   }
 
   if (finalChoice === "institutionalize") {
@@ -1218,6 +1426,13 @@ function scrollToStory() {
   }
 }
 
+function setStoryFocus(active) {
+  ui.gameScreen.classList.toggle("story-focus", active);
+  ui.focusModeBtn.setAttribute("aria-pressed", String(active));
+  ui.focusModeBtn.textContent = active ? "显示经营侧栏" : "剧情聚焦";
+  localStorage.setItem(FOCUS_MODE_KEY, active ? "1" : "0");
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -1233,6 +1448,12 @@ function toChineseNumber(number) {
 }
 
 function bindEvents() {
+  ui.visualBackgroundPrevious.addEventListener("animationend", () => {
+    ui.visualBackgroundPrevious.classList.add("hidden");
+  });
+  ui.visualCharacterGhost.addEventListener("animationend", () => {
+    ui.visualCharacterGhost.classList.add("hidden");
+  });
   ui.visualBackground.addEventListener("error", () => {
     ui.visualBackground.hidden = true;
     ui.visualStage.classList.add("visual-fallback");
@@ -1242,6 +1463,9 @@ function bindEvents() {
   });
   ui.visualCharacter.addEventListener("error", () => {
     ui.visualCharacter.classList.add("hidden");
+  });
+  ui.visualCharacterSecondary.addEventListener("error", () => {
+    ui.visualCharacterSecondary.classList.add("hidden");
   });
   ui.startForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1270,6 +1494,9 @@ function bindEvents() {
   ui.exportBtn.addEventListener("click", exportGame);
   ui.resultExportBtn.addEventListener("click", exportGame);
   ui.proactiveInquiryBtn.addEventListener("click", openProactiveInquiry);
+  ui.focusModeBtn.addEventListener("click", () => {
+    setStoryFocus(ui.focusModeBtn.getAttribute("aria-pressed") !== "true");
+  });
 }
 
 async function boot() {
@@ -1287,6 +1514,7 @@ async function boot() {
       console.warn("视觉素材未载入，继续使用文字模式。", visualError);
     }
     bindEvents();
+    setStoryFocus(localStorage.getItem(FOCUS_MODE_KEY) === "1");
     if (readSave()) ui.resumeBtn.classList.remove("hidden");
   } catch (error) {
     ui.startForm.innerHTML = `

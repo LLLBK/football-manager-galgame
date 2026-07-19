@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="一款关于足球俱乐部经营、承诺与后果的沉浸式叙事游戏。" />
     <title>岚城联：一季之内</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=director-3" />
   </head>
   <body>
     <main class="app-shell">
@@ -14,7 +14,7 @@
           <p class="eyebrow">FOOTBALL CLUB STORY</p>
           <h1>岚城联：一季之内</h1>
           <p class="start-lede">
-            你将接手一家有4200万现金、旧账、伤员、共同记忆和许多彼此冲突承诺的足球俱乐部。
+            你将接手一家账面现金4200万、其中600万不能动用，还有旧账、伤员和彼此冲突承诺的足球俱乐部。
             这里没有显示“最佳答案”的属性按钮。你能看到事实、合同与人说过的话，却只能在信息不完整时作决定。
           </p>
           <div class="start-features" aria-label="游戏特点">
@@ -29,7 +29,7 @@
           <div>
             <p class="eyebrow">任命书</p>
             <h2>开始你的任期</h2>
-            <p>游戏约需30—45分钟。浏览器会在本机保存当前进度。</p>
+            <p>游戏约需35—50分钟。浏览器会在本机保存当前进度。</p>
           </div>
           <label>
             你的名字
@@ -51,6 +51,7 @@
             <h1 id="clubTitle">岚城联</h1>
           </div>
           <div class="topbar-actions">
+            <button id="focusModeBtn" class="ghost-btn focus-mode-btn" type="button" aria-pressed="false">剧情聚焦</button>
             <button id="exportBtn" class="ghost-btn" type="button">导出任期记录</button>
             <button id="restartBtn" class="ghost-btn danger" type="button">重新开始</button>
           </div>
@@ -60,7 +61,7 @@
           <aside class="side-panel" aria-label="俱乐部经营信息">
             <section class="panel finance-panel">
               <div class="panel-title"><span>可动用现金</span><strong id="cashValue">—</strong></div>
-              <p class="panel-note">现金是明确事实；其余关系与竞技状态只会通过人的行为显现。</p>
+              <p class="panel-note">这是扣除受限资金后今天可以支付的钱；不等于未来承担得起的钱。</p>
               <div class="finance-grid">
                 <div><span>年度工资承诺</span><strong id="wageValue">—</strong></div>
                 <div><span>转会分期余额</span><strong id="installmentValue">—</strong></div>
@@ -100,11 +101,15 @@
 
             <article id="eventCard" class="event-card">
               <div id="visualStage" class="visual-stage hidden" aria-hidden="true">
+                <img id="visualBackgroundPrevious" class="visual-background visual-background-previous hidden" alt="" />
                 <img id="visualBackground" class="visual-background" alt="" />
                 <div class="visual-shade"></div>
+                <div class="visual-ambience"></div>
+                <img id="visualCharacterSecondary" class="visual-character visual-character-secondary hidden" alt="" />
+                <img id="visualCharacterGhost" class="visual-character visual-character-ghost hidden" alt="" />
                 <img id="visualCharacter" class="visual-character hidden" alt="" />
                 <span id="visualLocation" class="visual-location"></span>
-                <span id="visualEpisodeMark" class="visual-prologue-mark">EPISODE · 动漫画面</span>
+                <span id="visualEpisodeMark" class="visual-prologue-mark">EPISODE</span>
               </div>
               <div id="eventNarrative" class="event-narrative">
                 <header class="event-head">
@@ -199,6 +204,6 @@
     </main>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js"></script>
+    <script src="app.js?v=director-3"></script>
   </body>
 </html>

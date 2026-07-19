@@ -1,16 +1,19 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
 const data = JSON.parse(await readFile(new URL("story-data.json", root), "utf8"));
 const appSource = await readFile(new URL("app.js", root), "utf8");
 const html = await readFile(new URL("index.html", root), "utf8");
+const styles = await readFile(new URL("styles.css", root), "utf8");
 const visuals = JSON.parse(await readFile(new URL("visual-data.json", root), "utf8"));
 
 assert.equal(data.episodes.length, 10, "游戏必须包含十集");
 assert.equal(new Set(data.episodes.map((episode) => episode.id)).size, 10, "章节 ID 必须唯一");
 const episodeIds = data.episodes.map((episode) => episode.id);
 assert.deepEqual(visuals.scope, episodeIds, "视觉化范围必须覆盖完整十集且顺序一致");
+assert.equal(visuals.version, 2, "视觉素材版本必须整体升级，避免浏览器继续使用旧人像或旧背景缓存");
 
 const expectedVisualKeys = new Set();
 const payableEpisodeNumbers = new Set(data.initial.payables.map((item) => item.dueEpisode));
@@ -46,15 +49,13 @@ const forbiddenNarrativeKeys = new Set(["body", "title", "speaker", "text", "dia
 
 function validateVisualLayer(scene, key, label = "主画面") {
   assert.ok(visuals.backgrounds[scene.background], `${key}/${label} 引用了不存在的背景`);
-  if (scene.character && !dynamicCharacters.has(scene.character)) {
-    assert.ok(visuals.characters[scene.character], `${key}/${label} 引用了不存在的角色`);
-    if (scene.expression && !dynamicExpressions.has(scene.expression)) {
-      assert.ok(
-        visuals.characters[scene.character].expressions[scene.expression],
-        `${key}/${label} 引用了不存在的神态`
-      );
-    }
-  }
+  validateCharacterReference(scene.character, scene.expression, key, label);
+  validateCharacterReference(
+    scene.supportingCharacter,
+    scene.supportingExpression,
+    key,
+    `${label}的同场人物`
+  );
   for (const property of Object.keys(scene)) {
     assert.equal(
       forbiddenNarrativeKeys.has(property),
@@ -64,12 +65,29 @@ function validateVisualLayer(scene, key, label = "主画面") {
   }
 }
 
+function validateCharacterReference(characterId, expression, key, label) {
+  if (characterId && !dynamicCharacters.has(characterId)) {
+    assert.ok(visuals.characters[characterId], `${key}/${label} 引用了不存在的角色`);
+    if (expression && !dynamicExpressions.has(expression)) {
+      assert.ok(
+        visuals.characters[characterId].expressions[expression],
+        `${key}/${label} 引用了不存在的神态`
+      );
+    }
+  }
+}
+
 for (const [key, scene] of Object.entries(visuals.scenes)) {
   validateVisualLayer(scene, key);
   for (const [index, beat] of (scene.beats || []).entries()) {
     validateVisualLayer({ ...scene, ...beat }, key, `节拍${index + 1}`);
   }
 }
+const directedTwoCharacterLayers = Object.values(visuals.scenes).flatMap((scene) => [
+  scene,
+  ...(scene.beats || []).map((beat) => ({ ...scene, ...beat }))
+]).filter((scene) => scene.supportingCharacter);
+assert.ok(directedTwoCharacterLayers.length >= 16, "关键冲突场景应使用双人物同场调度");
 
 const visualAssetPaths = [
   ...Object.values(visuals.backgrounds).map((background) => background.src),
@@ -77,8 +95,59 @@ const visualAssetPaths = [
     Object.values(character.expressions)
   )
 ];
+assert.equal(
+  new Set(visualAssetPaths).size,
+  visualAssetPaths.length,
+  "不同背景或人物神态不得复用同一个素材路径"
+);
+for (const background of Object.values(visuals.backgrounds)) {
+  assert.match(background.src, /-v2\.webp$/, `背景必须使用新版缓存路径：${background.src}`);
+}
+for (const [characterId, character] of Object.entries(visuals.characters)) {
+  for (const portrait of Object.values(character.expressions)) {
+    assert.match(portrait, /-v2\.webp$/, `人物必须使用新版缓存路径：${portrait}`);
+    assert.ok(
+      portrait.includes(`/characters/${characterId}/`),
+      `${character.name} 的立绘错误引用了其他角色目录：${portrait}`
+    );
+  }
+}
+const visualAssetHashes = new Map();
 for (const assetPath of visualAssetPaths) {
   await access(new URL(assetPath, root));
+  const hash = createHash("sha256")
+    .update(await readFile(new URL(assetPath, root)))
+    .digest("hex");
+  assert.equal(
+    visualAssetHashes.has(hash),
+    false,
+    `${assetPath} 与 ${visualAssetHashes.get(hash)} 的图片内容完全相同`
+  );
+  visualAssetHashes.set(hash, assetPath);
+}
+
+const characterIdByName = new Map(
+  Object.entries(visuals.characters).map(([id, character]) => [character.name, id])
+);
+for (const episode of data.episodes) {
+  episode.opening.forEach((scene, index) => {
+    const expectedCharacter = characterIdByName.get(scene.speaker);
+    if (!expectedCharacter) return;
+    assert.equal(
+      visuals.scenes[`${episode.id}.opening.${index}`].character,
+      expectedCharacter,
+      `${episode.id} 开场的说话人与立绘不一致：${scene.speaker}`
+    );
+  });
+  for (const inquiry of episode.inquiry.options) {
+    const expectedCharacter = characterIdByName.get(inquiry.speaker);
+    if (!expectedCharacter) continue;
+    assert.equal(
+      visuals.scenes[`${episode.id}.inquiry.${inquiry.id}`].character,
+      expectedCharacter,
+      `${episode.id}/${inquiry.id} 的说话人与立绘不一致：${inquiry.speaker}`
+    );
+  }
 }
 
 const decisionIds = new Set();
@@ -142,8 +211,21 @@ for (const coachDecision of ["hire_gu", "back_coach", "three_game_review"]) {
   );
 }
 assert.match(appSource, /前一线队主教练/, "换帅后人物栏应更新贺峥身份");
+assert.equal(
+  appSource.includes("ui.eventSpeaker.textContent = character.name"),
+  false,
+  "镜头焦点人物不得覆盖剧情原本的说话人"
+);
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
 assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
+assert.match(html, /id="focusModeBtn"/, "桌面端应提供剧情聚焦模式");
+assert.match(html, /id="visualCharacterSecondary"/, "视觉舞台应支持双人物同场");
+assert.match(html, /id="visualBackgroundPrevious"/, "换景应保留上一背景完成交叉溶解");
+assert.match(html, /styles\.css\?v=director-3/, "新版导演样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=director-3/, "新版视觉播放器必须使用独立缓存版本");
+assert.match(styles, /@keyframes background-exit/, "视觉播放器应包含背景退场动画");
+assert.match(styles, /@keyframes portrait-exit/, "视觉播放器应包含人物退场动画");
+assert.match(styles, /data-atmosphere="rain"/, "视觉播放器应包含雨景环境层");
 assert.match(appSource, /state\.phase !== "scenes"/, "主动了解只能在事件推进中发起");
 
 const createProactiveHarness = Function(

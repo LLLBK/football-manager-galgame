@@ -267,12 +267,32 @@ input {
   color: var(--red);
 }
 
+.focus-mode-btn[aria-pressed="true"] {
+  border-color: rgba(29, 92, 77, 0.44);
+  background: #e4eee9;
+  color: var(--green);
+}
+
 .layout {
   display: grid;
-  grid-template-columns: 286px minmax(520px, 1fr) 286px;
+  grid-template-columns: 250px minmax(600px, 1fr) 250px;
   gap: 16px;
   align-items: start;
   padding-top: 16px;
+}
+
+.game-screen.story-focus {
+  max-width: 1180px;
+}
+
+.game-screen.story-focus .layout {
+  grid-template-columns: minmax(0, 980px);
+  justify-content: center;
+}
+
+.game-screen.story-focus .side-panel,
+.game-screen.story-focus .history-panel {
+  display: none;
 }
 
 .side-panel,
@@ -578,12 +598,13 @@ input {
 
 .visual-background,
 .visual-shade,
+.visual-ambience,
 .visual-character {
   position: absolute;
 }
 
 .visual-background {
-  z-index: -3;
+  z-index: 0;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -591,8 +612,12 @@ input {
   object-position: center;
 }
 
+.visual-background-previous {
+  z-index: 1;
+}
+
 .visual-shade {
-  z-index: -1;
+  z-index: 2;
   inset: 0;
   pointer-events: none;
   background:
@@ -600,8 +625,45 @@ input {
     linear-gradient(0deg, rgba(4, 11, 9, 0.82), transparent 43%);
 }
 
+.visual-ambience {
+  z-index: 3;
+  inset: -12%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.visual-stage[data-atmosphere="rain"] .visual-ambience {
+  opacity: 0.14;
+  background-image: repeating-linear-gradient(105deg, transparent 0 18px, rgba(210, 229, 234, 0.72) 19px, transparent 20px 37px);
+  animation: rain-drift 1.4s linear infinite;
+}
+
+.visual-stage[data-atmosphere="snow"] .visual-ambience {
+  opacity: 0.24;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.9) 0 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(255,255,255,0.68) 0 1.4px, transparent 2px);
+  background-position: 0 0, 42px 31px;
+  background-size: 74px 74px, 112px 112px;
+  animation: snow-drift 8s linear infinite;
+}
+
+.visual-stage[data-atmosphere="studio"] .visual-ambience {
+  opacity: 0.18;
+  background: radial-gradient(circle at 75% 18%, rgba(255, 229, 173, 0.55), transparent 26%);
+  animation: studio-pulse 3.8s ease-in-out infinite alternate;
+}
+
+.visual-stage[data-atmosphere="dusk"] .visual-ambience {
+  opacity: 0.2;
+  background: linear-gradient(180deg, rgba(177, 106, 158, 0.22), transparent 58%);
+}
+
 .visual-character {
-  z-index: -2;
+  --character-scale: 1;
+  --portrait-brightness: 1;
+  --portrait-saturation: 1;
+  z-index: 5;
   bottom: -6%;
   left: var(--character-x, 50%);
   width: auto;
@@ -609,13 +671,53 @@ input {
   max-width: 64%;
   object-fit: contain;
   object-position: bottom;
-  filter: drop-shadow(0 18px 23px rgba(0, 0, 0, 0.35));
-  transform: translateX(-50%);
+  filter: brightness(var(--portrait-brightness)) saturate(var(--portrait-saturation)) drop-shadow(0 18px 23px rgba(0, 0, 0, 0.35));
+  transform: translateX(-50%) scale(var(--character-scale));
   transform-origin: 50% 100%;
 }
 
+.visual-stage[data-light="night"] .visual-character {
+  --portrait-brightness: 0.82;
+  --portrait-saturation: 0.88;
+}
+
+.visual-stage[data-light="cold"] .visual-character {
+  --portrait-brightness: 0.92;
+  --portrait-saturation: 0.78;
+}
+
+.visual-stage[data-light="warm"] .visual-character {
+  --portrait-brightness: 0.96;
+  --portrait-saturation: 0.94;
+}
+
+.visual-character-secondary {
+  z-index: 4;
+}
+
+.visual-character-ghost {
+  z-index: 6;
+  pointer-events: none;
+}
+
+.visual-character.is-listening {
+  --character-scale: 0.93;
+  opacity: 0.68;
+}
+
+.visual-character.framing-wide {
+  bottom: -4%;
+  height: 88%;
+}
+
+.visual-character.framing-close {
+  bottom: -10%;
+  height: 108%;
+  max-width: 72%;
+}
+
 .visual-character.position-left {
-  --character-x: 29%;
+  --character-x: 31%;
 }
 
 .visual-character.position-center {
@@ -623,14 +725,14 @@ input {
 }
 
 .visual-character.position-right {
-  --character-x: 71%;
+  --character-x: 69%;
 }
 
 .visual-location,
 .visual-prologue-mark {
   position: absolute;
   top: 14px;
-  z-index: 2;
+  z-index: 8;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(7, 17, 14, 0.64);
   backdrop-filter: blur(8px);
@@ -717,8 +819,13 @@ input {
   color: rgba(255, 255, 255, 0.86);
 }
 
+.background-enter,
 .visual-fade {
-  animation: visual-fade-in 520ms ease both;
+  animation: background-enter 620ms ease both;
+}
+
+.background-exit {
+  animation: background-exit 520ms ease both;
 }
 
 .motion-enter {
@@ -733,26 +840,82 @@ input {
   animation: character-tense 300ms ease-out both;
 }
 
-@keyframes visual-fade-in {
+.portrait-exit {
+  animation: portrait-exit 230ms ease-in both;
+}
+
+.narrative-enter {
+  animation: narrative-rise 300ms cubic-bezier(0.2, 0.72, 0.25, 1) both;
+}
+
+@keyframes background-enter {
   from { opacity: 0; transform: scale(1.015); }
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes background-exit {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.992); }
+}
+
 @keyframes character-enter {
-  from { opacity: 0; transform: translateX(-50%) translateY(24px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(var(--character-scale)); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--character-scale)); }
 }
 
 @keyframes character-focus {
-  from { opacity: 0.78; transform: translateX(-50%) scale(0.985); }
-  to { opacity: 1; transform: translateX(-50%) scale(1); }
+  from { opacity: 0.76; transform: translateX(-50%) translateY(4px) scale(var(--character-scale)); }
+  to { opacity: 1; transform: translateX(-50%) scale(var(--character-scale)); }
 }
 
 @keyframes character-tense {
-  0% { transform: translateX(-50%); }
-  35% { transform: translateX(calc(-50% - 4px)); }
-  70% { transform: translateX(calc(-50% + 3px)); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translateX(-50%) scale(var(--character-scale)); }
+  35% { transform: translateX(calc(-50% - 4px)) scale(var(--character-scale)); }
+  70% { transform: translateX(calc(-50% + 3px)) scale(var(--character-scale)); }
+  100% { transform: translateX(-50%) scale(var(--character-scale)); }
+}
+
+@keyframes portrait-exit {
+  from { opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--character-scale)); }
+  to { opacity: 0; transform: translateX(-50%) translateY(12px) scale(var(--character-scale)); }
+}
+
+.visual-character.is-listening.motion-enter {
+  animation-name: character-listener-enter;
+}
+
+.visual-character.is-listening.motion-focus {
+  animation-name: character-listener-focus;
+}
+
+@keyframes character-listener-enter {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px) scale(var(--character-scale)); }
+  to { opacity: 0.68; transform: translateX(-50%) scale(var(--character-scale)); }
+}
+
+@keyframes character-listener-focus {
+  from { opacity: 0.5; transform: translateX(-50%) translateY(3px) scale(var(--character-scale)); }
+  to { opacity: 0.68; transform: translateX(-50%) scale(var(--character-scale)); }
+}
+
+@keyframes narrative-rise {
+  from { opacity: 0.74; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rain-drift {
+  from { transform: translate3d(-22px, -20px, 0); }
+  to { transform: translate3d(22px, 34px, 0); }
+}
+
+@keyframes snow-drift {
+  from { transform: translate3d(0, -20px, 0); }
+  to { transform: translate3d(28px, 54px, 0); }
+}
+
+@keyframes studio-pulse {
+  from { transform: scale(0.98); opacity: 0.12; }
+  to { transform: scale(1.02); opacity: 0.24; }
 }
 
 .event-head {
@@ -919,6 +1082,17 @@ input {
   font-weight: 800;
 }
 
+.decision-line {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--gold);
+  background: #f3eee4;
+  color: #26332e;
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .decision-action {
   margin-top: 8px;
   color: #3e4944;
@@ -966,6 +1140,17 @@ input {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
+  line-height: 1.65;
+}
+
+.feedback-scene blockquote {
+  margin: 10px 0 12px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--gold);
+  background: #f3eee4;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 14px;
   line-height: 1.65;
 }
 
@@ -1671,9 +1856,14 @@ input {
 
 @media (prefers-reduced-motion: reduce) {
   .visual-fade,
+  .background-enter,
+  .background-exit,
+  .portrait-exit,
   .motion-enter,
   .motion-focus,
-  .motion-tense {
+  .motion-tense,
+  .narrative-enter,
+  .visual-ambience {
     animation: none;
   }
 }
