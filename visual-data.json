@@ -89,7 +89,7 @@
   },
   "characters": {
     "shen": {
-      "name": "沈岳",
+      "name": "周绍庭",
       "expressions": {
         "neutral": "assets/visuals/characters/shen/neutral-v2.webp",
         "approving": "assets/visuals/characters/shen/approving-v2.webp",
@@ -97,7 +97,7 @@
       }
     },
     "tang": {
-      "name": "唐敏",
+      "name": "许青禾",
       "expressions": {
         "guarded": "assets/visuals/characters/tang/guarded-v2.webp",
         "resolute": "assets/visuals/characters/tang/resolute-v2.webp",
@@ -105,7 +105,7 @@
       }
     },
     "he": {
-      "name": "贺峥",
+      "name": "韩立锋",
       "expressions": {
         "focused": "assets/visuals/characters/he/focused-v2.webp",
         "guarded": "assets/visuals/characters/he/guarded-v2.webp",
@@ -113,7 +113,7 @@
       }
     },
     "qiao": {
-      "name": "乔岚",
+      "name": "方雯",
       "expressions": {
         "neutral": "assets/visuals/characters/qiao/neutral-v2.webp",
         "concerned": "assets/visuals/characters/qiao/concerned-v2.webp",
@@ -121,7 +121,7 @@
       }
     },
     "lin": {
-      "name": "林骁",
+      "name": "梁一川",
       "expressions": {
         "steady": "assets/visuals/characters/lin/steady-v2.webp",
         "vulnerable": "assets/visuals/characters/lin/vulnerable-v2.webp",
@@ -129,7 +129,7 @@
       }
     },
     "zhao": {
-      "name": "赵恺",
+      "name": "罗志衡",
       "expressions": {
         "patient": "assets/visuals/characters/zhao/patient-v2.webp",
         "concerned": "assets/visuals/characters/zhao/concerned-v2.webp",
@@ -137,7 +137,7 @@
       }
     },
     "chen": {
-      "name": "陈野",
+      "name": "程野",
       "expressions": {
         "nervous": "assets/visuals/characters/chen/nervous-v2.webp",
         "frustrated": "assets/visuals/characters/chen/frustrated-v2.webp",
@@ -145,7 +145,7 @@
       }
     },
     "jiang": {
-      "name": "江黎",
+      "name": "孟书宁",
       "expressions": {
         "clinical": "assets/visuals/characters/jiang/clinical-v2.webp",
         "concerned": "assets/visuals/characters/jiang/concerned-v2.webp",
@@ -153,7 +153,7 @@
       }
     },
     "gu": {
-      "name": "顾维",
+      "name": "高竞",
       "expressions": {
         "composed": "assets/visuals/characters/gu/composed-v2.webp",
         "intense": "assets/visuals/characters/gu/intense-v2.webp",

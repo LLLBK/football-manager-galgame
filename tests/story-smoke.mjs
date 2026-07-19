@@ -129,6 +129,21 @@ for (const assetPath of visualAssetPaths) {
 const characterIdByName = new Map(
   Object.entries(visuals.characters).map(([id, character]) => [character.name, id])
 );
+const expectedCharacterNames = {
+  shen: "周绍庭",
+  qiao: "方雯",
+  he: "韩立锋",
+  lin: "梁一川",
+  zhao: "罗志衡",
+  chen: "程野",
+  tang: "许青禾",
+  jiang: "孟书宁",
+  gu: "高竞"
+};
+for (const person of data.characters) {
+  assert.equal(person.name, expectedCharacterNames[person.id], `${person.id} 的对外姓名未统一`);
+  assert.ok(person.role.length >= 2, `${person.name} 缺少可识别的职务`);
+}
 
 function validateSpeakerPortraits(key, speaker, label) {
   const expectedCharacter = characterIdByName.get(speaker);
@@ -222,8 +237,8 @@ assert.equal(
 
 const episodeText = (id) => JSON.stringify(data.episodes.find((episode) => episode.id === id));
 assert.match(episodeText("e2"), /1:4/, "第二集应呈现财务整改期的1:4注册约束");
-assert.match(episodeText("e3"), /中低位站位/, "第三集应说明贺峥的控制型打法");
-assert.match(episodeText("e3"), /顾维.*防线前压/, "第三集应说明顾维的主动高压打法");
+assert.match(episodeText("e3"), /中低位站位/, "第三集应说明韩立锋的控制型打法");
+assert.match(episodeText("e3"), /高竞.*防线前压/, "第三集应说明高竞的主动高压打法");
 assert.match(episodeText("e5"), /一人一票/, "球迷线应包含会员一人一票的治理机制");
 assert.match(episodeText("e5"), /会员大会/, "球迷线应包含联合表决组织");
 assert.equal(episodeText("e7").includes("教练刚换过"), false, "未换帅路线不得显示教练已更换");
@@ -235,19 +250,23 @@ for (const coachDecision of ["hire_gu", "back_coach", "three_game_review"]) {
     `第七集缺少 ${coachDecision} 换帅状态回声`
   );
 }
-assert.match(appSource, /前一线队主教练/, "换帅后人物栏应更新贺峥身份");
+assert.match(appSource, /前一线队主教练/, "换帅后人物栏应更新韩立锋身份");
 assert.equal(
   appSource.includes("ui.eventSpeaker.textContent = character.name"),
   false,
   "镜头焦点人物不得覆盖剧情原本的说话人"
 );
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
+assert.match(appSource, /contentRevision: 4/, "旧存档应迁移到新版人物姓名");
+assert.match(appSource, /migrateSavedCharacterNames\(saved\)/, "旧存档文本应同步替换人物姓名");
 assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
 assert.match(html, /id="focusModeBtn"/, "桌面端应提供剧情聚焦模式");
 assert.match(html, /id="visualCharacterSecondary"/, "视觉舞台应支持双人物同场");
 assert.match(html, /id="visualBackgroundPrevious"/, "换景应保留上一背景完成交叉溶解");
-assert.match(html, /styles\.css\?v=director-4/, "新版导演样式必须使用独立缓存版本");
-assert.match(html, /app\.js\?v=director-4/, "新版视觉播放器必须使用独立缓存版本");
+assert.match(html, /id="eventRole"/, "剧情卡片应在姓名下直接显示人物职务");
+assert.match(appSource, /function roleForSpeaker/, "剧情播放器应按说话人解析当前职务");
+assert.match(html, /styles\.css\?v=director-5/, "新版导演样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=director-5/, "新版视觉播放器必须使用独立缓存版本");
 assert.match(html, /rel="preload" as="image"/, "第一幕关键画面应由浏览器优先预载");
 assert.match(appSource, /visualAssetCache = new Map/, "视觉播放器应复用已解码素材");
 assert.match(appSource, /scheduleEpisodeVisualPreload/, "视觉播放器应按集顺序预取素材");

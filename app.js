@@ -1,6 +1,17 @@
 const SAVE_KEY = "lancheng-season-v2";
 const FOCUS_MODE_KEY = "lancheng-story-focus";
 const PROACTIVE_INQUIRY_LIMIT = 4;
+const LEGACY_CHARACTER_NAMES = {
+  沈岳: "周绍庭",
+  乔岚: "方雯",
+  贺峥: "韩立锋",
+  林骁: "梁一川",
+  赵恺: "罗志衡",
+  陈野: "程野",
+  唐敏: "许青禾",
+  江黎: "孟书宁",
+  顾维: "高竞"
+};
 
 let gameData = null;
 let visualData = null;
@@ -54,6 +65,7 @@ const ui = {
   visualLocation: $("visualLocation"),
   visualEpisodeMark: $("visualEpisodeMark"),
   eventSpeaker: $("eventSpeaker"),
+  eventRole: $("eventRole"),
   eventMeta: $("eventMeta"),
   sceneType: $("sceneType"),
   eventTitle: $("eventTitle"),
@@ -85,6 +97,28 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function migrateSavedCharacterNames(value, key = "") {
+  if (typeof value === "string") {
+    if (key === "managerName" || key === "clubName") return value;
+    return Object.entries(LEGACY_CHARACTER_NAMES).reduce(
+      (text, [previousName, currentName]) => text.replaceAll(previousName, currentName),
+      value
+    );
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      value[index] = migrateSavedCharacterNames(item);
+    });
+    return value;
+  }
+  if (value && typeof value === "object") {
+    Object.entries(value).forEach(([property, item]) => {
+      value[property] = migrateSavedCharacterNames(item, property);
+    });
+  }
+  return value;
+}
+
 function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
 }
@@ -98,7 +132,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 3,
+    contentRevision: 4,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -149,6 +183,10 @@ function readSave() {
       saved.finance.cash -= 600;
       saved.minCash = previousMinCash - 600;
       saved.contentRevision = 3;
+    }
+    if ((saved.contentRevision || 0) < 4) {
+      migrateSavedCharacterNames(saved);
+      saved.contentRevision = 4;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -224,7 +262,7 @@ function processDuePayments(episodeNumber) {
   });
   state.minCash = Math.min(state.minCash, state.finance.cash);
   state.paymentNotices[episodeNumber] = due.map((item) => ({
-    speaker: "乔岚",
+    speaker: "方雯",
     title: `${item.text}今天到期`,
     body: [
       `${formatMoney(item.amount)}已从账户划走。这不是新的选择，而是过去的选择在今天兑现。付款后的可动用现金为${formatMoney(state.finance.cash)}。`
@@ -400,6 +438,19 @@ function relationText(value) {
   return "不再相信私下承诺";
 }
 
+function displayRoleForCharacter(person) {
+  const changedCoach = getDecision("e6") === "hire_gu";
+  if (person.id === "he" && changedCoach) return "前一线队主教练";
+  if (person.id === "gu" && changedCoach) return "一线队主教练";
+  return person.role;
+}
+
+function roleForSpeaker(speaker) {
+  if (speaker === state.managerName) return "足球运营总经理";
+  const person = gameData.characters.find((candidate) => candidate.name === speaker);
+  return person ? displayRoleForCharacter(person) : "";
+}
+
 function renderCharacters() {
   const episode = currentEpisode();
   const activeIds = new Set();
@@ -415,13 +466,11 @@ function renderCharacters() {
   ui.characterList.innerHTML = people
     .map((person) => {
       const changedCoach = getDecision("e6") === "hire_gu";
-      let role = person.role;
+      const role = displayRoleForCharacter(person);
       let status = relationText(state.characterTrust[person.id] ?? 50);
       if (person.id === "he" && changedCoach) {
-        role = "前一线队主教练";
         status = "已经离任，影响仍留在队内";
       }
-      if (person.id === "gu" && changedCoach) role = "一线队主教练";
       if (person.id === "gu" && !changedCoach) status = "仍在俱乐部之外等待机会";
       return `
         <details class="character-item" ${activeIds.has(person.id) ? "open" : ""}>
@@ -493,6 +542,9 @@ function renderPhase() {
 
 function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visualKey = null) {
   ui.eventSpeaker.textContent = speaker;
+  const speakerRole = roleForSpeaker(speaker);
+  ui.eventRole.textContent = speakerRole;
+  ui.eventRole.classList.toggle("hidden", !speakerRole);
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
@@ -1213,10 +1265,10 @@ function renderAftermath() {
 
 function decisionLine(optionId) {
   const lines = {
-    sell_captain: "把报价交给林骁。新闻稿不许写‘双方共同决定’。",
+    sell_captain: "把报价交给梁一川。新闻稿不许写‘双方共同决定’。",
     renew_captain: "两年，不保首发。角色要变，先由我们当面告诉他。",
     last_dance: "踢完这季。一月第一周，我亲自来找你。",
-    medical_veto: "江黎签不了可出场，他就不上。比分由我来解释。",
+    medical_veto: "孟书宁签不了可出场，他就不上。比分由我来解释。",
     informed_choice: "先把奖金和位置从这个问题里拿走，再问他一次。",
     play_and_shoot: "把风险逐条写清。他若仍然要踢，我批准。",
     institutionalize: "我留下。但今年站在门外的人，明年要有椅子。",
@@ -1444,11 +1496,11 @@ function buildEpilogues(finalChoice) {
   }
   const captain = getDecision("e4");
   if (captain === "sell_captain") {
-    result.push({ who: "林骁", text: "他在江东完成了一个稳定赛季。岚城更衣室最终选出新队长，但那只袖标花了几个月才停止像借来的。" });
+    result.push({ who: "梁一川", text: "他在江东完成了一个稳定赛季。岚城更衣室最终选出新队长，但那只袖标花了几个月才停止像借来的。" });
   } else if (captain === "renew_captain") {
-    result.push({ who: "林骁", text: "他接受轮换，也在最困难的几周替年轻人说话。续约没有冻结时间，却让交接可以不以羞辱开始。" });
+    result.push({ who: "梁一川", text: "他接受轮换，也在最困难的几周替年轻人说话。续约没有冻结时间，却让交接可以不以羞辱开始。" });
   } else {
-    result.push({ who: "林骁", text: "最后一轮后，他独自在东看台坐到清场。是否续约仍未完全决定，但俱乐部不能再假装冬天的谈话没有到期。" });
+    result.push({ who: "梁一川", text: "最后一轮后，他独自在东看台坐到清场。是否续约仍未完全决定，但俱乐部不能再假装冬天的谈话没有到期。" });
   }
 
   const stand = getDecision("e5");
@@ -1462,18 +1514,18 @@ function buildEpilogues(finalChoice) {
 
   const coach = getDecision("e6");
   if (coach === "hire_gu") {
-    result.push({ who: "主教练", text: "顾维带来了可见改变，也带来新的预算要求。贺峥的离开没有证明换帅错误，只证明一段关系已经无法回到七月。" });
+    result.push({ who: "主教练", text: "高竞带来了可见改变，也带来新的预算要求。韩立锋的离开没有证明换帅错误，只证明一段关系已经无法回到七月。" });
   } else if (coach === "back_coach") {
-    result.push({ who: "主教练", text: "贺峥执教到最后一天。无论排名是否漂亮，球员知道管理层曾在最容易甩锅时用第一人称承担了决定。" });
+    result.push({ who: "主教练", text: "韩立锋执教到最后一天。无论排名是否漂亮，球员知道管理层曾在最容易甩锅时用第一人称承担了决定。" });
   } else {
     result.push({ who: "主教练", text: "三场期限结束后，所有人仍习惯数下一次倒计时。制度完成了评估，却没能完全收回它制造的生存感。" });
   }
 
   const youth = getDecision("e8");
   if (youth === "sell_chen") {
-    result.push({ who: "陈野", text: "他在租借队得到连续首发。岚城拥有回购条款，但是否还拥有一条真正的青训路径，要等下一名孩子来验证。" });
+    result.push({ who: "程野", text: "他在租借队得到连续首发。岚城拥有回购条款，但是否还拥有一条真正的青训路径，要等下一名孩子来验证。" });
   } else {
-    result.push({ who: "陈野", text: "他不再只是海报上的未来。失误、替补和有限出场终于组成一条可理解的成长路径。" });
+    result.push({ who: "程野", text: "他不再只是海报上的未来。失误、替补和有限出场终于组成一条可理解的成长路径。" });
   }
 
   const medical = getDecision("e7");
@@ -1514,7 +1566,7 @@ function evaluatePromise(id, position) {
     independent_review: () => getDecision("e7") === "play_and_shoot" ? broken("带伤履约让独立风险报告未能真正约束决定。") : kept("医疗风险进入决定，并改变了球员使用。"),
     protect_coach_model: () => getDecision("e6") === "hire_gu" ? broken("开局压力下更换了主教练与比赛模型。") : kept("球队困难时没有由管理层临时改写模型。"),
     six_week_protection: () => kept("球队完成了约定适应期后才进入帅位决定。"),
-    chen_pathway: () => getDecision("e8") === "hold_course" ? kept("陈野获得明确轮换。") : getDecision("e8") === "sell_chen" ? broken("陈野离队获得比赛，但岚城的一线队承诺未兑现。") : open("是否形成真实轮换仍取决于下赛季。"),
+    chen_pathway: () => getDecision("e8") === "hold_course" ? kept("程野获得明确轮换。") : getDecision("e8") === "sell_chen" ? broken("程野离队获得比赛，但岚城的一线队承诺未兑现。") : open("是否形成真实轮换仍取决于下赛季。"),
     winter_captain_talk: () => kept("一月的谈话按期发生，尽管答案未必令人满意。"),
     east_stand_floor: () => kept("本季合同保留了名称、壁画与低价票底线。"),
     supporter_board_seat: () => kept("会员完成看台事务董事选举，并在本季获得正式表决权。"),

@@ -792,6 +792,10 @@ input {
   color: #f0ce89;
 }
 
+.visual-event .speaker-role {
+  color: rgba(255, 255, 255, 0.76);
+}
+
 .visual-event .event-meta {
   color: rgba(255, 255, 255, 0.58);
 }
@@ -946,6 +950,7 @@ input {
 }
 
 .speaker,
+.speaker-role,
 .event-meta {
   margin: 0;
 }
@@ -954,6 +959,14 @@ input {
   color: var(--green);
   font-size: 14px;
   font-weight: 800;
+}
+
+.speaker-role {
+  margin-top: 3px;
+  color: #52655e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .event-meta {

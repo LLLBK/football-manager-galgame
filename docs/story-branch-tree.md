@@ -118,7 +118,7 @@ S2 赛季预算
 S3 球员来源
 ├─ recruit_youth_path｜青训主管敲门：梯队里有个孩子可以试试
 │  触发：青训体系 >= 58
-│  ├─ recruit_promote_youth｜给 18 岁前锋陈野一线队合同和替补名额
+│  ├─ recruit_promote_youth｜给 18 岁前锋程野一线队合同和替补名额
 │  │  └─ 门槛：现金 >= 80；当前现金 -80；设置 promotedYouth = true
 │  └─ recruit_young_player｜花 650 万签下 20 岁前锋罗钧
 │     └─ 门槛：现金 >= 650；当前现金 -650；工资承诺 +180
@@ -138,24 +138,24 @@ S4 核心问题
 ├─ star_new_veteran｜新援高薪刺激核心不满
 │  触发：signedVeteran == true
 │  优先级：最高；只要签过成名老将，优先进入这个分支
-│  ├─ star_match_wage｜给林骁同级顶薪，并保证战术核心位置
+│  ├─ star_match_wage｜给梁一川同级顶薪，并保证战术核心位置
 │  │  └─ 门槛：现金 >= 500；当前现金 -500；工资承诺 +800；奖金承诺 +300
-│  └─ star_refuse_after_veteran｜维持林骁原合同，取消新援的特殊待遇扩张
+│  └─ star_refuse_after_veteran｜维持梁一川原合同，取消新援的特殊待遇扩张
 │     └─ 无立即支出
 ├─ star_support_rebuild｜核心愿意支持重建，但要看到长期计划
 │  触发：俱乐部文化 >= 58
 │  ├─ star_rebuild_captain｜续任队长，并把青训出场目标写入奖金协议
 │  │  └─ 门槛：现金 >= 150；当前现金 -150；奖金承诺 +350
-│  └─ star_sell_for_future｜接受争冠队 1600 万报价，让林骁转会
+│  └─ star_sell_for_future｜接受争冠队 1600 万报价，让梁一川转会
 │     └─ 当前现金 +1600；工资承诺 -450；设置 coreStarInTeam = false
 └─ star_default｜核心球星续约危机（默认）
-   ├─ star_full_contract｜按经纪人报价与林骁续约三年
+   ├─ star_full_contract｜按经纪人报价与梁一川续约三年
    │  └─ 门槛：现金 >= 500；当前现金 -500；工资承诺 +700；奖金承诺 +300
-   ├─ star_wage_discipline｜拒绝新约，让林骁履行最后一年合同
+   ├─ star_wage_discipline｜拒绝新约，让梁一川履行最后一年合同
    │  └─ 无立即支出
    ├─ star_delay_talks｜先付 150 万忠诚奖金，把续约推迟到两轮联赛后
    │  └─ 门槛：现金 >= 150；当前现金 -150；设置 delayedStarTalks = true
-   └─ star_sell｜接受 1600 万报价，立即出售林骁
+   └─ star_sell｜接受 1600 万报价，立即出售梁一川
       └─ 当前现金 +1600；工资承诺 -450；设置 coreStarInTeam = false
 ```
 
@@ -165,16 +165,16 @@ S4 核心问题
 S5 教练路线
 ├─ coach_youth｜青年队教练得到更衣室支持
 │  触发：青训体系 >= 58
-│  ├─ coach_promote_youth｜解约现任教练，任命青年队教练赵恺
+│  ├─ coach_promote_youth｜解约现任教练，任命青年队教练罗志衡
 │  │  └─ 门槛：现金 >= 150；当前现金 -150；设置 headCoach = youth
-│  └─ coach_current_with_youth_staff｜保留现任主帅，任命赵恺为一线队助教
+│  └─ coach_current_with_youth_staff｜保留现任主帅，任命罗志衡为一线队助教
 │     └─ 门槛：现金 >= 300；当前现金 -300；设置 headCoach = current
 └─ coach_default｜主教练与战术路线（默认）
-   ├─ coach_star｜支付 900 万换帅成本，聘请名帅顾维
+   ├─ coach_star｜支付 900 万换帅成本，聘请名帅高竞
    │  └─ 门槛：现金 >= 900；当前现金 -900；工资承诺 +300；设置 headCoach = star
    ├─ coach_support_current｜续留现任主帅，增聘定位球与体能教练
    │  └─ 门槛：现金 >= 450；当前现金 -450；设置 headCoach = current
-   └─ coach_promote_default｜解约现任教练，内部提拔赵恺
+   └─ coach_promote_default｜解约现任教练，内部提拔罗志衡
       └─ 门槛：现金 >= 150；当前现金 -150；设置 headCoach = youth
 ```
 
