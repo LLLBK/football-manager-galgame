@@ -1125,6 +1125,63 @@ input {
   line-height: 1.55;
 }
 
+.proactive-inquiry-control {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.proactive-inquiry-control > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.proactive-inquiry-control strong {
+  color: var(--green);
+}
+
+.proactive-inquiry-control p {
+  margin: 0;
+  color: #56615c;
+  font-family: var(--serif);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.proactive-inquiry-btn {
+  width: 100%;
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  padding: 10px 12px;
+  background: #eef5f0;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.proactive-inquiry-btn:hover:not(:disabled) {
+  border-color: var(--green-bright);
+  background: white;
+}
+
+.proactive-inquiry-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.proactive-choice {
+  border-color: rgba(46, 125, 96, 0.55);
+}
+
+.proactive-choice span {
+  color: var(--blue);
+}
+
 .character-item {
   border-bottom: 1px solid #e7e1d7;
   padding-bottom: 7px;

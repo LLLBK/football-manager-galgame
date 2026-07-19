@@ -1,4 +1,5 @@
 const SAVE_KEY = "lancheng-season-v2";
+const PROACTIVE_INQUIRY_LIMIT = 4;
 
 let gameData = null;
 let visualData = null;
@@ -57,6 +58,9 @@ const ui = {
   feedbackScene: $("feedbackScene"),
   matchReport: $("matchReport"),
   clubDossier: $("clubDossier"),
+  proactiveInquiryCount: $("proactiveInquiryCount"),
+  proactiveInquiryNote: $("proactiveInquiryNote"),
+  proactiveInquiryBtn: $("proactiveInquiryBtn"),
   characterList: $("characterList"),
   historyList: $("historyList"),
   resultTitle: $("resultTitle"),
@@ -95,6 +99,9 @@ function createInitialState(managerName, clubName) {
     visualBeatIndex: 0,
     activeReply: null,
     questions: {},
+    proactiveQuestions: {},
+    proactiveRemaining: PROACTIVE_INQUIRY_LIMIT,
+    phaseBeforeProactive: null,
     decisions: {},
     finance: initial.finance,
     operations: initial.operations,
@@ -124,9 +131,34 @@ function saveGame() {
 function readSave() {
   try {
     const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
-    return saved?.version === 2 ? saved : null;
+    if (saved?.version !== 2) return null;
+    saved.proactiveQuestions ||= {};
+    saved.proactiveRemaining ??= PROACTIVE_INQUIRY_LIMIT;
+    saved.phaseBeforeProactive ??= null;
+    repairSavedMatchScores(saved);
+    return saved;
   } catch (error) {
     return null;
+  }
+}
+
+function repairSavedMatchScores(saved) {
+  for (const report of saved.matchReports || []) {
+    for (const game of report.games || []) {
+      const [home, away] = String(game.score)
+        .split("-")
+        .map(Number);
+      if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) {
+        game.score = makeScore(game.outcome);
+      } else if (game.outcome === "W" && home <= away) {
+        game.score = `${away + 1}-${away}`;
+      } else if (game.outcome === "L" && home >= away) {
+        game.score = `${home}-${home + 1}`;
+      } else if (game.outcome === "D" && home !== away) {
+        const level = Math.min(home, away);
+        game.score = `${level}-${level}`;
+      }
+    }
   }
 }
 
@@ -300,12 +332,14 @@ function renderEpisodeHeader() {
 function renderDossier() {
   const episode = currentEpisode();
   const selected = state.questions[episode.id] || [];
+  const proactiveSelected = state.proactiveQuestions[episode.id] || [];
   const recentKnowledge = state.knowledge.slice(-3);
   ui.clubDossier.innerHTML = `
     <dl>
       <div><dt>你的职位</dt><dd>足球运营总经理</dd></div>
       <div><dt>本集时点</dt><dd>${escapeHtml(episode.phase)}</dd></div>
-      <div><dt>已经追问</dt><dd>${selected.length} / ${episode.inquiry.max}</dd></div>
+      <div><dt>决策前核实</dt><dd>${selected.length} / ${episode.inquiry.max}</dd></div>
+      <div><dt>本集主动了解</dt><dd>${proactiveSelected.length ? "已使用" : "未使用"}</dd></div>
     </dl>
     <div class="known-facts">
       <strong>最近确认的事实</strong>
@@ -315,6 +349,23 @@ function renderDossier() {
           : "<p>你还没有把任何人的说法核实为案头信息。</p>"
       }
     </div>`;
+
+  const canUseNow = state.phase === "scenes";
+  const usedThisEpisode = proactiveSelected.length > 0;
+  ui.proactiveInquiryCount.textContent = `${state.proactiveRemaining} / ${PROACTIVE_INQUIRY_LIMIT}`;
+  ui.proactiveInquiryBtn.disabled = !canUseNow || usedThisEpisode || state.proactiveRemaining <= 0;
+  ui.proactiveInquiryBtn.textContent = state.phase === "proactive" ? "正在主动了解" : "主动找人了解";
+  if (state.phase === "proactive") {
+    ui.proactiveInquiryNote.textContent = "这次谈话由你发起；结束后会回到刚才的现场进度。";
+  } else if (state.proactiveRemaining <= 0) {
+    ui.proactiveInquiryNote.textContent = "本赛季的主动了解机会已经用完。";
+  } else if (usedThisEpisode) {
+    ui.proactiveInquiryNote.textContent = "本集已经主动找过一人；剩余机会留给之后的赛季节点。";
+  } else if (!canUseNow) {
+    ui.proactiveInquiryNote.textContent = "主动了解应发生在事件推进中，而不是等决定摆到桌上以后。";
+  } else {
+    ui.proactiveInquiryNote.textContent = "现在可主动找一人谈；不占随后两次决策前核实名额。";
+  }
 }
 
 function relationText(value) {
@@ -398,6 +449,9 @@ function renderPhase() {
       break;
     case "inquiry":
       renderInquiry();
+      break;
+    case "proactive":
+      renderProactiveInquiry();
       break;
     case "decision":
       renderDecision();
@@ -541,7 +595,7 @@ function renderScene() {
   const scene = scenes[state.sceneIndex] || scenes[0];
   setSceneContent(scene, `${episode.date} · ${episode.location}`, scene.visualKey);
   const last = state.sceneIndex >= scenes.length - 1;
-  showContinue(last ? "开始了解冲突" : "继续", () => {
+  showContinue(last ? "进入决策前核实" : "继续", () => {
     if (last) {
       state.phase = "inquiry";
       state.activeReply = null;
@@ -558,6 +612,8 @@ function renderInquiry() {
   const episode = currentEpisode();
   const inquiry = episode.inquiry;
   const selected = state.questions[episode.id] || [];
+  const proactiveSelected = state.proactiveQuestions[episode.id] || [];
+  const allSelected = [...proactiveSelected, ...selected];
   const active = inquiry.options.find((item) => item.id === state.activeReply);
 
   if (active) {
@@ -582,23 +638,23 @@ function renderInquiry() {
   setSceneContent(
     {
       speaker: state.managerName,
-      title: selected.length ? "还有谁的话值得占用最后的时间？" : "你不可能听到所有人的版本",
+      title: selected.length || proactiveSelected.length ? "还有谁的话值得在决定前核实？" : "你不可能听到所有人的版本",
       body: [inquiry.prompt],
-      kind: "有限追问"
+      kind: "决策前核实"
     },
     `${episode.date} · 决策前`,
     `${episode.id}.inquiry.menu`
   );
-  ui.inquiryStatus.textContent = `可以追问 ${inquiry.max} 人 · 已问 ${selected.length} 人`;
+  ui.inquiryStatus.textContent = `可以现场核实 ${inquiry.max} 人 · 已核实 ${selected.length} 人${proactiveSelected.length ? ` · 此前主动了解 ${proactiveSelected.length} 人` : ""}`;
   ui.inquiryStatus.classList.remove("hidden");
 
   inquiry.options
-    .filter((item) => !selected.includes(item.id))
+    .filter((item) => !allSelected.includes(item.id))
     .forEach((option) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "inquiry-choice";
-      button.innerHTML = `<span>追问</span><strong>${escapeHtml(option.label)}</strong>`;
+      button.innerHTML = `<span>核实</span><strong>${escapeHtml(option.label)}</strong>`;
       button.addEventListener("click", () => selectInquiry(option));
       ui.choiceList.appendChild(button);
     });
@@ -618,10 +674,93 @@ function selectInquiry(option) {
   const episode = currentEpisode();
   const inquiry = episode.inquiry;
   const selected = state.questions[episode.id] || [];
-  if (selected.includes(option.id) || selected.length >= inquiry.max) return;
+  const proactiveSelected = state.proactiveQuestions[episode.id] || [];
+  if (selected.includes(option.id) || proactiveSelected.includes(option.id) || selected.length >= inquiry.max) return;
   state.questions[episode.id] = [...selected, option.id];
   state.activeReply = option.id;
   state.knowledge.push({ episode: episode.number, text: option.knowledge });
+  saveGame();
+  render();
+  scrollToStory();
+}
+
+function openProactiveInquiry() {
+  const episode = currentEpisode();
+  const alreadyUsed = (state.proactiveQuestions[episode.id] || []).length > 0;
+  if (state.phase !== "scenes" || state.proactiveRemaining <= 0 || alreadyUsed) return;
+  state.phaseBeforeProactive = state.phase;
+  state.phase = "proactive";
+  state.activeReply = null;
+  saveGame();
+  render();
+  scrollToStory();
+}
+
+function renderProactiveInquiry() {
+  const episode = currentEpisode();
+  const inquiry = episode.inquiry;
+  const proactiveSelected = state.proactiveQuestions[episode.id] || [];
+  const selected = state.questions[episode.id] || [];
+  const active = inquiry.options.find((item) => item.id === state.activeReply);
+
+  if (active) {
+    setSceneContent(
+      { speaker: active.speaker, title: active.title, body: active.body, kind: "主动了解" },
+      `${episode.date} · 由你发起`,
+      `${episode.id}.inquiry.${active.id}`
+    );
+    ui.knowledgeCard.innerHTML = `<strong>主动了解所得</strong><p>${escapeHtml(active.knowledge)}</p>`;
+    ui.knowledgeCard.classList.remove("hidden");
+    showContinue("结束谈话，回到现场", closeProactiveInquiry);
+    return;
+  }
+
+  setSceneContent(
+    {
+      speaker: state.managerName,
+      title: "不等问题被送到桌上",
+      body: ["你可以在事件仍在发展时主动找一个人谈。这次了解不占之后的两次现场核实，但本集只能使用一次。"],
+      kind: "总经理主动权"
+    },
+    `${episode.date} · 主动走访`,
+    `${episode.id}.inquiry.menu`
+  );
+  ui.inquiryStatus.textContent = `本赛季还可主动了解 ${state.proactiveRemaining} 次`;
+  ui.inquiryStatus.classList.remove("hidden");
+
+  inquiry.options
+    .filter((item) => !proactiveSelected.includes(item.id) && !selected.includes(item.id))
+    .forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "inquiry-choice proactive-choice";
+      button.innerHTML = `<span>主动约谈</span><strong>${escapeHtml(option.label)}</strong>`;
+      button.addEventListener("click", () => selectProactiveInquiry(option));
+      ui.choiceList.appendChild(button);
+    });
+
+  showContinue("暂时不找人，回到现场", closeProactiveInquiry);
+}
+
+function selectProactiveInquiry(option) {
+  const episode = currentEpisode();
+  const proactiveSelected = state.proactiveQuestions[episode.id] || [];
+  const selected = state.questions[episode.id] || [];
+  if (state.proactiveRemaining <= 0 || proactiveSelected.length > 0) return;
+  if (proactiveSelected.includes(option.id) || selected.includes(option.id)) return;
+  state.proactiveQuestions[episode.id] = [option.id];
+  state.proactiveRemaining -= 1;
+  state.activeReply = option.id;
+  state.knowledge.push({ episode: episode.number, text: option.knowledge, source: "proactive" });
+  saveGame();
+  render();
+  scrollToStory();
+}
+
+function closeProactiveInquiry() {
+  state.phase = state.phaseBeforeProactive || "scenes";
+  state.phaseBeforeProactive = null;
+  state.activeReply = null;
   saveGame();
   render();
   scrollToStory();
@@ -810,9 +949,14 @@ function randomBetween(min, max) {
 }
 
 function makeScore(outcome) {
-  const low = () => Math.floor(Math.random() * 2);
-  if (outcome === "W") return `${1 + Math.floor(Math.random() * 3)}-${low()}`;
-  if (outcome === "L") return `${low()}-${1 + Math.floor(Math.random() * 3)}`;
+  if (outcome === "W") {
+    const away = Math.floor(Math.random() * 3);
+    return `${away + 1 + Math.floor(Math.random() * 3)}-${away}`;
+  }
+  if (outcome === "L") {
+    const home = Math.floor(Math.random() * 3);
+    return `${home}-${home + 1 + Math.floor(Math.random() * 3)}`;
+  }
   const value = Math.floor(Math.random() * 3);
   return `${value}-${value}`;
 }
@@ -1040,6 +1184,8 @@ function exportGame() {
     record: state.record,
     decisions: state.history,
     questionsAsked: state.questions,
+    proactiveInquiries: state.proactiveQuestions,
+    proactiveInquiriesRemaining: state.proactiveRemaining,
     knowledgeConfirmed: state.knowledge,
     promises: state.promises,
     openThreads: state.openThreads,
@@ -1123,6 +1269,7 @@ function bindEvents() {
   ui.resultRestartBtn.addEventListener("click", restartGame);
   ui.exportBtn.addEventListener("click", exportGame);
   ui.resultExportBtn.addEventListener("click", exportGame);
+  ui.proactiveInquiryBtn.addEventListener("click", openProactiveInquiry);
 }
 
 async function boot() {

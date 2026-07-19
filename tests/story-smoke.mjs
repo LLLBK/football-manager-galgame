@@ -142,6 +142,86 @@ for (const coachDecision of ["hire_gu", "back_coach", "three_game_review"]) {
   );
 }
 assert.match(appSource, /前一线队主教练/, "换帅后人物栏应更新贺峥身份");
+assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
+assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
+assert.match(appSource, /state\.phase !== "scenes"/, "主动了解只能在事件推进中发起");
+
+const createProactiveHarness = Function(
+  "state",
+  "currentEpisode",
+  "saveGame",
+  "render",
+  "scrollToStory",
+  `${readFunctionSource("openProactiveInquiry")}
+   ${readFunctionSource("selectProactiveInquiry")}
+   ${readFunctionSource("closeProactiveInquiry")}
+   return { openProactiveInquiry, selectProactiveInquiry, closeProactiveInquiry };`
+);
+const proactiveState = {
+  phase: "scenes",
+  phaseBeforeProactive: null,
+  activeReply: null,
+  proactiveQuestions: {},
+  proactiveRemaining: 4,
+  questions: {},
+  knowledge: []
+};
+const proactiveHarness = createProactiveHarness(
+  proactiveState,
+  () => ({ id: "e1", number: 1 }),
+  () => {},
+  () => {},
+  () => {}
+);
+proactiveHarness.openProactiveInquiry();
+assert.equal(proactiveState.phase, "proactive", "应能从事件现场主动发起了解");
+proactiveHarness.selectProactiveInquiry({ id: "ask_shen", knowledge: "董事会考核现金与排名。" });
+assert.equal(proactiveState.proactiveRemaining, 3, "主动了解应消耗一次赛季机会");
+assert.deepEqual(proactiveState.proactiveQuestions.e1, ["ask_shen"], "主动了解应按集记录对象");
+proactiveHarness.selectProactiveInquiry({ id: "ask_tang", knowledge: "球迷有共同底线。" });
+assert.equal(proactiveState.proactiveRemaining, 3, "同一集不得再次消耗主动了解机会");
+proactiveHarness.closeProactiveInquiry();
+assert.equal(proactiveState.phase, "scenes", "主动谈话后应回到原来的现场进度");
+
+function readFunctionSource(name) {
+  const start = appSource.indexOf(`function ${name}(`);
+  assert.notEqual(start, -1, `app.js 缺少 ${name} 函数`);
+  const bodyStart = appSource.indexOf("{", start);
+  let depth = 0;
+  for (let index = bodyStart; index < appSource.length; index += 1) {
+    if (appSource[index] === "{") depth += 1;
+    if (appSource[index] === "}") depth -= 1;
+    if (depth === 0) return appSource.slice(start, index + 1);
+  }
+  throw new Error(`${name} 函数没有结束`);
+}
+
+const makeScore = Function(`${readFunctionSource("makeScore")}; return makeScore;`)();
+for (const outcome of ["W", "D", "L"]) {
+  for (let index = 0; index < 1000; index += 1) {
+    const [home, away] = makeScore(outcome).split("-").map(Number);
+    if (outcome === "W") assert.ok(home > away, "胜局比分必须主队进球更多");
+    if (outcome === "D") assert.equal(home, away, "平局比分必须相等");
+    if (outcome === "L") assert.ok(home < away, "负局比分必须主队进球更少");
+  }
+}
+
+const repairSavedMatchScores = Function(
+  `${readFunctionSource("makeScore")}; ${readFunctionSource("repairSavedMatchScores")}; return repairSavedMatchScores;`
+)();
+const savedWithOldScores = {
+  matchReports: [{ games: [
+    { outcome: "W", score: "1-1" },
+    { outcome: "D", score: "2-1" },
+    { outcome: "L", score: "0-0" }
+  ] }]
+};
+repairSavedMatchScores(savedWithOldScores);
+assert.deepEqual(
+  savedWithOldScores.matchReports[0].games.map((game) => game.score),
+  ["2-1", "1-1", "0-1"],
+  "旧存档中的矛盾比分应按赛果自动修复"
+);
 
 const staticIds = new Set([...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]));
 const referencedIds = new Set([...appSource.matchAll(/\$\("([^"]+)"\)/g)].map((match) => match[1]));
