@@ -70,6 +70,7 @@ const ui = {
   visualCharacter: $("visualCharacter"),
   visualCharacterGhost: $("visualCharacterGhost"),
   visualCharacterSecondary: $("visualCharacterSecondary"),
+  visualProps: $("visualProps"),
   visualLocation: $("visualLocation"),
   visualEpisodeMark: $("visualEpisodeMark"),
   eventSpeaker: $("eventSpeaker"),
@@ -140,7 +141,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 5,
+    contentRevision: 6,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -217,6 +218,11 @@ function readSave() {
     }
     if ((saved.contentRevision || 0) < 5) {
       saved.contentRevision = 5;
+    }
+    if ((saved.contentRevision || 0) < 6) {
+      saved.visualBeatKey = null;
+      saved.visualBeatIndex = 0;
+      saved.contentRevision = 6;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -573,6 +579,7 @@ function displayRoleForCharacter(person) {
 
 function roleForSpeaker(speaker) {
   if (speaker === state.managerName) return "足球运营总经理";
+  if (speaker === "你") return "足球运营总经理 · 内心";
   const person = gameData.characters.find((candidate) => candidate.name === speaker);
   return person ? displayRoleForCharacter(person) : "";
 }
@@ -591,24 +598,12 @@ function renderCharacters() {
 
   ui.characterList.innerHTML = people
     .map((person) => {
-      const changedCoach = getDecision("e6") === "hire_gu";
       const role = displayRoleForCharacter(person);
-      let status = state.characterStates?.[person.id]
-        ? characterBehaviorText(person.id)
-        : relationText(state.characterTrust[person.id] ?? 50);
-      if (person.id === "he" && changedCoach) {
-        status = "已经离任，影响仍留在队内";
-      }
-      if (person.id === "gu" && !changedCoach) status = "仍在俱乐部之外等待机会";
       return `
-        <details class="character-item" ${activeIds.has(person.id) ? "open" : ""}>
-          <summary><span><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(role)}</small></span></summary>
-          <p>${escapeHtml(person.bio)}</p>
-          ${person.want ? `<p class="character-drive"><strong>他想要：</strong>${escapeHtml(person.want)}</p>` : ""}
-          ${person.fear ? `<p class="character-drive"><strong>他害怕：</strong>${escapeHtml(person.fear)}</p>` : ""}
-          ${person.habit ? `<p class="character-habit">${escapeHtml(person.habit)}</p>` : ""}
-          <em>${escapeHtml(status)}</em>
-        </details>`;
+        <div class="character-item ${activeIds.has(person.id) ? "active" : ""}">
+          <span><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(role)}</small></span>
+          ${activeIds.has(person.id) ? '<em>本集在场</em>' : ""}
+        </div>`;
     })
     .join("");
 }
@@ -687,8 +682,8 @@ function renderFinanceCrisis() {
       speaker: "方雯",
       title: "付款日到了，账户不够",
       body: [
-        `今天必须支付${itemText}。账户只有${formatMoney(state.finance.cash)}，还差${formatMoney(crisis.shortage)}。`,
-        "方雯没有替你把余额写成负数。她把三份代价不同的处理文件摆在桌上：先决定谁为这个缺口付钱。"
+        `“今天必须支付${itemText}。账户只有${formatMoney(state.finance.cash)}，还差${formatMoney(crisis.shortage)}。”`,
+        "“我不会替你把余额写成负数。三份文件都在桌上——借、卖，或延期。你先说，谁为这个缺口付钱。”"
       ],
       kind: "现金危机"
     },
@@ -782,16 +777,13 @@ function resolveFinanceCrisis(choice) {
   scrollToStory();
 }
 
-function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visualKey = null) {
-  ui.eventSpeaker.textContent = speaker;
-  const speakerRole = roleForSpeaker(speaker);
-  ui.eventRole.textContent = speakerRole;
-  ui.eventRole.classList.toggle("hidden", !speakerRole);
+function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" }, meta, visualKey = null) {
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
   const visual = getVisualScene(visualKey);
   let visibleBody = body;
+  let activeSpeaker = speaker;
 
   if (visual && body.length) {
     if (state.visualBeatKey !== visualKey) {
@@ -799,7 +791,13 @@ function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visual
       state.visualBeatIndex = 0;
     }
     const beatIndex = Math.min(state.visualBeatIndex || 0, body.length - 1);
-    const beat = { ...visual, ...(visual.beats?.[beatIndex] || {}) };
+    activeSpeaker = speakers[beatIndex] || speaker;
+    const beat = {
+      ...visual,
+      ...(visual.beats?.[beatIndex] || {}),
+      visualKey,
+      beatIndex
+    };
     if (renderVisualStage(beat, meta)) {
       visibleBody = [body[beatIndex]];
       activeVisualPage = {
@@ -815,6 +813,11 @@ function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visual
     state.visualBeatIndex = 0;
     hideVisualStage();
   }
+
+  ui.eventSpeaker.textContent = activeSpeaker;
+  const speakerRole = roleForSpeaker(activeSpeaker);
+  ui.eventRole.textContent = speakerRole;
+  ui.eventRole.classList.toggle("hidden", !speakerRole);
 
   ui.eventScene.innerHTML = visibleBody
     .map((paragraph) => `<p>${renderRichText(paragraph)}</p>`)
@@ -852,6 +855,68 @@ function hideVisualStage() {
   ui.visualCharacter.classList.add("hidden");
   ui.visualCharacterGhost.classList.add("hidden");
   ui.visualCharacterSecondary.classList.add("hidden");
+  ui.visualProps.innerHTML = "";
+}
+
+const scenePropPlans = {
+  "e1.opening.0": [["contract", "pen"], ["investment-folder", "pen"]],
+  "e1.opening.1": [[], [], []],
+  "e2.opening.0": [["cash-sheets", "pen"], ["cash-sheets", "folder-stack"]],
+  "e2.opening.1": [["tactics-board"], ["tactics-board", "bench-cards"]],
+  "e2.opening.2": [["registration-sheet"], ["folder-stack"]],
+  "e3.opening.0": [["remote", "tactics-board"], ["remote", "tactics-board"]],
+  "e3.opening.1": [["tactics-board"], ["training-shirt"]],
+  "e3.opening.2": [["contract"], ["armband"]],
+  "e4.opening.0": [["offer-sheet"], ["folder-stack"]],
+  "e4.opening.1": [["contract", "armband"], ["contract"]],
+  "e5.opening.0": [["water-bucket", "safety-folder"], ["sponsor-board", "contract"]],
+  "e5.opening.1": [["water-bucket", "resolutions"], ["resolutions", "season-ticket"]],
+  "e6.opening.0": [["score-card"], ["phone", "score-card"]],
+  "e6.opening.1": [["training-sheet"], ["folded-list"]],
+  "e7.opening.0": [["medical-scan", "medical-chart"], ["medical-chart"]],
+  "e7.opening.1": [["ice-pack"], ["team-sheet", "ice-pack"]],
+  "e8.opening.0": [["cash-sheets"], ["offer-sheet", "cash-sheets"]],
+  "e8.opening.1": [["training-sheet"], ["loan-contract", "pen"]],
+  "e9.opening.0": [["standings-sheet"], ["folder-stack", "bonus-list"]],
+  "e9.opening.1": [["standings-sheet"], ["folded-list"]],
+  "e10.opening.0": [["audit-files"], ["contract", "pen"]],
+  "e10.opening.1": [["wall-notes"], ["armband"]]
+};
+
+const characterDefaultProps = {
+  shen: ["pen"],
+  tang: ["resolutions", "season-ticket"],
+  he: ["tactics-board"],
+  qiao: ["cash-sheets"],
+  lin: ["armband"],
+  zhao: ["training-sheet"],
+  chen: ["training-shirt"],
+  jiang: ["medical-chart"],
+  gu: ["contract"],
+  analyst: ["analysis-tablet"],
+  sponsor: ["contract"],
+  player: ["ice-pack"]
+};
+
+function propsForScene(scene) {
+  if (Array.isArray(scene.props)) return scene.props;
+  const planned = scenePropPlans[scene.visualKey];
+  if (planned) return planned[scene.beatIndex] || planned.at(-1) || [];
+  const characterId = resolveVisualCharacterId(scene.character);
+  return characterDefaultProps[characterId] || [];
+}
+
+function renderVisualProps(scene) {
+  const props = propsForScene(scene);
+  ui.visualProps.innerHTML = props
+    .map((prop, index) => {
+      const descriptor = typeof prop === "string" ? { type: prop } : prop;
+      const type = descriptor.type || "paper";
+      const position = descriptor.position || (index % 2 ? "right" : "left");
+      return `<span class="visual-prop prop-${escapeHtml(type)} prop-${escapeHtml(position)}" data-prop="${escapeHtml(type)}"><i></i></span>`;
+    })
+    .join("");
+  ui.visualStage.dataset.camera = scene.camera || (scene.visualKey === "e1.opening.1" ? "hands" : "medium");
 }
 
 function renderVisualStage(scene, meta) {
@@ -870,6 +935,7 @@ function renderVisualStage(scene, meta) {
   updateVisualBackground(background, renderEpoch);
   ui.visualLocation.textContent = meta;
   ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number}`;
+  renderVisualProps(scene);
 
   const characterId = resolveVisualCharacterId(scene.character);
   const character = characterId ? visualData.characters?.[characterId] : null;
@@ -1228,7 +1294,7 @@ function renderInquiry() {
           ? "录像重放"
           : "谈话记录";
     setSceneContent(
-      { speaker: active.speaker, title: active.title, body: active.body, kind: activeKind },
+      { speaker: active.speaker, speakers: active.speakers, title: active.title, body: active.body, kind: activeKind },
       `${episode.date} · 只对你说`,
       `${episode.id}.inquiry.${active.id}`
     );
@@ -1267,7 +1333,7 @@ function renderInquiry() {
 
   setSceneContent(
     {
-      speaker: state.managerName,
+      speaker: "你",
       title: interactionCopy.title,
       body: [inquiry.prompt],
       kind: interactionCopy.kind
@@ -1286,7 +1352,7 @@ function renderInquiry() {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "inquiry-choice";
-      button.innerHTML = `<span>${escapeHtml(inquiry.actionLabel || "核实")}</span><strong>${renderRichText(option.label, false)}</strong>${option.stake ? `<small>${renderRichText(option.stake, false)}</small>` : ""}`;
+      button.innerHTML = `<span>${escapeHtml(inquiry.actionLabel || "开口问")}</span><strong>${renderRichText(option.label, false)}</strong>`;
       button.addEventListener("click", () => selectInquiry(option));
       ui.choiceList.appendChild(button);
     });
@@ -1351,7 +1417,7 @@ function renderProactiveInquiry() {
 
   if (active) {
     setSceneContent(
-      { speaker: active.speaker, title: active.title, body: active.body, kind: "主动了解" },
+      { speaker: active.speaker, speakers: active.speakers, title: active.title, body: active.body, kind: "主动了解" },
       `${episode.date} · 由你发起`,
       `${episode.id}.inquiry.${active.id}`
     );
@@ -1362,9 +1428,9 @@ function renderProactiveInquiry() {
 
   setSceneContent(
     {
-      speaker: state.managerName,
+      speaker: "你",
       title: "不等问题被送到桌上",
-      body: ["你可以在事件仍在发展时主动找一个人谈。这次了解不占之后的两次现场核实，但本集只能使用一次。"],
+      body: ["我可以现在主动去找一个人。这次谈话不占之后的现场机会，但这一集我只能去一次。"],
       kind: "总经理主动权"
     },
     `${episode.date} · 主动走访`,
@@ -1422,7 +1488,7 @@ function renderDecision() {
   finalizeInteractionConsequences(episode);
   setSceneContent(
     {
-      speaker: state.managerName,
+      speaker: "你",
       title: "现在，没有更多信息会替你作决定",
       body: [episode.decision.prompt],
       kind: "不可逆决定"
@@ -1430,7 +1496,7 @@ function renderDecision() {
     `${episode.date} · ${episode.phase}`,
     `${episode.id}.decision`
   );
-  ui.eventPrompt.innerHTML = "<strong>你会公开做什么</strong><span>选择后，决定会立即进入任期记录。</span>";
+  ui.eventPrompt.innerHTML = "<strong>我现在要怎么说</strong><span>按下选项，这句话就会当着在场的人说出口。</span>";
   ui.eventPrompt.classList.remove("hidden");
 
   episode.decision.options.forEach((option) => {
@@ -1447,14 +1513,8 @@ function renderDecision() {
     button.innerHTML = `
       <span class="decision-label">${renderRichText(option.label, false)}</span>
       ${spokenLine ? `<span class="decision-line">“${renderRichText(spokenLine, false)}”</span>` : ""}
-      <span class="decision-action">${renderRichText(option.action, false)}</span>
-      ${option.advocate ? `<span class="decision-stake"><b>谁在要求</b>${renderRichText(option.advocate, false)}</span>` : ""}
-      ${option.bet ? `<span class="decision-stake"><b>你在押注</b>${renderRichText(option.bet, false)}</span>` : ""}
-      ${option.burden ? `<span class="decision-stake"><b>最坏情况由谁承担</b>${renderRichText(option.burden, false)}</span>` : ""}
       ${cashChange || addedPayables.length ? `<span class="finance-preview ${projection.level}"><b>签字后的已知现金前景</b>今日现金 ${formatMoney(state.finance.cash + cashChange)} · 已知付款全部兑现后 ${formatMoney(projection.projected)} · ${escapeHtml(projection.label)}</span>` : ""}
-      ${!affordable ? `<span class="unavailable-reason">今天的现金不足，除非先找到确定融资。</span>` : ""}
-      <span class="known-title">签字前案头信息</span>
-      <ul>${option.known.map((item) => `<li>${renderRichText(item, false)}</li>`).join("")}</ul>`;
+      ${!affordable ? `<span class="unavailable-reason">我今天的现金不足，除非先找到确定融资。</span>` : ""}`;
     button.addEventListener("click", () => chooseDecision(option));
     ui.choiceList.appendChild(button);
   });
@@ -1546,15 +1606,13 @@ function renderAftermath() {
     <p class="eyebrow">记录在案</p>
     <h3>${escapeHtml(option.label)}</h3>
     ${spokenLine ? `<blockquote>“${escapeHtml(spokenLine)}”</blockquote>` : ""}
-    <p>${escapeHtml(option.action)}</p>
     ${
       addedPromises.length
         ? `<div class="receipt-promises"><strong>你因此说过</strong>${addedPromises
             .map((item) => `<span>“${escapeHtml(item.text)}”</span>`)
             .join("")}</div>`
         : ""
-    }
-    ${renderConsequenceReceipt(option)}`;
+    }`;
   ui.feedbackScene.classList.remove("hidden");
   showContinue(episode.match ? "看看比赛如何回应" : episode.number === 10 ? "结束这个赛季" : "进入下一集", () => {
     if (episode.match) {

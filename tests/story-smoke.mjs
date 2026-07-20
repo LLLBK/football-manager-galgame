@@ -143,17 +143,22 @@ const expectedCharacterNames = {
 for (const person of data.characters) {
   assert.equal(person.name, expectedCharacterNames[person.id], `${person.id} 的对外姓名未统一`);
   assert.ok(person.role.length >= 2, `${person.name} 缺少可识别的职务`);
-  assert.ok(person.want?.length >= 8, `${person.name} 缺少明确欲望`);
-  assert.ok(person.fear?.length >= 8, `${person.name} 缺少明确恐惧`);
+  assert.equal("want" in person, false, `${person.name} 的内在欲望不应作为游戏文案明写`);
+  assert.equal("fear" in person, false, `${person.name} 的内在恐惧不应作为游戏文案明写`);
   assert.ok(person.habit?.length >= 8, `${person.name} 缺少可观察的习惯动作`);
+  assert.ok(person.voice?.length >= 8, `${person.name} 缺少可辨识的说话方式`);
 }
 
-function validateSpeakerPortraits(key, speaker, label) {
-  const expectedCharacter = characterIdByName.get(speaker);
+function validateSpeakerPortraits(key, scene, label) {
   const visual = visuals.scenes[key];
-  if (!expectedCharacter || !visual) return;
-  const layers = [visual, ...(visual.beats || []).map((beat) => ({ ...visual, ...beat }))];
+  if (!visual) return;
+  const layers = visual.beats?.length
+    ? visual.beats.map((beat) => ({ ...visual, ...beat }))
+    : [visual];
   layers.forEach((layer, index) => {
+    const speaker = scene.speakers?.[index] || scene.speaker;
+    const expectedCharacter = characterIdByName.get(speaker);
+    if (!expectedCharacter) return;
     assert.equal(
       layer.character,
       expectedCharacter,
@@ -166,30 +171,46 @@ for (const episode of data.episodes) {
   episode.opening.forEach((scene, index) => {
     validateSpeakerPortraits(
       `${episode.id}.opening.${index}`,
-      scene.speaker,
+      scene,
       `${episode.id} 开场${index + 1}`
     );
   });
   for (const inquiry of episode.inquiry.options) {
     validateSpeakerPortraits(
       `${episode.id}.inquiry.${inquiry.id}`,
-      inquiry.speaker,
+      inquiry,
       `${episode.id}/${inquiry.id}`
     );
   }
   for (const option of episode.decision.options) {
     validateSpeakerPortraits(
       `${episode.id}.aftermath.${option.id}`,
-      option.aftermath.speaker,
+      option.aftermath,
       `${episode.id}/${option.id}余波`
     );
   }
   for (const [index, echo] of (episode.echoes || []).entries()) {
     validateSpeakerPortraits(
       `${episode.id}.echo.${index}`,
-      echo.speaker,
+      echo,
       `${episode.id}回声${index + 1}`
     );
+  }
+
+  const scriptedScenes = [
+    ...episode.opening,
+    ...episode.inquiry.options,
+    ...episode.decision.options.map((option) => option.aftermath),
+    ...(episode.echoes || [])
+  ];
+  for (const scene of scriptedScenes) {
+    scene.body.forEach((line, index) => {
+      const speaker = scene.speakers?.[index] || scene.speaker;
+      if (speaker !== "你") {
+        assert.match(line, /^[“‘'"]/, `${episode.id}/${speaker}的台词混入了第三人称旁白`);
+      }
+      assert.ok(line.length <= 75, `${episode.id}/${speaker}单次对话过长，应拆成多个镜头`);
+    });
   }
 }
 
@@ -279,7 +300,7 @@ assert.equal(
   "镜头焦点人物不得覆盖剧情原本的说话人"
 );
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
-assert.match(appSource, /contentRevision: 5/, "旧存档应迁移到人物、因果与现金压力新版");
+assert.match(appSource, /contentRevision: 6/, "旧存档应迁移到对话分镜与动作道具新版");
 assert.match(appSource, /migrateSavedCharacterNames\(saved\)/, "旧存档文本应同步替换人物姓名");
 assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
 assert.match(html, /id="focusModeBtn"/, "桌面端应提供剧情聚焦模式");

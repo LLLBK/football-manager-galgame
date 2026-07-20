@@ -101,7 +101,8 @@
       "expressions": {
         "guarded": "assets/visuals/characters/tang/guarded-v2.webp",
         "resolute": "assets/visuals/characters/tang/resolute-v2.webp",
-        "hopeful": "assets/visuals/characters/tang/hopeful-v2.webp"
+        "hopeful": "assets/visuals/characters/tang/hopeful-v2.webp",
+        "evidence": "assets/visuals/characters/tang/evidence-v2.webp"
       }
     },
     "he": {
@@ -193,17 +194,21 @@
       "expression": "neutral",
       "beats": [
         { "expression": "neutral", "motion": "enter" },
-        { "expression": "stern", "motion": "focus" }
+        { "expression": "stern", "motion": "focus" },
+        { "expression": "stern", "framing": "close", "motion": "tense" }
       ]
     },
     "e1.opening.1": {
       "background": "boardroom_stairwell",
       "character": "tang",
       "position": "center",
-      "expression": "guarded",
+      "expression": "evidence",
+      "camera": "hands",
       "beats": [
-        { "expression": "guarded", "motion": "enter" },
-        { "expression": "resolute", "motion": "focus" }
+        { "expression": "evidence", "motion": "enter" },
+        { "expression": "evidence", "framing": "close", "motion": "focus" },
+        { "expression": "evidence", "framing": "medium", "motion": "focus" },
+        { "expression": "evidence", "framing": "close", "motion": "tense" }
       ]
     },
     "e1.inquiry.menu": {
@@ -222,7 +227,9 @@
       "background": "boardroom_stairwell",
       "character": "tang",
       "position": "center",
-      "expression": "resolute",
+      "expression": "evidence",
+      "camera": "hands",
+      "props": [],
       "motion": "focus"
     },
     "e1.inquiry.ask_he": {
@@ -254,7 +261,7 @@
       "expression": "exacting",
       "beats": [
         { "background": "finance_office", "character": "qiao", "expression": "exacting", "position": "center", "motion": "focus" },
-        { "background": "boardroom_stairwell", "character": "qiao", "expression": "concerned", "position": "left", "supportingCharacter": "tang", "supportingExpression": "hopeful", "supportingPosition": "right", "framing": "wide", "motion": "focus" }
+        { "background": "boardroom_stairwell", "character": "tang", "expression": "hopeful", "position": "right", "supportingCharacter": "qiao", "supportingExpression": "concerned", "supportingPosition": "left", "framing": "wide", "motion": "focus" }
       ]
     },
     "e1.aftermath.sporting_control": {
@@ -264,7 +271,7 @@
       "expression": "stern",
       "beats": [
         { "background": "press_room", "character": "shen", "expression": "stern", "position": "center", "motion": "tense" },
-        { "background": "training_ground_afternoon", "character": "shen", "expression": "stern", "position": "left", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "right", "framing": "wide", "motion": "enter" }
+        { "background": "training_ground_afternoon", "character": "he", "expression": "guarded", "position": "right", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "left", "framing": "wide", "motion": "enter" }
       ]
     },
 
@@ -276,24 +283,24 @@
     "e2.inquiry.ask_he": { "background": "training_ground_afternoon", "character": "he", "expression": "guarded", "motion": "focus" },
     "e2.inquiry.ask_zhao": { "background": "academy_dormitory", "character": "zhao", "expression": "firm", "motion": "focus" },
     "e2.decision": { "background": "finance_office", "character": null, "tone": "decision" },
-    "e2.aftermath.liquidity_first": { "background": "training_ground_afternoon", "character": "he", "expression": "frustrated", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "background": "academy_dormitory", "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "zhao", "supportingExpression": "concerned", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
-    "e2.aftermath.first_team_push": { "background": "locker_room", "character": null, "beats": [{ "character": null, "motion": "focus" }, { "background": "training_ground_afternoon", "character": "he", "expression": "focused", "motion": "focus" }] },
-    "e2.aftermath.build_capacity": { "background": "medical_room", "character": "jiang", "expression": "resolute", "beats": [{ "character": "jiang", "expression": "resolute", "motion": "focus" }, { "background": "video_room", "character": "jiang", "expression": "clinical", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "framing": "wide", "motion": "tense" }] },
+    "e2.aftermath.liquidity_first": { "background": "training_ground_afternoon", "character": "he", "expression": "frustrated", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "background": "academy_dormitory", "character": "zhao", "expression": "concerned", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
+    "e2.aftermath.first_team_push": { "background": "locker_room", "character": "qiao", "expression": "exacting", "beats": [{ "character": "qiao", "expression": "exacting", "motion": "focus" }, { "background": "locker_room", "character": "lin", "expression": "steady", "motion": "focus" }] },
+    "e2.aftermath.build_capacity": { "background": "medical_room", "character": "jiang", "expression": "resolute", "beats": [{ "character": "jiang", "expression": "resolute", "motion": "focus" }, { "background": "video_room", "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "jiang", "supportingExpression": "clinical", "supportingPosition": "right", "framing": "wide", "motion": "tense" }] },
     "e2.echo.0": { "background": "finance_office", "character": "qiao", "expression": "exacting", "motion": "focus" },
     "e2.echo.1": { "background": "finance_office", "character": "qiao", "expression": "concerned", "motion": "focus" },
     "e2.echo.2": { "background": "boardroom_morning", "character": "shen", "expression": "stern", "motion": "focus" },
 
     "e3.opening.0": { "background": "video_room", "character": null, "beats": [{ "character": "he", "expression": "focused", "position": "left", "supportingCharacter": "gu", "supportingExpression": "composed", "supportingPosition": "right", "framing": "wide", "motion": "enter" }, { "character": "gu", "expression": "intense", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
-    "e3.opening.1": { "background": "empty_training_pitch_dusk", "character": "he", "expression": "focused", "beats": [{ "character": "he", "expression": "focused", "motion": "enter" }, { "background": "video_room", "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "analyst", "supportingExpression": "concerned", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
-    "e3.opening.2": { "background": "video_room", "character": "lin", "expression": "steady", "beats": [{ "expression": "steady", "motion": "enter" }, { "expression": "resolute", "motion": "focus" }] },
+    "e3.opening.1": { "background": "empty_training_pitch_dusk", "character": "he", "expression": "focused", "beats": [{ "character": "he", "expression": "focused", "motion": "enter" }, { "background": "video_room", "character": "chen", "expression": "nervous", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "framing": "wide", "motion": "focus" }, { "background": "video_room", "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "chen", "supportingExpression": "nervous", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
+    "e3.opening.2": { "background": "video_room", "character": "gu", "expression": "composed", "beats": [{ "character": "gu", "expression": "composed", "motion": "enter" }, { "character": "lin", "expression": "resolute", "motion": "focus" }] },
     "e3.inquiry.menu": { "background": "video_room", "character": null, "tone": "quiet" },
     "e3.inquiry.ask_he": { "background": "video_room", "character": "he", "expression": "focused", "motion": "focus" },
     "e3.inquiry.ask_analyst": { "background": "video_room", "character": "analyst", "expression": "firm", "motion": "focus" },
     "e3.inquiry.ask_lin": { "background": "locker_room", "character": "lin", "expression": "steady", "motion": "focus" },
     "e3.decision": { "background": "video_room", "character": null, "tone": "decision" },
-    "e3.aftermath.back_he": { "background": "video_room", "character": "he", "expression": "focused", "beats": [{ "character": "he", "expression": "focused", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "chen", "supportingExpression": "frustrated", "supportingPosition": "right", "framing": "wide", "motion": "enter" }] },
-    "e3.aftermath.pressing_identity": { "background": "video_room", "character": "he", "expression": "frustrated", "position": "left", "supportingCharacter": "zhao", "supportingExpression": "patient", "supportingPosition": "right", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "character": "he", "expression": "guarded", "position": "left", "supportingCharacter": "zhao", "supportingExpression": "patient", "supportingPosition": "right", "motion": "enter" }] },
-    "e3.aftermath.shared_principles": { "background": "locker_room", "character": "lin", "expression": "resolute", "beats": [{ "character": "lin", "expression": "resolute", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "lin", "expression": "steady", "motion": "enter" }] },
+    "e3.aftermath.back_he": { "background": "video_room", "character": "he", "expression": "focused", "beats": [{ "character": "he", "expression": "focused", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "chen", "expression": "frustrated", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "framing": "wide", "motion": "enter" }] },
+    "e3.aftermath.pressing_identity": { "background": "video_room", "character": "he", "expression": "frustrated", "position": "left", "supportingCharacter": "zhao", "supportingExpression": "patient", "supportingPosition": "right", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "character": "chen", "expression": "frustrated", "position": "right", "supportingCharacter": "he", "supportingExpression": "guarded", "supportingPosition": "left", "motion": "enter" }] },
+    "e3.aftermath.shared_principles": { "background": "locker_room", "character": "lin", "expression": "resolute", "beats": [{ "character": "lin", "expression": "resolute", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "he", "expression": "focused", "motion": "enter" }] },
 
     "e4.opening.0": { "background": "meeting_room_evening", "character": "qiao", "expression": "exacting", "position": "right", "supportingCharacter": "lin", "supportingExpression": "vulnerable", "supportingPosition": "left", "beats": [{ "expression": "exacting", "motion": "enter" }, { "expression": "concerned", "motion": "focus" }] },
     "e4.opening.1": { "background": "meeting_room_evening", "character": "lin", "expression": "vulnerable", "position": "left", "supportingCharacter": "qiao", "supportingExpression": "concerned", "supportingPosition": "right", "beats": [{ "expression": "vulnerable", "motion": "enter" }, { "expression": "resolute", "motion": "focus" }] },
@@ -302,26 +309,26 @@
     "e4.inquiry.ask_he": { "background": "training_ground_afternoon", "character": "he", "expression": "guarded", "motion": "focus" },
     "e4.inquiry.ask_qiao": { "background": "meeting_room_evening", "character": "qiao", "expression": "exacting", "motion": "focus" },
     "e4.decision": { "background": "meeting_room_evening", "character": null, "tone": "decision" },
-    "e4.aftermath.sell_captain": { "background": "locker_room", "character": "lin", "expression": "resolute", "beats": [{ "character": "lin", "expression": "resolute", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "lin", "expression": "resolute", "position": "left", "supportingCharacter": "chen", "supportingExpression": "nervous", "supportingPosition": "right", "framing": "wide", "motion": "enter" }] },
-    "e4.aftermath.renew_captain": { "background": "locker_room", "character": "lin", "expression": "steady", "beats": [{ "character": "lin", "expression": "steady", "motion": "enter" }, { "character": "lin", "expression": "resolute", "motion": "focus" }] },
-    "e4.aftermath.last_dance": { "background": "meeting_room_evening", "character": "lin", "expression": "vulnerable", "beats": [{ "character": "lin", "expression": "vulnerable", "motion": "focus" }, { "background": "finance_office", "character": "lin", "expression": "vulnerable", "position": "left", "supportingCharacter": "qiao", "supportingExpression": "concerned", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
+    "e4.aftermath.sell_captain": { "background": "locker_room", "character": "lin", "expression": "resolute", "beats": [{ "character": "lin", "expression": "resolute", "motion": "focus" }, { "background": "empty_training_pitch_dusk", "character": "chen", "expression": "nervous", "position": "right", "supportingCharacter": "lin", "supportingExpression": "resolute", "supportingPosition": "left", "framing": "wide", "motion": "enter" }] },
+    "e4.aftermath.renew_captain": { "background": "locker_room", "character": "lin", "expression": "steady", "beats": [{ "character": "lin", "expression": "steady", "motion": "enter" }, { "character": "he", "expression": "focused", "motion": "focus" }] },
+    "e4.aftermath.last_dance": { "background": "meeting_room_evening", "character": "lin", "expression": "vulnerable", "beats": [{ "character": "lin", "expression": "vulnerable", "motion": "focus" }, { "background": "finance_office", "character": "qiao", "expression": "concerned", "position": "right", "supportingCharacter": "lin", "supportingExpression": "vulnerable", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
     "e4.echo.0": { "background": "meeting_room_evening", "character": "qiao", "expression": "concerned", "motion": "focus" },
     "e4.echo.1": { "background": "finance_office", "character": "qiao", "expression": "exacting", "motion": "focus" },
     "e4.echo.2": { "background": "locker_room", "character": "he", "expression": "guarded", "motion": "focus" },
 
-    "e5.opening.0": { "background": "east_stand_rain", "character": null, "beats": [{ "character": null, "motion": "enter" }, { "character": "sponsor", "expression": "calculating", "motion": "focus" }] },
+    "e5.opening.0": { "background": "east_stand_rain", "character": null, "beats": [{ "character": null, "motion": "enter" }, { "character": "shen", "expression": "stern", "motion": "focus" }] },
     "e5.opening.1": { "background": "east_stand_rain", "character": "tang", "expression": "guarded", "beats": [{ "expression": "guarded", "motion": "enter" }, { "expression": "resolute", "motion": "focus" }] },
     "e5.inquiry.menu": { "background": "east_stand_rain", "character": null, "tone": "quiet" },
     "e5.inquiry.ask_sponsor": { "background": "east_stand_commercial", "character": "sponsor", "expression": "calculating", "motion": "focus" },
     "e5.inquiry.ask_tang": { "background": "east_stand_rain", "character": "tang", "expression": "resolute", "motion": "focus" },
     "e5.inquiry.ask_qiao": { "background": "finance_office", "character": "qiao", "expression": "concerned", "motion": "focus" },
     "e5.decision": { "background": "east_stand_rain", "character": null, "tone": "decision" },
-    "e5.aftermath.full_naming": { "background": "east_stand_commercial", "character": null, "beats": [{ "character": null, "motion": "focus" }, { "character": "tang", "expression": "guarded", "motion": "tense" }] },
-    "e5.aftermath.hybrid_naming": { "background": "heritage_matchday", "character": "tang", "expression": "hopeful", "beats": [{ "expression": "hopeful", "motion": "enter" }, { "expression": "resolute", "motion": "focus" }] },
+    "e5.aftermath.full_naming": { "background": "east_stand_commercial", "character": "tang", "expression": "guarded", "beats": [{ "character": "tang", "expression": "guarded", "motion": "focus" }, { "character": "tang", "expression": "guarded", "motion": "tense" }] },
+    "e5.aftermath.hybrid_naming": { "background": "heritage_matchday", "character": "tang", "expression": "hopeful", "beats": [{ "character": "tang", "expression": "hopeful", "motion": "enter" }, { "character": "shen", "expression": "stern", "motion": "focus" }] },
     "e5.aftermath.supporter_bond": { "background": "east_stand_rain", "character": "tang", "expression": "hopeful", "beats": [{ "character": "tang", "expression": "hopeful", "motion": "enter" }, { "background": "finance_office", "character": "qiao", "expression": "exacting", "motion": "focus" }] },
     "e5.echo.0": { "background": "east_stand_rain", "character": "tang", "expression": "resolute", "motion": "focus" },
-    "e5.echo.1": { "background": "east_stand_rain", "character": null, "tone": "quiet" },
-    "e5.echo.2": { "background": "east_stand_commercial", "character": "sponsor", "expression": "courteous", "motion": "focus" },
+    "e5.echo.1": { "background": "east_stand_rain", "character": "tang", "expression": "guarded", "tone": "quiet" },
+    "e5.echo.2": { "background": "east_stand_commercial", "character": "shen", "expression": "stern", "motion": "focus" },
 
     "e6.opening.0": { "background": "away_tunnel_night", "character": null, "beats": [{ "character": null, "motion": "enter" }, { "character": "shen", "expression": "stern", "position": "right", "supportingCharacter": "he", "supportingExpression": "frustrated", "supportingPosition": "left", "motion": "focus" }] },
     "e6.opening.1": { "background": "away_tunnel_night", "character": "he", "expression": "frustrated", "position": "left", "supportingCharacter": "$captain", "supportingExpression": "resolute", "supportingPosition": "right", "beats": [{ "expression": "frustrated", "motion": "tense" }, { "expression": "guarded", "motion": "focus" }] },
@@ -330,12 +337,12 @@
     "e6.inquiry.ask_qiao": { "background": "finance_office", "character": "qiao", "expression": "exacting", "motion": "focus" },
     "e6.inquiry.ask_jiang": { "background": "medical_room", "character": "jiang", "expression": "concerned", "motion": "focus" },
     "e6.decision": { "background": "away_tunnel_night", "character": null, "tone": "decision" },
-    "e6.aftermath.back_coach": { "background": "press_room", "character": "he", "expression": "guarded", "beats": [{ "character": "he", "expression": "guarded", "motion": "focus" }, { "background": "training_ground_afternoon", "character": "he", "expression": "focused", "motion": "enter" }] },
-    "e6.aftermath.hire_gu": { "background": "locker_room", "character": "he", "expression": "frustrated", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "background": "training_ground_afternoon", "character": "he", "expression": "frustrated", "position": "left", "supportingCharacter": "gu", "supportingExpression": "confident", "supportingPosition": "right", "framing": "wide", "motion": "enter" }] },
-    "e6.aftermath.three_game_review": { "background": "training_ground_afternoon", "character": null, "beats": [{ "character": null, "motion": "focus" }, { "background": "medical_room", "character": "jiang", "expression": "concerned", "motion": "focus" }] },
-    "e6.echo.0": { "background": "video_room", "character": "analyst", "expression": "firm", "motion": "focus" },
-    "e6.echo.1": { "background": "away_tunnel_night", "character": null, "tone": "quiet" },
-    "e6.echo.2": { "background": "locker_room", "character": null, "tone": "quiet" },
+    "e6.aftermath.back_coach": { "background": "press_room", "character": "he", "expression": "guarded", "beats": [{ "character": "he", "expression": "guarded", "motion": "focus" }, { "background": "training_ground_afternoon", "character": "jiang", "expression": "concerned", "motion": "enter" }] },
+    "e6.aftermath.hire_gu": { "background": "locker_room", "character": "he", "expression": "frustrated", "beats": [{ "character": "he", "expression": "frustrated", "motion": "tense" }, { "background": "training_ground_afternoon", "character": "gu", "expression": "confident", "position": "right", "supportingCharacter": "he", "supportingExpression": "frustrated", "supportingPosition": "left", "framing": "wide", "motion": "enter" }] },
+    "e6.aftermath.three_game_review": { "background": "training_ground_afternoon", "character": "he", "expression": "guarded", "beats": [{ "character": "he", "expression": "guarded", "motion": "focus" }, { "background": "medical_room", "character": "jiang", "expression": "concerned", "motion": "focus" }] },
+    "e6.echo.0": { "background": "video_room", "character": "he", "expression": "guarded", "motion": "focus" },
+    "e6.echo.1": { "background": "away_tunnel_night", "character": "he", "expression": "guarded", "tone": "quiet" },
+    "e6.echo.2": { "background": "locker_room", "character": "chen", "expression": "frustrated", "tone": "quiet" },
     "e6.echo.3": { "background": "sponsor_studio", "character": "sponsor", "expression": "pragmatic", "motion": "focus" },
     "e6.payment": { "background": "finance_office", "character": "qiao", "expression": "exacting", "motion": "focus" },
 
@@ -346,7 +353,7 @@
     "e7.inquiry.ask_coach": { "background": "locker_room", "character": "$coach", "expression": "$coach_focus", "motion": "focus" },
     "e7.inquiry.ask_sponsor": { "background": "sponsor_studio", "character": "sponsor", "expression": "pragmatic", "motion": "focus" },
     "e7.decision": { "background": "medical_room", "character": null, "tone": "decision" },
-    "e7.aftermath.medical_veto": { "background": "sponsor_studio", "character": "chen", "expression": "nervous", "beats": [{ "character": "chen", "expression": "nervous", "motion": "enter" }, { "background": "medical_room", "character": "chen", "expression": "nervous", "position": "left", "supportingCharacter": "jiang", "supportingExpression": "resolute", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
+    "e7.aftermath.medical_veto": { "background": "sponsor_studio", "character": "chen", "expression": "nervous", "beats": [{ "character": "chen", "expression": "nervous", "motion": "enter" }, { "background": "medical_room", "character": "jiang", "expression": "resolute", "position": "right", "supportingCharacter": "chen", "supportingExpression": "nervous", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
     "e7.aftermath.informed_choice": { "background": "training_ground_winter", "character": "player", "expression": "relieved", "beats": [{ "character": "player", "expression": "relieved", "motion": "focus" }, { "background": "medical_room", "character": "player", "expression": "relieved", "motion": "enter" }] },
     "e7.aftermath.play_and_shoot": { "background": "sponsor_studio", "character": "jiang", "expression": "concerned", "position": "right", "supportingCharacter": "player", "supportingExpression": "pain", "supportingPosition": "left", "beats": [{ "character": "jiang", "expression": "concerned", "motion": "tense" }, { "background": "medical_room", "character": "jiang", "expression": "resolute", "motion": "focus" }] },
     "e7.echo.0": { "background": "medical_room", "character": "jiang", "expression": "resolute", "motion": "focus" },
@@ -354,17 +361,17 @@
     "e7.echo.2": { "background": "sponsor_studio", "character": "sponsor", "expression": "pragmatic", "motion": "focus" },
     "e7.echo.3": { "background": "training_ground_winter", "character": "gu", "expression": "confident", "motion": "enter" },
     "e7.echo.4": { "background": "training_ground_winter", "character": "he", "expression": "guarded", "motion": "focus" },
-    "e7.echo.5": { "background": "training_ground_winter", "character": null, "tone": "quiet" },
+    "e7.echo.5": { "background": "training_ground_winter", "character": "he", "expression": "guarded", "tone": "quiet" },
 
     "e8.opening.0": { "background": "finance_committee_snow", "character": "qiao", "expression": "exacting", "position": "right", "supportingCharacter": "$coach", "supportingExpression": "$coach_focus", "supportingPosition": "left", "beats": [{ "expression": "exacting", "motion": "enter" }, { "expression": "concerned", "motion": "focus" }] },
-    "e8.opening.1": { "background": "agent_hotel_winter", "character": "zhao", "expression": "firm", "beats": [{ "character": "zhao", "expression": "firm", "position": "left", "supportingCharacter": "chen", "supportingExpression": "frustrated", "supportingPosition": "right", "motion": "focus" }, { "background": "finance_committee_snow", "character": "zhao", "expression": "firm", "position": "left", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "right", "motion": "focus" }] },
+    "e8.opening.1": { "background": "agent_hotel_winter", "character": "zhao", "expression": "firm", "beats": [{ "character": "zhao", "expression": "firm", "position": "left", "supportingCharacter": "chen", "supportingExpression": "frustrated", "supportingPosition": "right", "motion": "focus" }, { "background": "finance_committee_snow", "character": "shen", "expression": "stern", "position": "right", "supportingCharacter": "zhao", "supportingExpression": "firm", "supportingPosition": "left", "motion": "focus" }] },
     "e8.inquiry.menu": { "background": "agent_hotel_winter", "character": null, "tone": "quiet" },
     "e8.inquiry.ask_chen": { "background": "agent_hotel_winter", "character": "chen", "expression": "frustrated", "motion": "focus" },
     "e8.inquiry.ask_qiao": { "background": "finance_committee_snow", "character": "qiao", "expression": "exacting", "motion": "focus" },
     "e8.inquiry.ask_coach": { "background": "video_room", "character": "$coach", "expression": "$coach_focus", "motion": "focus" },
     "e8.decision": { "background": "finance_committee_snow", "character": null, "tone": "decision" },
-    "e8.aftermath.sell_chen": { "background": "agent_hotel_winter", "character": "chen", "expression": "frustrated", "beats": [{ "character": "chen", "expression": "frustrated", "motion": "focus" }, { "background": "finance_office", "character": "chen", "expression": "frustrated", "position": "left", "supportingCharacter": "qiao", "supportingExpression": "exacting", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
-    "e8.aftermath.shareholder_loan": { "background": "press_room", "character": "shen", "expression": "approving", "beats": [{ "character": "shen", "expression": "approving", "motion": "focus" }, { "background": "training_ground_winter", "character": "shen", "expression": "stern", "position": "left", "supportingCharacter": "$coach", "supportingExpression": "$coach_focus", "supportingPosition": "right", "framing": "wide", "motion": "enter" }] },
+    "e8.aftermath.sell_chen": { "background": "agent_hotel_winter", "character": "chen", "expression": "frustrated", "beats": [{ "character": "chen", "expression": "frustrated", "motion": "focus" }, { "background": "finance_office", "character": "qiao", "expression": "exacting", "position": "right", "supportingCharacter": "chen", "supportingExpression": "frustrated", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
+    "e8.aftermath.shareholder_loan": { "background": "press_room", "character": "shen", "expression": "approving", "beats": [{ "character": "shen", "expression": "approving", "motion": "focus" }, { "background": "finance_committee_snow", "character": "qiao", "expression": "concerned", "position": "right", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "left", "framing": "wide", "motion": "enter" }] },
     "e8.aftermath.hold_course": { "background": "locker_room", "character": "chen", "expression": "hopeful", "beats": [{ "character": "chen", "expression": "hopeful", "motion": "enter" }, { "background": "press_room", "character": "chen", "expression": "hopeful", "position": "left", "supportingCharacter": "$coach", "supportingExpression": "$coach_focus", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
     "e8.echo.0": { "background": "agent_hotel_winter", "character": "lin", "expression": "vulnerable", "motion": "focus" },
     "e8.echo.1": { "background": "finance_committee_snow", "character": "qiao", "expression": "exacting", "motion": "focus" },
@@ -381,7 +388,7 @@
     "e9.decision": { "background": "locker_room", "character": null, "tone": "decision" },
     "e9.aftermath.bonus_push": { "background": "locker_room", "character": null, "beats": [{ "character": null, "motion": "focus" }, { "background": "away_tunnel_night", "character": null, "motion": "tense" }] },
     "e9.aftermath.quiet_process": { "background": "press_room", "character": null, "beats": [{ "character": null, "motion": "focus" }, { "background": "locker_room", "character": null, "motion": "enter" }] },
-    "e9.aftermath.identity_runin": { "background": "heritage_matchday", "character": null, "beats": [{ "character": null, "motion": "enter" }, { "character": "tang", "expression": "hopeful", "motion": "focus" }] },
+    "e9.aftermath.identity_runin": { "background": "heritage_matchday", "character": "tang", "expression": "hopeful", "beats": [{ "character": "tang", "expression": "hopeful", "motion": "enter" }, { "character": "tang", "expression": "hopeful", "motion": "focus" }] },
     "e9.echo.0": { "background": "boardroom_morning", "character": "shen", "expression": "stern", "motion": "focus" },
     "e9.echo.1": { "background": "video_room", "character": "$coach", "expression": "$coach_focus", "motion": "focus" },
     "e9.echo.2": { "background": "medical_room", "character": "jiang", "expression": "clinical", "motion": "focus" },
@@ -390,13 +397,13 @@
     "e10.opening.0": { "background": "empty_stadium_morning", "character": null, "beats": [{ "character": null, "motion": "enter" }, { "background": "boardroom_season_end", "character": "qiao", "expression": "neutral", "position": "right", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "left", "motion": "focus" }] },
     "e10.opening.1": { "background": "locker_room", "character": "$captain", "expression": "steady", "beats": [{ "character": null, "motion": "enter" }, { "character": "$captain", "expression": "vulnerable", "motion": "focus" }] },
     "e10.inquiry.menu": { "background": "boardroom_season_end", "character": null, "tone": "quiet" },
-    "e10.inquiry.ask_qiao": { "background": "boardroom_season_end", "character": "qiao", "expression": "neutral", "motion": "focus" },
-    "e10.inquiry.ask_tang": { "background": "boardroom_season_end", "character": "tang", "expression": "resolute", "motion": "focus" },
-    "e10.inquiry.ask_coach": { "background": "boardroom_season_end", "character": "$coach", "expression": "$coach_focus", "motion": "focus" },
+    "e10.inquiry.ask_qiao": { "background": "boardroom_season_end", "character": "qiao", "expression": "neutral", "props": ["contract", "pen"], "motion": "focus" },
+    "e10.inquiry.ask_tang": { "background": "boardroom_season_end", "character": "tang", "expression": "resolute", "props": ["chair", "resolutions"], "motion": "focus" },
+    "e10.inquiry.ask_coach": { "background": "boardroom_season_end", "character": "$coach", "expression": "$coach_focus", "props": ["team-sheet"], "motion": "focus" },
     "e10.decision": { "background": "boardroom_season_end", "character": null, "tone": "decision" },
     "e10.aftermath.institutionalize": { "background": "boardroom_season_end", "character": "shen", "expression": "stern", "position": "left", "supportingCharacter": "qiao", "supportingExpression": "neutral", "supportingPosition": "right", "beats": [{ "character": "shen", "expression": "stern", "motion": "focus" }, { "character": "qiao", "expression": "neutral", "position": "right", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "left", "motion": "enter" }] },
-    "e10.aftermath.personal_project": { "background": "boardroom_season_end", "character": "shen", "expression": "approving", "beats": [{ "character": "shen", "expression": "approving", "motion": "focus" }, { "background": "boardroom_stairwell", "character": "shen", "expression": "stern", "position": "left", "supportingCharacter": "tang", "supportingExpression": "guarded", "supportingPosition": "right", "framing": "wide", "motion": "focus" }] },
-    "e10.aftermath.leave_record": { "background": "finance_office", "character": "qiao", "expression": "exacting", "beats": [{ "character": "qiao", "expression": "exacting", "motion": "focus" }, { "background": "empty_stadium_morning", "character": "qiao", "expression": "concerned", "motion": "enter" }] },
+    "e10.aftermath.personal_project": { "background": "boardroom_season_end", "character": "shen", "expression": "approving", "beats": [{ "character": "shen", "expression": "approving", "motion": "focus" }, { "background": "boardroom_stairwell", "character": "tang", "expression": "guarded", "position": "right", "supportingCharacter": "shen", "supportingExpression": "stern", "supportingPosition": "left", "framing": "wide", "motion": "focus" }] },
+    "e10.aftermath.leave_record": { "background": "finance_office", "character": "qiao", "expression": "exacting", "beats": [{ "character": "qiao", "expression": "exacting", "motion": "focus" }, { "background": "empty_stadium_morning", "character": "chen", "expression": "hopeful", "motion": "enter" }] },
     "e10.payment": { "background": "boardroom_season_end", "character": "qiao", "expression": "exacting", "motion": "focus" }
     }
   }
