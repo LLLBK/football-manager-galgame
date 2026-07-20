@@ -7,7 +7,7 @@
     <title>岚城联：一季之内</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=director-8" />
+    <link rel="stylesheet" href="styles.css?v=director-9" />
   </head>
   <body>
     <main class="app-shell">
@@ -41,7 +41,8 @@
             俱乐部名称
             <input id="teamName" name="teamName" maxlength="18" value="岚城联" autocomplete="off" />
           </label>
-          <button type="submit">从雨里走进去</button>
+          <button id="startBtn" type="submit" disabled aria-busy="true">正在载入球队…</button>
+          <p id="startStatus" class="start-status" role="status">正在读取这一季的第一场雨。</p>
           <button type="button" id="resumeBtn" class="text-btn hidden">继续上次的赛季</button>
         </form>
       </section>
@@ -230,6 +231,6 @@
     </section>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=director-8"></script>
+    <script src="app.js?v=director-9"></script>
   </body>
 </html>

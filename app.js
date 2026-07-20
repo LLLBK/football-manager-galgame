@@ -26,6 +26,8 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   startScreen: $("startScreen"),
   startForm: $("startForm"),
+  startBtn: $("startBtn"),
+  startStatus: $("startStatus"),
   managerName: $("managerName"),
   teamName: $("teamName"),
   resumeBtn: $("resumeBtn"),
@@ -2464,23 +2466,35 @@ function bindEvents() {
   });
 }
 
+function setStartReady(ready, message) {
+  ui.startBtn.disabled = !ready;
+  ui.startBtn.setAttribute("aria-busy", String(!ready));
+  ui.startBtn.textContent = ready ? "从雨里走进去" : "正在载入球队…";
+  ui.startStatus.textContent = message;
+}
+
+async function loadVisualData() {
+  try {
+    const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
+    if (!visualResponse.ok) return;
+    visualData = await visualResponse.json();
+    scheduleEpisodeVisualPreload(visualData.scope?.[0]);
+    if (state) render();
+  } catch (visualError) {
+    console.warn("视觉素材未载入，继续使用文字模式。", visualError);
+  }
+}
+
 async function boot() {
   try {
     const response = await fetch("story-data.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     gameData = await response.json();
-    try {
-      const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
-      if (visualResponse.ok) {
-        visualData = await visualResponse.json();
-        scheduleEpisodeVisualPreload(visualData.scope?.[0]);
-      }
-    } catch (visualError) {
-      console.warn("视觉素材未载入，继续使用文字模式。", visualError);
-    }
     bindEvents();
     setStoryFocus(localStorage.getItem(FOCUS_MODE_KEY) === "1");
     if (readSave()) ui.resumeBtn.classList.remove("hidden");
+    setStartReady(true, "剧情已经载入。现在可以从雨里走进去。");
+    loadVisualData();
   } catch (error) {
     ui.startForm.innerHTML = `
       <h2>剧情数据没有载入</h2>

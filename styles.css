@@ -255,6 +255,23 @@ input {
   background: var(--green-bright);
 }
 
+.start-form > button[type="submit"]:disabled {
+  cursor: wait;
+  background: #77847f;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.start-form > button[type="submit"]:disabled:hover {
+  background: #77847f;
+}
+
+.start-form .start-status {
+  margin-top: -9px;
+  color: #68746f;
+  font-size: 11px;
+  text-align: center;
+}
+
 .text-btn {
   border: 0;
   padding: 5px;
