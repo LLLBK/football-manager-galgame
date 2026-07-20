@@ -234,6 +234,23 @@
         { "expression": "evidence", "framing": "close", "motion": "tense" }
       ]
     },
+    "e1.opening.2": {
+      "background": "training_ground_afternoon",
+      "character": "he",
+      "supportingCharacter": "lin",
+      "expression": "focused",
+      "supportingExpression": "steady",
+      "position": "left",
+      "supportingPosition": "right",
+      "camera": "medium",
+      "beats": [
+        { "character": "he", "expression": "focused", "motion": "tense" },
+        { "character": "lin", "expression": "steady", "motion": "focus" },
+        { "character": "he", "expression": "guarded", "motion": "focus" },
+        { "character": "lin", "expression": "vulnerable", "motion": "focus", "camera": "hands" },
+        { "character": "he", "expression": "guarded", "framing": "close", "motion": "tense" }
+      ]
+    },
     "e1.inquiry.menu": {
       "background": "boardroom_morning",
       "character": null,

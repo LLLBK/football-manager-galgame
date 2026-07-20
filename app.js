@@ -142,7 +142,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 7,
+    contentRevision: 8,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -233,6 +233,15 @@ function readSave() {
         saved.sceneIndex = 0;
       }
       saved.contentRevision = 7;
+    }
+    if ((saved.contentRevision || 0) < 8) {
+      saved.visualBeatKey = null;
+      saved.visualBeatIndex = 0;
+      if (saved.currentEpisode === 0 && !saved.decisions?.e1) {
+        saved.phase = "scenes";
+        saved.sceneIndex = 0;
+      }
+      saved.contentRevision = 8;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -840,32 +849,62 @@ function resolveFinanceCrisis(choice) {
   scrollToStory();
 }
 
+function splitStoryParagraph(paragraph) {
+  const text = String(paragraph || "").trim();
+  if (!text) return [];
+  if (text.length <= 28) return [text];
+
+  const isChineseQuote = text.startsWith("“") && text.endsWith("”");
+  const source = isChineseQuote ? text.slice(1, -1) : text;
+  const pieces = source.match(/[^。！？!?；;]+[。！？!?；;]+|[^。！？!?；;]+$/g)
+    ?.map((item) => item.trim())
+    .filter(Boolean) || [source];
+
+  if (pieces.length <= 1) return [text];
+  return pieces.map((item) => isChineseQuote ? `“${item}”` : item);
+}
+
+function buildStoryBeats(body, speaker, speakers = []) {
+  return body.flatMap((paragraph, paragraphIndex) => {
+    const beatSpeaker = speakers[paragraphIndex] || speaker;
+    return splitStoryParagraph(paragraph).map((text) => ({
+      text,
+      speaker: beatSpeaker,
+      visualBeatIndex: paragraphIndex
+    }));
+  });
+}
+
 function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" }, meta, visualKey = null) {
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
   const visual = getVisualScene(visualKey);
+  const storyBeats = buildStoryBeats(body, speaker, speakers);
   let visibleBody = body;
   let activeSpeaker = speaker;
 
-  if (visual && body.length) {
+  if (visual && storyBeats.length) {
     if (state.visualBeatKey !== visualKey) {
       state.visualBeatKey = visualKey;
       state.visualBeatIndex = 0;
     }
-    const beatIndex = Math.min(state.visualBeatIndex || 0, body.length - 1);
-    activeSpeaker = speakers[beatIndex] || speaker;
+    const beatIndex = Math.min(state.visualBeatIndex || 0, storyBeats.length - 1);
+    const storyBeat = storyBeats[beatIndex];
+    activeSpeaker = storyBeat.speaker;
     const beat = {
       ...visual,
-      ...(visual.beats?.[beatIndex] || {}),
+      ...(visual.beats?.[storyBeat.visualBeatIndex] || {}),
       visualKey,
       beatIndex
     };
     if (renderVisualStage(beat, meta)) {
-      visibleBody = [body[beatIndex]];
+      visibleBody = [storyBeat.text];
       activeVisualPage = {
         key: visualKey,
-        hasNext: beatIndex < body.length - 1
+        hasNext: beatIndex < storyBeats.length - 1,
+        current: beatIndex + 1,
+        total: storyBeats.length
       };
     } else {
       state.visualBeatKey = null;
@@ -877,7 +916,7 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
     hideVisualStage();
   }
 
-  ui.eventSpeaker.textContent = activeSpeaker;
+  ui.eventSpeaker.textContent = activeSpeaker === "现场" ? "现场动作" : activeSpeaker;
   const speakerRole = roleForSpeaker(activeSpeaker);
   ui.eventRole.textContent = speakerRole;
   ui.eventRole.classList.toggle("hidden", !speakerRole);
@@ -890,7 +929,7 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
 
 function showContinue(label, handler) {
   if (activeVisualPage?.hasNext) {
-    ui.continueBtn.textContent = "继续";
+    ui.continueBtn.textContent = `继续  ${activeVisualPage.current} / ${activeVisualPage.total}`;
     ui.continueBtn.onclick = () => {
       state.visualBeatIndex = (state.visualBeatIndex || 0) + 1;
       saveGame();
@@ -922,8 +961,22 @@ function hideVisualStage() {
 }
 
 const scenePropPlans = {
+  "e1.arrival.0": [["water-bucket"], ["water-bucket"], ["water-bucket"]],
+  "e1.arrival.1": [["water-bucket"], ["water-bucket"], ["water-bucket"], ["water-bucket"]],
+  "e1.arrival.2": [["water-bucket"], ["season-ticket"], ["resolutions"], ["resolutions", "season-ticket"]],
+  "e1.arrival.3": [["score-card"], ["score-card"], ["contract"], ["score-card"]],
+  "e1.arrival.4": [["cash-sheets"], ["folder-stack"], ["cash-sheets"], ["folder-stack"], ["cash-sheets", "pen"]],
   "e1.opening.0": [["contract", "pen"], ["investment-folder", "pen"]],
-  "e1.opening.1": [[], [], []],
+  "e1.opening.1": [[], [], [], [], []],
+  "e1.opening.2": [["tactics-board"], ["water-bottle"], ["tactics-board"], ["water-bottle"], ["tactics-board", "water-bottle"]],
+  "e3.arrival.0": [["water-bottle"], ["training-shirt"], ["tactics-board"]],
+  "e4.arrival.0": [["phone"], ["offer-sheet"], ["tactics-board", "armband"]],
+  "e5.arrival.0": [["sponsor-board"], ["resolutions"], ["water-bucket"], ["water-bucket"]],
+  "e6.arrival.0": [["score-card"], ["training-shirt"], ["training-sheet", "phone"], ["training-sheet", "phone"]],
+  "e7.arrival.0": [["phone"], ["phone"], ["medical-chart"], ["medical-chart"]],
+  "e8.arrival.0": [["cash-sheets"], ["cash-sheets"], ["offer-sheet"], ["offer-sheet", "cash-sheets"]],
+  "e9.arrival.0": [["training-shirt"], ["offer-sheet", "cash-sheets"], ["standings-sheet"], ["standings-sheet"]],
+  "e10.arrival.0": [["water-bucket"], ["water-bucket"], ["wall-notes", "armband"], ["contract"]],
   "e2.opening.0": [["cash-sheets", "pen"], ["cash-sheets", "folder-stack"]],
   "e2.opening.1": [["tactics-board"], ["tactics-board", "bench-cards"]],
   "e2.opening.2": [["registration-sheet"], ["folder-stack"]],
@@ -1990,19 +2043,79 @@ function finishSeason() {
   showScreen("result");
 }
 
+const decisionTendencies = {
+  board_mandate: "ascent", club_charter: "institution", sporting_control: "authority",
+  liquidity_first: "institution", first_team_push: "ascent", build_capacity: "institution",
+  back_he: "authority", pressing_identity: "ascent", shared_principles: "institution",
+  sell_captain: "ascent", renew_captain: "relationship", last_dance: "relationship",
+  full_naming: "ascent", hybrid_naming: "institution", supporter_bond: "relationship",
+  back_coach: "relationship", hire_gu: "ascent", three_game_review: "institution",
+  medical_veto: "institution", informed_choice: "relationship", play_and_shoot: "ascent",
+  sell_chen: "ascent", shareholder_loan: "authority", hold_course: "institution",
+  bonus_push: "ascent", quiet_process: "institution", identity_runin: "relationship",
+  institutionalize: "institution", personal_project: "authority", leave_record: "relationship"
+};
+
+function deriveSeasonEnding(position) {
+  const tendencyCounts = { ascent: 0, institution: 0, authority: 0, relationship: 0 };
+  Object.values(state.decisions).forEach((decisionId) => {
+    const tendency = decisionTendencies[decisionId];
+    if (tendency) tendencyCounts[tendency] += 1;
+  });
+  const strongest = Object.entries(tendencyCounts)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || "institution";
+  const promiseResults = state.promises.map((promise) => evaluatePromise(promise.id, position));
+  const brokenPromises = promiseResults.filter((item) => item.status === "broken").length;
+  const openDoors = Object.values(state.characterStates || {})
+    .filter((item) => item.behavior === "open").length;
+  const trustValues = Object.values(state.characterTrust || {});
+  const averageTrust = trustValues.length
+    ? trustValues.reduce((sum, value) => sum + value, 0) / trustValues.length
+    : 0;
+
+  const patternCopy = {
+    ascent: "这一季，你最常把资源押在能够立刻被看见的上升上。",
+    institution: "这一季，你最常要求把边界、异议和到期日写进程序。",
+    authority: "这一季，你最常用清晰的个人责任换取行动速度。",
+    relationship: "这一季，你最常先保住一个具体的人、一段关系或一份共同记忆。"
+  }[strongest];
+
+  let title = "终场哨没有替你回答这一季";
+  if (getDecision("e10") === "leave_record") {
+    title = "你离开了，别人仍能沿着记录找到你说过的话";
+  } else if (position <= 6 && strongest === "ascent" && state.finance.cash < 1000) {
+    title = "上升故事兑现了，下一张账单也已经到门口";
+  } else if (strongest === "institution" && openDoors >= 5) {
+    title = "俱乐部终于学会在坏消息发生前反对你";
+  } else if (strongest === "authority" && averageTrust < 48) {
+    title = "决定变快了，每个错误也只剩你的名字";
+  } else if (strongest === "relationship" && brokenPromises > 0) {
+    title = "你守住了一些人，却没能守住所有说过的话";
+  } else if (position <= 6) {
+    title = "球队向上走了，但没有一种代价因此消失";
+  } else if (openDoors >= 5) {
+    title = "名次没有成为故事，仍有人愿意把坏消息先告诉你";
+  }
+
+  const accessSentence = openDoors >= 6
+    ? `${openDoors}个人仍愿意在坏消息公开前先来敲你的门。`
+    : openDoors >= 3
+      ? `${openDoors}个人还会直接来找你，其他人已经改走正式邮件、经纪人或董事会。`
+      : "赛季结束时，大多数人已经不再把私下谈话当成可靠承诺。";
+  const promiseSentence = brokenPromises
+    ? `${brokenPromises}项明确承诺已经失信；它们不会被最终排名自动抹掉。`
+    : "到期的明确承诺没有被最后一轮比分改写。";
+
+  return { title, patternCopy, accessSentence, promiseSentence };
+}
+
 function renderResult() {
   const position = projectedPosition();
   const finalChoice = getDecision("e10");
+  const seasonEnding = deriveSeasonEnding(position);
   ui.resultTitle.textContent = `${state.clubName}的一季结束了`;
   ui.resultSubtitle.textContent = `${state.managerName}的任期记录 · ${gameData.meta.season}`;
-
-  if (position <= 6) {
-    ui.verdictTitle.textContent = `第${position}名：目标实现，代价没有因此消失`;
-  } else if (position <= 10) {
-    ui.verdictTitle.textContent = `第${position}名：没有奇迹，也不是一句失败能够概括`;
-  } else {
-    ui.verdictTitle.textContent = `第${position}名：球队活了下来，信任却需要更长时间修复`;
-  }
+  ui.verdictTitle.textContent = seasonEnding.title;
 
   const financeSentence = state.finance.cash >= 1000
     ? `俱乐部以${formatMoney(state.finance.cash)}现金结束赛季，仍有选择空间。`
@@ -2014,7 +2127,11 @@ function renderResult() {
     : state.operations.dressingRoom >= 45
       ? "更衣室没有瓦解，但人们会先确认风险由谁承担。"
       : "更衣室已经学会先保护自己，再听管理层解释。";
-  ui.verdictBody.innerHTML = `<p>${financeSentence}</p><p>${culture} 排名记录了结果，却没有替这些关系作最终判决。</p>`;
+  ui.verdictBody.innerHTML = `
+    <p>${seasonEnding.patternCopy}</p>
+    <p>${financeSentence}</p>
+    <p>${culture} ${seasonEnding.accessSentence}</p>
+    <p>${seasonEnding.promiseSentence}</p>`;
 
   ui.finalStats.innerHTML = `
     <div><span>联赛最终推定</span><strong>第${position}名</strong></div>
