@@ -7,7 +7,7 @@
     <title>岚城联：一季之内</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/boardroom-morning-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/shen/neutral-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=director-5" />
+    <link rel="stylesheet" href="styles.css?v=director-6" />
   </head>
   <body>
     <main class="app-shell">
@@ -53,6 +53,7 @@
             <h1 id="clubTitle">岚城联</h1>
           </div>
           <div class="topbar-actions">
+            <button id="glossaryBtn" class="ghost-btn" type="button">足球词语</button>
             <button id="focusModeBtn" class="ghost-btn focus-mode-btn" type="button" aria-pressed="false">剧情聚焦</button>
             <button id="exportBtn" class="ghost-btn" type="button">导出任期记录</button>
             <button id="restartBtn" class="ghost-btn danger" type="button">重新开始</button>
@@ -73,6 +74,12 @@
               <div class="payables">
                 <h2>接下来必须支付</h2>
                 <ul id="payablesList"></ul>
+              </div>
+              <div class="cash-forecast" id="cashForecast">
+                <span>已知付款全部兑现后</span>
+                <strong id="forecastValue">—</strong>
+                <b id="runwayStatus">—</b>
+                <p id="forecastDetail">这里不计算尚未确定的赞助或卖人收入。</p>
               </div>
             </section>
 
@@ -206,7 +213,20 @@
       </section>
     </main>
 
+    <section id="glossaryPanel" class="glossary-panel hidden" role="dialog" aria-modal="true" aria-labelledby="glossaryTitle">
+      <div class="glossary-dialog">
+        <header>
+          <div>
+            <p class="eyebrow">FOOTBALL IN PLAIN WORDS</p>
+            <h2 id="glossaryTitle">足球词语</h2>
+          </div>
+          <button id="glossaryCloseBtn" class="ghost-btn" type="button">关闭</button>
+        </header>
+        <div id="glossaryContent" class="glossary-content"></div>
+      </div>
+    </section>
+
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=director-5"></script>
+    <script src="app.js?v=director-6"></script>
   </body>
 </html>

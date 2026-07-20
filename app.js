@@ -34,6 +34,11 @@ const ui = {
   restartBtn: $("restartBtn"),
   exportBtn: $("exportBtn"),
   focusModeBtn: $("focusModeBtn"),
+  glossaryBtn: $("glossaryBtn"),
+  glossaryPanel: $("glossaryPanel"),
+  glossaryCloseBtn: $("glossaryCloseBtn"),
+  glossaryTitle: $("glossaryTitle"),
+  glossaryContent: $("glossaryContent"),
   resultExportBtn: $("resultExportBtn"),
   resultRestartBtn: $("resultRestartBtn"),
   seasonLabel: $("seasonLabel"),
@@ -44,6 +49,9 @@ const ui = {
   restrictedValue: $("restrictedValue"),
   recordValue: $("recordValue"),
   payablesList: $("payablesList"),
+  forecastValue: $("forecastValue"),
+  runwayStatus: $("runwayStatus"),
+  forecastDetail: $("forecastDetail"),
   promiseCount: $("promiseCount"),
   promiseList: $("promiseList"),
   threadCount: $("threadCount"),
@@ -132,7 +140,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 4,
+    contentRevision: 5,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -150,12 +158,21 @@ function createInitialState(managerName, clubName) {
     operations: initial.operations,
     pitch: initial.pitch,
     characterTrust: initial.characterTrust,
+    characterStates: Object.fromEntries(
+      gameData.characters.map((person) => [person.id, { behavior: "open", memories: [] }])
+    ),
     promises: initial.promises,
     openThreads: initial.openThreads,
     payables: initial.payables,
     paidPayables: [],
     paymentNotices: {},
     knowledge: [],
+    interactionFinalized: {},
+    causalLedger: [],
+    seenTerms: [],
+    pendingCrisis: null,
+    crisisReturnPhase: null,
+    financeCrises: [],
     tags: [],
     history: [],
     matchReports: [],
@@ -178,6 +195,16 @@ function readSave() {
     saved.proactiveQuestions ||= {};
     saved.proactiveRemaining ??= PROACTIVE_INQUIRY_LIMIT;
     saved.phaseBeforeProactive ??= null;
+    saved.characterStates ||= Object.fromEntries(
+      gameData.characters.map((person) => [person.id, { behavior: "open", memories: [] }])
+    );
+    saved.interactionFinalized ||= {};
+    saved.causalLedger ||= [];
+    saved.seenTerms ||= [];
+    saved.pendingCrisis ??= null;
+    saved.crisisReturnPhase ??= null;
+    saved.financeCrises ||= [];
+    saved.pitch.squadDepth ??= 54;
     if ((saved.contentRevision || 0) < 3) {
       const previousMinCash = saved.minCash ?? saved.finance.cash;
       saved.finance.cash -= 600;
@@ -187,6 +214,9 @@ function readSave() {
     if ((saved.contentRevision || 0) < 4) {
       migrateSavedCharacterNames(saved);
       saved.contentRevision = 4;
+    }
+    if ((saved.contentRevision || 0) < 5) {
+      saved.contentRevision = 5;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -248,8 +278,26 @@ function processDuePayments(episodeNumber) {
   const due = state.payables.filter(
     (item) => item.dueEpisode === episodeNumber && !state.paidPayables.includes(item.id)
   );
-  if (!due.length) return;
+  if (!due.length) return true;
 
+  const total = due.reduce((sum, item) => sum + item.amount, 0);
+  if (state.finance.cash < total) {
+    state.pendingCrisis = {
+      episodeNumber,
+      items: clone(due),
+      total,
+      shortage: total - state.finance.cash
+    };
+    state.crisisReturnPhase = "scenes";
+    state.phase = "financeCrisis";
+    return false;
+  }
+
+  settleDuePayments(due, episodeNumber);
+  return true;
+}
+
+function settleDuePayments(due, episodeNumber) {
   due.forEach((item) => {
     state.finance.cash -= item.amount;
     state.paidPayables.push(item.id);
@@ -270,6 +318,32 @@ function processDuePayments(episodeNumber) {
     kind: "到期付款",
     visualKey: `${currentEpisode().id}.payment`
   }));
+}
+
+function financeProjection(extraCash = 0, extraPayables = []) {
+  const futurePayables = state.payables
+    .filter((item) => !state.paidPayables.includes(item.id))
+    .concat(extraPayables || []);
+  const committed = futurePayables.reduce((sum, item) => sum + item.amount, 0);
+  const projected = state.finance.cash + extraCash - committed;
+  let level = "choice";
+  let label = "仍有选择空间";
+  if (projected < 0) {
+    level = "insolvent";
+    label = "已知付款将出现缺口";
+  } else if (projected < 400) {
+    level = "critical";
+    label = "临界：新支出必须有补救";
+  } else if (projected < 1000) {
+    level = "fragile";
+    label = "脆弱：一次意外就会出事";
+  }
+  return { projected, committed, level, label, futurePayables };
+}
+
+function dueLabel(item) {
+  const episode = gameData.episodes.find((candidate) => candidate.number === item.dueEpisode);
+  return episode ? `${episode.date} · ${item.text}` : `赛季后 · ${item.text}`;
 }
 
 function getSceneQueue(episode) {
@@ -346,6 +420,15 @@ function renderChrome() {
         .join("")
     : '<li class="empty-item">本季已知付款均已处理</li>';
 
+  const projection = financeProjection();
+  ui.forecastValue.textContent = formatMoney(projection.projected);
+  ui.runwayStatus.textContent = projection.label;
+  ui.runwayStatus.dataset.level = projection.level;
+  const nextPayable = futurePayables[0];
+  ui.forecastDetail.textContent = nextPayable
+    ? `下一笔：${dueLabel(nextPayable)}。不把尚未确定的赞助或卖人收入算进来。`
+    : "本季已知付款已经处理；未来新合同仍会增加义务。";
+
   ui.promiseCount.textContent = state.promises.length;
   ui.promiseList.innerHTML = state.promises.length
     ? state.promises
@@ -395,12 +478,19 @@ function renderDossier() {
   const selected = state.questions[episode.id] || [];
   const proactiveSelected = state.proactiveQuestions[episode.id] || [];
   const recentKnowledge = state.knowledge.slice(-3);
+  const interactionLabels = {
+    destination: "最后去见",
+    stress_test: "方案压力测试",
+    replay: "失败重放"
+  };
+  const interactionLabel = interactionLabels[episode.inquiry.mode] || "决策前核实";
+  const proactiveAllowed = episode.inquiry.allowProactive !== false;
   ui.clubDossier.innerHTML = `
     <dl>
       <div><dt>你的职位</dt><dd>足球运营总经理</dd></div>
       <div><dt>本集时点</dt><dd>${escapeHtml(episode.phase)}</dd></div>
-      <div><dt>决策前核实</dt><dd>${selected.length} / ${episode.inquiry.max}</dd></div>
-      <div><dt>本集主动了解</dt><dd>${proactiveSelected.length ? "已使用" : "未使用"}</dd></div>
+      <div><dt>${interactionLabel}</dt><dd>${selected.length ? "已完成" : "尚未发生"}</dd></div>
+      <div><dt>主动了解</dt><dd>${proactiveAllowed ? (proactiveSelected.length ? "本集已使用" : `赛季余 ${state.proactiveRemaining} 次`) : "随现场发生"}</dd></div>
     </dl>
     <div class="known-facts">
       <strong>最近确认的事实</strong>
@@ -415,9 +505,11 @@ function renderDossier() {
   const canUseNow = state.phase === "scenes" && state.sceneIndex >= scenes.length - 1;
   const usedThisEpisode = proactiveSelected.length > 0;
   ui.proactiveInquiryCount.textContent = `${state.proactiveRemaining} / ${PROACTIVE_INQUIRY_LIMIT}`;
-  ui.proactiveInquiryBtn.disabled = !canUseNow || usedThisEpisode || state.proactiveRemaining <= 0;
+  ui.proactiveInquiryBtn.disabled = !proactiveAllowed || !canUseNow || usedThisEpisode || state.proactiveRemaining <= 0;
   ui.proactiveInquiryBtn.textContent = state.phase === "proactive" ? "正在主动了解" : "主动找人了解";
-  if (state.phase === "proactive") {
+  if (!proactiveAllowed) {
+    ui.proactiveInquiryNote.textContent = episode.inquiry.proactiveNote || "这一集的互动发生在现场，不另设主动约谈。";
+  } else if (state.phase === "proactive") {
     ui.proactiveInquiryNote.textContent = "这次谈话由你发起；结束后会回到刚才的现场进度。";
   } else if (state.proactiveRemaining <= 0) {
     ui.proactiveInquiryNote.textContent = "本赛季的主动了解机会已经用完。";
@@ -436,6 +528,40 @@ function relationText(value) {
   if (value >= 43) return "仍在观察你的下一次决定";
   if (value >= 30) return "开始通过别人向你传话";
   return "不再相信私下承诺";
+}
+
+function characterBehaviorText(id) {
+  const behavior = state.characterStates?.[id]?.behavior || "open";
+  const labels = {
+    open: "愿意在坏消息公开前先来找你",
+    guarded: "只回答你问到的，不再主动补充",
+    oppositional: "仍会说真话，但会组织别人共同施压",
+    withdrawn: "不再相信私下谈话，改走正式程序"
+  };
+  return labels[behavior] || labels.open;
+}
+
+function applyCharacterStateEffects(changes = {}) {
+  Object.entries(changes).forEach(([id, change]) => {
+    state.characterStates[id] ||= { behavior: "open", memories: [] };
+    if (change.behavior) state.characterStates[id].behavior = change.behavior;
+    const additions = change.memories || (change.memory ? [change.memory] : []);
+    additions.forEach((memory) => {
+      if (!state.characterStates[id].memories.includes(memory)) {
+        state.characterStates[id].memories.push(memory);
+      }
+    });
+  });
+}
+
+function addCausalEntries(entries = []) {
+  entries.forEach((entry) => {
+    const normalized = { ...clone(entry), createdEpisode: currentEpisode()?.number || 0 };
+    const duplicate = state.causalLedger.some(
+      (item) => item.sourceDecision === normalized.sourceDecision && item.text === normalized.text
+    );
+    if (!duplicate) state.causalLedger.push(normalized);
+  });
 }
 
 function displayRoleForCharacter(person) {
@@ -467,7 +593,9 @@ function renderCharacters() {
     .map((person) => {
       const changedCoach = getDecision("e6") === "hire_gu";
       const role = displayRoleForCharacter(person);
-      let status = relationText(state.characterTrust[person.id] ?? 50);
+      let status = state.characterStates?.[person.id]
+        ? characterBehaviorText(person.id)
+        : relationText(state.characterTrust[person.id] ?? 50);
       if (person.id === "he" && changedCoach) {
         status = "已经离任，影响仍留在队内";
       }
@@ -476,6 +604,9 @@ function renderCharacters() {
         <details class="character-item" ${activeIds.has(person.id) ? "open" : ""}>
           <summary><span><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(role)}</small></span></summary>
           <p>${escapeHtml(person.bio)}</p>
+          ${person.want ? `<p class="character-drive"><strong>他想要：</strong>${escapeHtml(person.want)}</p>` : ""}
+          ${person.fear ? `<p class="character-drive"><strong>他害怕：</strong>${escapeHtml(person.fear)}</p>` : ""}
+          ${person.habit ? `<p class="character-habit">${escapeHtml(person.habit)}</p>` : ""}
           <em>${escapeHtml(status)}</em>
         </details>`;
     })
@@ -535,9 +666,120 @@ function renderPhase() {
     case "match":
       renderMatch();
       break;
+    case "financeCrisis":
+      renderFinanceCrisis();
+      break;
     default:
       renderScene();
   }
+}
+
+function renderFinanceCrisis() {
+  const crisis = state.pendingCrisis;
+  if (!crisis) {
+    state.phase = state.crisisReturnPhase || "scenes";
+    renderPhase();
+    return;
+  }
+  const itemText = crisis.items.map((item) => `${item.text}${formatMoney(item.amount)}`).join("、");
+  setSceneContent(
+    {
+      speaker: "方雯",
+      title: "付款日到了，账户不够",
+      body: [
+        `今天必须支付${itemText}。账户只有${formatMoney(state.finance.cash)}，还差${formatMoney(crisis.shortage)}。`,
+        "方雯没有替你把余额写成负数。她把三份代价不同的处理文件摆在桌上：先决定谁为这个缺口付钱。"
+      ],
+      kind: "现金危机"
+    },
+    `${currentEpisode().date} · 到期付款`
+  );
+  ui.eventPrompt.innerHTML = "<strong>这不是延期显示的数字</strong><span>你的选择会改变所有权、阵容或付款信誉。</span>";
+  ui.eventPrompt.classList.remove("hidden");
+  const options = [
+    {
+      id: "bridge_loan",
+      label: "接受周绍庭的过桥借款",
+      action: `股东补足缺口并多留500万周转；两个月后按20%代价偿还，主席增加对足球预算的否决权。`
+    },
+    {
+      id: "emergency_sale",
+      label: "接受被压价的紧急出售",
+      action: "立即出售一名轮换球员补足付款；阵容深度下降，买方知道你没有等待更好报价的时间。"
+    },
+    {
+      id: "defer_payment",
+      label: "延迟这笔付款",
+      action: "把付款推迟到下一集并增加15%；供应商与员工先知道俱乐部失约，方雯会正式记录。"
+    }
+  ];
+  options.forEach((option) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "decision-choice crisis-choice";
+    button.innerHTML = `<span class="decision-label">${escapeHtml(option.label)}</span><span class="decision-action">${escapeHtml(option.action)}</span>`;
+    button.addEventListener("click", () => resolveFinanceCrisis(option.id));
+    ui.choiceList.appendChild(button);
+  });
+}
+
+function resolveFinanceCrisis(choice) {
+  const crisis = state.pendingCrisis;
+  if (!crisis) return;
+  const record = {
+    episode: crisis.episodeNumber,
+    choice,
+    shortage: crisis.shortage,
+    items: crisis.items.map((item) => item.text)
+  };
+
+  if (choice === "bridge_loan") {
+    const advance = crisis.shortage + 500;
+    state.finance.cash += advance;
+    state.payables.push({
+      id: `bridge_loan_${crisis.episodeNumber}_${state.financeCrises.length}`,
+      text: "股东过桥借款及代价",
+      amount: Math.round(advance * 1.2),
+      dueEpisode: crisis.episodeNumber + 2
+    });
+    state.operations.boardBacking = clamp(state.operations.boardBacking + 8);
+    addCausalEntries([
+      { sourceDecision: "finance_crisis_bridge", domain: "ownership", direction: "risk", text: "用股东过桥借款解决付款缺口，主席获得更多预算影响力。", canAffect: ["board_pressure", "future_cash"] }
+    ]);
+    settleDuePayments(crisis.items, crisis.episodeNumber);
+  } else if (choice === "emergency_sale") {
+    state.finance.cash += crisis.shortage + 300;
+    state.pitch.squadDepth = clamp(state.pitch.squadDepth - 8);
+    state.operations.dressingRoom = clamp(state.operations.dressingRoom - 6);
+    addCausalEntries([
+      { sourceDecision: "finance_crisis_sale", domain: "squadDepth", direction: "risk", text: "现金危机迫使俱乐部低价出售轮换球员，替补深度下降。", canAffect: ["late_match_fatigue", "injury_cover"] }
+    ]);
+    settleDuePayments(crisis.items, crisis.episodeNumber);
+  } else {
+    for (const dueItem of crisis.items) {
+      const payable = state.payables.find((item) => item.id === dueItem.id);
+      if (!payable) continue;
+      payable.dueEpisode += 1;
+      payable.amount = Math.round(payable.amount * 1.15);
+    }
+    state.operations.boardBacking = clamp(state.operations.boardBacking - 8);
+    state.operations.dressingRoom = clamp(state.operations.dressingRoom - 5);
+    applyCharacterStateEffects({
+      qiao: { behavior: "oppositional", memories: ["玩家在付款日延迟了已知义务"] }
+    });
+    addCausalEntries([
+      { sourceDecision: "finance_crisis_defer", domain: "paymentTrust", direction: "risk", text: "俱乐部延迟到期付款并承担15%追加成本，付款信誉受损。", canAffect: ["staff_trust", "future_cash"] }
+    ]);
+  }
+
+  state.financeCrises.push(record);
+  state.pendingCrisis = null;
+  state.phase = state.crisisReturnPhase || "scenes";
+  state.crisisReturnPhase = null;
+  state.minCash = Math.min(state.minCash, state.finance.cash);
+  saveGame();
+  render();
+  scrollToStory();
 }
 
 function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visualKey = null) {
@@ -575,7 +817,7 @@ function setSceneContent({ speaker, title, body, kind = "现场" }, meta, visual
   }
 
   ui.eventScene.innerHTML = visibleBody
-    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+    .map((paragraph) => `<p>${renderRichText(paragraph)}</p>`)
     .join("");
   restartAnimation(ui.eventNarrative, "narrative-enter");
 }
@@ -951,7 +1193,12 @@ function renderScene() {
   const scene = scenes[state.sceneIndex] || scenes[0];
   setSceneContent(scene, `${episode.date} · ${episode.location}`, scene.visualKey);
   const last = state.sceneIndex >= scenes.length - 1;
-  showContinue(last ? "进入决策前核实" : "继续", () => {
+  const interactionLabels = {
+    destination: "发布会前，你最后去哪里",
+    stress_test: "拆开一份方案的隐藏条件",
+    replay: "重放一次可能失败的时刻"
+  };
+  showContinue(last ? (interactionLabels[episode.inquiry.mode] || "进入决策前核实") : "继续", () => {
     if (last) {
       state.phase = "inquiry";
       state.activeReply = null;
@@ -973,8 +1220,15 @@ function renderInquiry() {
   const active = inquiry.options.find((item) => item.id === state.activeReply);
 
   if (active) {
+    const activeKind = inquiry.mode === "destination"
+      ? "最后五分钟"
+      : inquiry.mode === "stress_test"
+        ? "方案压力测试"
+        : inquiry.mode === "replay"
+          ? "录像重放"
+          : "谈话记录";
     setSceneContent(
-      { speaker: active.speaker, title: active.title, body: active.body, kind: "谈话记录" },
+      { speaker: active.speaker, title: active.title, body: active.body, kind: activeKind },
       `${episode.date} · 只对你说`,
       `${episode.id}.inquiry.${active.id}`
     );
@@ -982,7 +1236,10 @@ function renderInquiry() {
     const reachedMax = selected.length >= inquiry.max;
     showContinue(reachedMax ? "带着这些信息作决定" : "返回，再问一个人", () => {
       state.activeReply = null;
-      if (reachedMax) state.phase = "decision";
+      if (reachedMax) {
+        finalizeInteractionConsequences(episode);
+        state.phase = "decision";
+      }
       saveGame();
       render();
       scrollToStory();
@@ -990,17 +1247,37 @@ function renderInquiry() {
     return;
   }
 
+  const interactionCopy = {
+    destination: {
+      title: "发布会前只剩五分钟",
+      kind: "你最后去哪里"
+    },
+    stress_test: {
+      title: "四个人都已经把最好的一面说完了",
+      kind: "拆开隐藏条件"
+    },
+    replay: {
+      title: "把最可能失败的那一刻重放一次",
+      kind: "决定允许哪种错误"
+    }
+  }[inquiry.mode] || {
+    title: selected.length || proactiveSelected.length ? "还有谁的话值得在决定前核实？" : "你不可能听到所有人的版本",
+    kind: "决策前核实"
+  };
+
   setSceneContent(
     {
       speaker: state.managerName,
-      title: selected.length || proactiveSelected.length ? "还有谁的话值得在决定前核实？" : "你不可能听到所有人的版本",
+      title: interactionCopy.title,
       body: [inquiry.prompt],
-      kind: "决策前核实"
+      kind: interactionCopy.kind
     },
     `${episode.date} · 决策前`,
     `${episode.id}.inquiry.menu`
   );
-  ui.inquiryStatus.textContent = `可以现场核实 ${inquiry.max} 人 · 已核实 ${selected.length} 人${proactiveSelected.length ? ` · 此前主动了解 ${proactiveSelected.length} 人` : ""}`;
+  ui.inquiryStatus.textContent = inquiry.statusText
+    ? inquiry.statusText.replace("{selected}", selected.length).replace("{max}", inquiry.max)
+    : `可以现场核实 ${inquiry.max} 人 · 已核实 ${selected.length} 人${proactiveSelected.length ? ` · 此前主动了解 ${proactiveSelected.length} 人` : ""}`;
   ui.inquiryStatus.classList.remove("hidden");
 
   inquiry.options
@@ -1009,13 +1286,14 @@ function renderInquiry() {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "inquiry-choice";
-      button.innerHTML = `<span>核实</span><strong>${escapeHtml(option.label)}</strong>`;
+      button.innerHTML = `<span>${escapeHtml(inquiry.actionLabel || "核实")}</span><strong>${renderRichText(option.label, false)}</strong>${option.stake ? `<small>${renderRichText(option.stake, false)}</small>` : ""}`;
       button.addEventListener("click", () => selectInquiry(option));
       ui.choiceList.appendChild(button);
     });
 
   if (selected.length > 0) {
     showContinue(selected.length >= inquiry.max ? "现在作决定" : "不再追问，直接决定", () => {
+      finalizeInteractionConsequences(episode);
       state.phase = "decision";
       state.activeReply = null;
       saveGame();
@@ -1034,9 +1312,22 @@ function selectInquiry(option) {
   state.questions[episode.id] = [...selected, option.id];
   state.activeReply = option.id;
   state.knowledge.push({ episode: episode.number, text: option.knowledge });
+  applyCharacterStateEffects(option.characterEffects);
   saveGame();
   render();
   scrollToStory();
+}
+
+function finalizeInteractionConsequences(episode) {
+  if (state.interactionFinalized[episode.id]) return;
+  const selected = new Set([
+    ...(state.questions[episode.id] || []),
+    ...(state.proactiveQuestions[episode.id] || [])
+  ]);
+  Object.entries(episode.inquiry.unselectedEffects || {}).forEach(([optionId, effects]) => {
+    if (!selected.has(optionId)) applyCharacterStateEffects(effects);
+  });
+  state.interactionFinalized[episode.id] = true;
 }
 
 function openProactiveInquiry() {
@@ -1098,7 +1389,7 @@ function renderProactiveInquiry() {
 
 function renderInquiryReceipt(item, label) {
   if (!item.receipt) return;
-  ui.knowledgeCard.innerHTML = `<strong>${escapeHtml(label)}</strong><p>${escapeHtml(item.receipt)}</p>`;
+  ui.knowledgeCard.innerHTML = `<strong>${escapeHtml(label)}</strong><p>${renderRichText(item.receipt)}</p>`;
   ui.knowledgeCard.classList.remove("hidden");
 }
 
@@ -1128,6 +1419,7 @@ function closeProactiveInquiry() {
 
 function renderDecision() {
   const episode = currentEpisode();
+  finalizeInteractionConsequences(episode);
   setSceneContent(
     {
       speaker: state.managerName,
@@ -1143,15 +1435,26 @@ function renderDecision() {
 
   episode.decision.options.forEach((option) => {
     const spokenLine = option.line || decisionLine(option.id);
+    const cashChange = option.effects?.finance?.cash || 0;
+    const addedPayables = option.effects?.payablesAdd || [];
+    const projection = financeProjection(cashChange, addedPayables);
+    const affordable = state.finance.cash + cashChange >= 0;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "decision-choice";
+    button.disabled = !affordable;
+    if (!affordable) button.classList.add("unavailable");
     button.innerHTML = `
-      <span class="decision-label">${escapeHtml(option.label)}</span>
-      ${spokenLine ? `<span class="decision-line">“${escapeHtml(spokenLine)}”</span>` : ""}
-      <span class="decision-action">${escapeHtml(option.action)}</span>
+      <span class="decision-label">${renderRichText(option.label, false)}</span>
+      ${spokenLine ? `<span class="decision-line">“${renderRichText(spokenLine, false)}”</span>` : ""}
+      <span class="decision-action">${renderRichText(option.action, false)}</span>
+      ${option.advocate ? `<span class="decision-stake"><b>谁在要求</b>${renderRichText(option.advocate, false)}</span>` : ""}
+      ${option.bet ? `<span class="decision-stake"><b>你在押注</b>${renderRichText(option.bet, false)}</span>` : ""}
+      ${option.burden ? `<span class="decision-stake"><b>最坏情况由谁承担</b>${renderRichText(option.burden, false)}</span>` : ""}
+      ${cashChange || addedPayables.length ? `<span class="finance-preview ${projection.level}"><b>签字后的已知现金前景</b>今日现金 ${formatMoney(state.finance.cash + cashChange)} · 已知付款全部兑现后 ${formatMoney(projection.projected)} · ${escapeHtml(projection.label)}</span>` : ""}
+      ${!affordable ? `<span class="unavailable-reason">今天的现金不足，除非先找到确定融资。</span>` : ""}
       <span class="known-title">签字前案头信息</span>
-      <ul>${option.known.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+      <ul>${option.known.map((item) => `<li>${renderRichText(item, false)}</li>`).join("")}</ul>`;
     button.addEventListener("click", () => chooseDecision(option));
     ui.choiceList.appendChild(button);
   });
@@ -1180,6 +1483,8 @@ function chooseDecision(option) {
   Object.entries(effects.characters || {}).forEach(([id, delta]) => {
     state.characterTrust[id] = clamp((state.characterTrust[id] || 50) + delta);
   });
+  applyCharacterStateEffects(effects.characterStates);
+  addCausalEntries(effects.causalAdd);
 
   (effects.promisesAdd || []).forEach((item) => {
     if (!state.promises.some((promise) => promise.id === item.id)) state.promises.push(clone(item));
@@ -1248,7 +1553,8 @@ function renderAftermath() {
             .map((item) => `<span>“${escapeHtml(item.text)}”</span>`)
             .join("")}</div>`
         : ""
-    }`;
+    }
+    ${renderConsequenceReceipt(option)}`;
   ui.feedbackScene.classList.remove("hidden");
   showContinue(episode.match ? "看看比赛如何回应" : episode.number === 10 ? "结束这个赛季" : "进入下一集", () => {
     if (episode.match) {
@@ -1261,6 +1567,21 @@ function renderAftermath() {
       advanceEpisode();
     }
   });
+}
+
+function renderConsequenceReceipt(option) {
+  const receipt = option.receipt;
+  if (!receipt) return "";
+  const sections = [
+    ["已经发生", receipt.happened],
+    ["已经答应", receipt.promised],
+    ["已经埋下", receipt.seeded],
+    ["谁改变了做法", receipt.people]
+  ].filter(([, items]) => items?.length);
+  if (!sections.length) return "";
+  return `<div class="consequence-receipt">${sections.map(([label, items]) => `
+    <section><strong>${label}</strong>${items.map((item) => `<p>${renderRichText(item)}</p>`).join("")}</section>
+  `).join("")}</div>`;
 }
 
 function decisionLine(optionId) {
@@ -1286,15 +1607,33 @@ function ensureMatchReport(episode) {
   const games = [];
 
   for (let index = 0; index < count; index += 1) {
-    const teamBase = Object.values(state.pitch).reduce((sum, value) => sum + value, 0) / 5;
-    const structure = (state.operations.coachAuthority + state.operations.dressingRoom) / 25;
-    const fatiguePenalty = Math.max(0, 50 - state.pitch.fitness) / 5;
-    const performance = teamBase + structure - fatiguePenalty - config.difficulty + randomBetween(-13, 13);
+    const attackEdge = (state.pitch.attack - config.difficulty) * 0.27;
+    const defenseEdge = (state.pitch.defense - config.difficulty) * 0.29;
+    const lateGame =
+      (state.pitch.fitness - 50) * 0.14 +
+      ((state.pitch.squadDepth ?? 50) - 50) * 0.12;
+    const collective =
+      (state.pitch.cohesion - 50) * 0.13 +
+      (state.pitch.morale - 50) * 0.08;
+    const execution =
+      (state.operations.coachAuthority - 50) * 0.06 +
+      (state.operations.dressingRoom - 50) * 0.05;
+    const performance = attackEdge + defenseEdge + lateGame + collective + execution + randomBetween(-8, 8);
     let outcome = "D";
-    if (performance > 6) outcome = "W";
-    if (performance < -6) outcome = "L";
+    if (performance > 5) outcome = "W";
+    if (performance < -5) outcome = "L";
     const score = makeScore(outcome);
-    games.push({ outcome, score });
+    games.push({
+      outcome,
+      score,
+      shape: {
+        attack: attackEdge,
+        defense: defenseEdge,
+        lateGame,
+        collective,
+        execution
+      }
+    });
 
     if (competitive) {
       state.record.games += 1;
@@ -1319,8 +1658,72 @@ function ensureMatchReport(episode) {
     opponent: config.opponent,
     stakes: config.stakes,
     competitive,
-    games
+    games,
+    events: buildMatchEvents(episode),
+    voices: buildMatchVoices(episode),
+    causalSummary: buildCausalSummary()
   });
+}
+
+function buildMatchEvents(episode) {
+  const events = [];
+  const budget = getDecision("e2");
+  const tactic = getDecision("e3");
+
+  if (budget === "first_team_push") {
+    events.push({ minute: 18, tone: "help", text: "新中卫抢在海港城前锋之前顶走传中。", source: "第二集：把钱换成即战力", note: "首发防守的确因此更稳定。" });
+    events.push({ minute: 71, tone: "risk", text: "右后卫抽筋，替补席没有同位置球员，梁一川临时回撤。", source: "第二集：清理两名多位置球员", note: "为注册新援付出的阵容深度代价在后半场出现。" });
+  } else if (budget === "liquidity_first") {
+    events.push({ minute: 34, tone: "risk", text: "中卫被对手带到边路，梁一川退回禁区补位，程野独自留在前场。", source: "第二集：没有补进主力中卫", note: "现金被保住了，夏训计划却必须在场上补洞。" });
+    events.push({ minute: 66, tone: "help", text: "替补席仍有完整位置选择，教练连续换上两名体能充足的球员。", source: "第二集：没有清理边缘合同", note: "没有新援，也意味着轮换深度没有被进一步削薄。" });
+  } else if (budget === "build_capacity") {
+    events.push({ minute: 63, tone: "help", text: "康复团队赛前标出的边后卫体能预警生效，教练在抽筋前完成换人。", source: "第二集：投资康复与数据团队", note: "专业能力没有直接进球，却阻止一次可预见的失控。" });
+    events.push({ minute: 28, tone: "risk", text: "现有中卫在大空间里转身较慢，对手获得一次直接射门。", source: "第二集：短期阵容没有补强", note: "更好的信息不能替代缺少的球员。" });
+  }
+
+  if (tactic === "back_he") {
+    events.push({ minute: 42, tone: "help", text: "两条防线保持距离，对手连续横传后只能远射。", source: "第三集：完整支持控制型足球", note: "中低位的稳定距离限制了直接机会。" });
+    events.push({ minute: 79, tone: "risk", text: "岚城联需要进球，连续三次横传却没有人提前进入禁区。", source: "第三集：控制型足球的进攻上限", note: "球队把比赛留到最后，也缺少主动抬速的办法。" });
+  } else if (tactic === "pressing_identity") {
+    events.push({ minute: 23, tone: "help", text: "程野在前场逼出回传，队友抢断后完成近距离射门。", source: "第三集：主动压迫", note: "前场夺回球权直接变成一次机会。" });
+    events.push({ minute: 76, tone: "risk", text: "压迫慢了半步，对手一脚传到防线身后。", source: "第三集：高位压迫的身后风险", note: (state.pitch.squadDepth ?? 50) < 50 ? "替补变薄让强度更早下降。" : "这是主动站位必须承认的空间代价。" });
+  } else if (tactic === "shared_principles") {
+    events.push({ minute: 70, tone: "help", text: "球队落后后整条中场同时前移十米，第一次形成连续围抢。", source: "第三集：三条共同原则", note: "球员知道何时可以一起改变风险。" });
+    events.push({ minute: 52, tone: "risk", text: "边后卫向前前先看了一眼教练席，反击窗口随犹豫消失。", source: "第三集：共同原则的边界", note: "适应性需要持续沟通，不能靠一张纸自动完成。" });
+  }
+
+  const randomEvents = [
+    { minute: 84, tone: "random", text: "突然加大的雨让门将第一次扑救脱手。", source: "不可控：天气", note: "经营可以改变球队如何应对，不能取消偶然。" },
+    { minute: 58, tone: "random", text: "海港城门将完成一次超出正常范围的近距离扑救。", source: "不可控：对手发挥", note: "正确制造机会也不保证每一次都进球。" },
+    { minute: 37, tone: "random", text: "一次折射让原本偏出的射门突然改变方向。", source: "不可控：折射", note: "比分包含无法预先经营掉的部分。" }
+  ];
+  events.push(clone(randomEvents[Math.floor(Math.random() * randomEvents.length)]));
+  return events.sort((a, b) => a.minute - b.minute);
+}
+
+function buildMatchVoices() {
+  const tactic = getDecision("e3");
+  const budget = getDecision("e2");
+  const coach = tactic === "back_he"
+    ? "韩立锋：‘距离没有散。若你要问为什么机会少，这也是我方案的账。’"
+    : tactic === "pressing_identity"
+      ? "韩立锋：‘前场确实抢到了球。后半场跑不动，也请把六周和替补人数一起写。’"
+      : "梁一川：‘大家知道七十分钟后能一起往前。下一次输球，别临时加第四条。’";
+  const finance = budget === "first_team_push"
+    ? "方雯：‘新中卫今天帮了球队；一月后只剩100万也没有因此消失。’"
+    : budget === "liquidity_first"
+      ? "方雯：‘现金安全垫还在。没买的人在场上留下的空位，也要由我们承认。’"
+      : "孟书宁：‘提前换人不会出现在比分里，但那条腿明天还能正常训练。’";
+  return [coach, finance];
+}
+
+function buildCausalSummary() {
+  const relevant = state.causalLedger.filter((item) =>
+    ["tactic", "defense", "squadDepth", "fitness", "pressure", "authority", "sharedProcess"].includes(item.domain)
+  );
+  const helpful = relevant.filter((item) => item.direction === "help" || item.direction === "mixed").slice(-2);
+  const risks = relevant.filter((item) => item.direction === "risk").slice(-1);
+  return { helpful, risks };
 }
 
 function randomBetween(min, max) {
@@ -1370,7 +1773,17 @@ function renderMatch() {
         )
         .join("")}
     </div>
-    <p class="match-note">比赛包含偶然性。它结算你此前建立的阵容、体能、信任与混乱，却不会证明某个决定天然正确。</p>
+    ${report.events?.length ? `<section class="match-timeline"><h3>比赛怎样走到这个比分</h3>${report.events.map((event) => `
+      <article class="match-event ${event.tone}">
+        <time>${event.minute}'</time>
+        <div><strong>${renderRichText(event.text)}</strong><span>${renderRichText(event.source)}</span><p>${renderRichText(event.note)}</p></div>
+      </article>`).join("")}</section>` : ""}
+    ${report.causalSummary ? `<section class="match-causes"><h3>你的旧决定仍在起作用</h3>
+      ${report.causalSummary.helpful.map((item) => `<p class="help">${renderRichText(item.text)}</p>`).join("")}
+      ${report.causalSummary.risks.map((item) => `<p class="risk">${renderRichText(item.text)}</p>`).join("")}
+    </section>` : ""}
+    ${report.voices?.length ? `<section class="match-voices"><h3>同一场比赛，两种真实解释</h3>${report.voices.map((voice) => `<blockquote>${renderRichText(voice)}</blockquote>`).join("")}</section>` : ""}
+    <p class="match-note">你的经营改变了球队以什么方式创造机会、暴露风险和应对意外；天气、折射和对手发挥仍会改变比分。</p>
     <button id="matchContinue" class="primary-btn" type="button">${episode.number === 10 ? "查看赛季结局" : "进入下一集"}</button>`;
   ui.matchReport.classList.remove("hidden");
   $("matchContinue").addEventListener("click", advanceEpisode);
@@ -1388,7 +1801,8 @@ function advanceEpisode() {
 
 function projectedPosition() {
   const ppg = state.record.games ? state.record.points / state.record.games : 1.35;
-  const teamBase = Object.values(state.pitch).reduce((sum, value) => sum + value, 0) / 5;
+  const pitchValues = Object.values(state.pitch);
+  const teamBase = pitchValues.reduce((sum, value) => sum + value, 0) / pitchValues.length;
   const organization =
     (state.operations.dressingRoom + state.operations.coachAuthority + state.operations.medicalIntegrity) / 3;
   const score = ppg * 32 + (teamBase - 50) * 0.55 + (organization - 50) * 0.18;
@@ -1649,6 +2063,46 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function renderRichText(value, interactiveTerms = true) {
+  let rendered = escapeHtml(value);
+  const terms = Object.keys(gameData?.glossary || {}).sort((a, b) => b.length - a.length);
+  for (const term of terms) {
+    const escapedTerm = escapeHtml(term);
+    const interactionAttributes = interactiveTerms
+      ? `role="button" tabindex="0" aria-label="解释：${escapedTerm}"`
+      : "";
+    rendered = rendered.replaceAll(
+      escapedTerm,
+      `<span class="glossary-term" ${interactionAttributes} data-term="${escapedTerm}">${escapedTerm}</span>`
+    );
+  }
+  return rendered;
+}
+
+function openGlossary(term = null) {
+  const entries = Object.entries(gameData.glossary || {});
+  const selected = term ? entries.filter(([name]) => name === term) : entries;
+  ui.glossaryTitle.textContent = term || "足球词语";
+  ui.glossaryContent.innerHTML = selected.map(([name, item]) => `
+    <article class="glossary-entry">
+      <h3>${escapeHtml(name)}</h3>
+      <p>${escapeHtml(item.definition)}</p>
+      <strong>为什么此刻重要</strong>
+      <p>${escapeHtml(item.why)}</p>
+    </article>
+  `).join("");
+  if (term && state) {
+    if (!state.seenTerms.includes(term)) state.seenTerms.push(term);
+    saveGame();
+  }
+  ui.glossaryPanel.classList.remove("hidden");
+  ui.glossaryCloseBtn.focus();
+}
+
+function closeGlossary() {
+  ui.glossaryPanel.classList.add("hidden");
+}
+
 function toChineseNumber(number) {
   const values = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
   return values[number] || String(number);
@@ -1701,6 +2155,26 @@ function bindEvents() {
   ui.exportBtn.addEventListener("click", exportGame);
   ui.resultExportBtn.addEventListener("click", exportGame);
   ui.proactiveInquiryBtn.addEventListener("click", openProactiveInquiry);
+  ui.glossaryBtn.addEventListener("click", () => openGlossary());
+  ui.glossaryCloseBtn.addEventListener("click", closeGlossary);
+  ui.glossaryPanel.addEventListener("click", (event) => {
+    if (event.target === ui.glossaryPanel) closeGlossary();
+  });
+  document.addEventListener("click", (event) => {
+    const term = event.target.closest?.(".glossary-term");
+    if (!term) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openGlossary(term.dataset.term);
+  }, true);
+  document.addEventListener("keydown", (event) => {
+    const term = event.target.closest?.(".glossary-term");
+    if (term && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      openGlossary(term.dataset.term);
+    }
+    if (event.key === "Escape" && !ui.glossaryPanel.classList.contains("hidden")) closeGlossary();
+  });
   ui.focusModeBtn.addEventListener("click", () => {
     setStoryFocus(ui.focusModeBtn.getAttribute("aria-pressed") !== "true");
   });

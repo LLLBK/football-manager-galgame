@@ -143,6 +143,9 @@ const expectedCharacterNames = {
 for (const person of data.characters) {
   assert.equal(person.name, expectedCharacterNames[person.id], `${person.id} 的对外姓名未统一`);
   assert.ok(person.role.length >= 2, `${person.name} 缺少可识别的职务`);
+  assert.ok(person.want?.length >= 8, `${person.name} 缺少明确欲望`);
+  assert.ok(person.fear?.length >= 8, `${person.name} 缺少明确恐惧`);
+  assert.ok(person.habit?.length >= 8, `${person.name} 缺少可观察的习惯动作`);
 }
 
 function validateSpeakerPortraits(key, speaker, label) {
@@ -196,7 +199,7 @@ const promiseIds = new Set();
 for (const [index, episode] of data.episodes.entries()) {
   assert.equal(episode.number, index + 1, `第 ${index + 1} 集编号不连续`);
   assert.ok(episode.opening.length >= 2, `${episode.id} 缺少冲突现场`);
-  assert.equal(episode.inquiry.max, 2, `${episode.id} 应只允许两次追问`);
+  assert.equal(episode.inquiry.max, index < 3 ? 1 : 2, `${episode.id} 的互动次数不符合章节设计`);
   assert.equal(episode.inquiry.options.length, 3, `${episode.id} 应提供三条追问线索`);
   assert.equal(episode.decision.options.length, 3, `${episode.id} 应提供三种决定`);
   assert.ok(episode.debrief.length >= 2, `${episode.id} 缺少赛后复盘`);
@@ -214,6 +217,14 @@ for (const [index, episode] of data.episodes.entries()) {
     assert.equal("hint" in option, false, `${episode.id}/${option.id} 仍含答案式 hint`);
     assert.equal("visibleFinance" in option, false, `${episode.id}/${option.id} 仍提前显示财务答案`);
     assert.equal("priceBasis" in option, false, `${episode.id}/${option.id} 仍含问卷式价格依据`);
+    if (index < 3) {
+      assert.ok(option.line?.length >= 8, `${episode.id}/${option.id} 缺少玩家真正说出口的话`);
+      assert.ok(option.advocate?.length >= 8, `${episode.id}/${option.id} 缺少提出主张的人`);
+      assert.ok(option.bet?.length >= 8, `${episode.id}/${option.id} 缺少明确下注`);
+      assert.ok(option.burden?.length >= 8, `${episode.id}/${option.id} 缺少代价承担者`);
+      assert.ok(option.effects?.causalAdd?.length >= 1, `${episode.id}/${option.id} 没有写入因果账本`);
+      assert.ok(option.receipt?.seeded?.length >= 1, `${episode.id}/${option.id} 缺少决定回执`);
+    }
 
     for (const promise of option.effects?.promisesAdd || []) {
       assert.ok(!promiseIds.has(promise.id), `承诺 ID 重复：${promise.id}`);
@@ -228,6 +239,17 @@ for (const [index, episode] of data.episodes.entries()) {
   }
 }
 
+assert.deepEqual(
+  data.episodes.slice(0, 3).map((episode) => episode.inquiry.mode),
+  ["destination", "stress_test", "replay"],
+  "前三集必须使用三种不同的戏剧互动，而不是重复问卷"
+);
+assert.ok(data.episodes.slice(0, 3).every((episode) => episode.inquiry.allowProactive === false), "前三集互动应嵌入现场");
+for (const term of ["更衣室", "中卫", "中低位", "高位压迫", "注册", "转会分期"]) {
+  assert.ok(data.glossary[term]?.definition, `术语表缺少 ${term}`);
+  assert.ok(data.glossary[term]?.why, `术语表没有说明 ${term} 为什么重要`);
+}
+
 assert.equal(decisionIds.size, 30, "应有 30 个独立决定");
 assert.equal(
   data.episodes.flatMap((episode) => episode.inquiry.options).length,
@@ -237,8 +259,8 @@ assert.equal(
 
 const episodeText = (id) => JSON.stringify(data.episodes.find((episode) => episode.id === id));
 assert.match(episodeText("e2"), /1:4/, "第二集应呈现财务整改期的1:4注册约束");
-assert.match(episodeText("e3"), /中低位站位/, "第三集应说明韩立锋的控制型打法");
-assert.match(episodeText("e3"), /高竞.*防线前压/, "第三集应说明高竞的主动高压打法");
+assert.match(episodeText("e3"), /中低位/, "第三集应说明韩立锋的控制型打法");
+assert.match(episodeText("e3"), /高竞.*高位/, "第三集应说明高竞的主动高压打法");
 assert.match(episodeText("e5"), /一人一票/, "球迷线应包含会员一人一票的治理机制");
 assert.match(episodeText("e5"), /会员大会/, "球迷线应包含联合表决组织");
 assert.equal(episodeText("e7").includes("教练刚换过"), false, "未换帅路线不得显示教练已更换");
@@ -257,16 +279,21 @@ assert.equal(
   "镜头焦点人物不得覆盖剧情原本的说话人"
 );
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
-assert.match(appSource, /contentRevision: 4/, "旧存档应迁移到新版人物姓名");
+assert.match(appSource, /contentRevision: 5/, "旧存档应迁移到人物、因果与现金压力新版");
 assert.match(appSource, /migrateSavedCharacterNames\(saved\)/, "旧存档文本应同步替换人物姓名");
 assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
 assert.match(html, /id="focusModeBtn"/, "桌面端应提供剧情聚焦模式");
 assert.match(html, /id="visualCharacterSecondary"/, "视觉舞台应支持双人物同场");
 assert.match(html, /id="visualBackgroundPrevious"/, "换景应保留上一背景完成交叉溶解");
 assert.match(html, /id="eventRole"/, "剧情卡片应在姓名下直接显示人物职务");
+assert.match(html, /id="glossaryPanel"/, "页面应提供不离开剧情的足球词语解释");
+assert.match(html, /id="forecastValue"/, "财务侧栏应显示已知付款后的现金前景");
 assert.match(appSource, /function roleForSpeaker/, "剧情播放器应按说话人解析当前职务");
-assert.match(html, /styles\.css\?v=director-5/, "新版导演样式必须使用独立缓存版本");
-assert.match(html, /app\.js\?v=director-5/, "新版视觉播放器必须使用独立缓存版本");
+assert.match(appSource, /function renderRichText/, "正文术语应能直接打开白话解释");
+assert.match(appSource, /function renderFinanceCrisis/, "到期现金不足时必须进入可感知的危机现场");
+assert.match(appSource, /function buildMatchEvents/, "比赛结果必须展示决定如何进入具体回合");
+assert.match(html, /styles\.css\?v=director-6/, "体验重构样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=director-6/, "体验重构脚本必须使用独立缓存版本");
 assert.match(html, /rel="preload" as="image"/, "第一幕关键画面应由浏览器优先预载");
 assert.match(appSource, /visualAssetCache = new Map/, "视觉播放器应复用已解码素材");
 assert.match(appSource, /scheduleEpisodeVisualPreload/, "视觉播放器应按集顺序预取素材");
@@ -381,18 +408,32 @@ function simulateRoute(optionIndex) {
     paid: new Set(),
     promises: [],
     threads: structuredClone(data.initial.openThreads),
-    choices: []
+    choices: [],
+    financeCrises: 0
   };
 
   for (const episode of data.episodes) {
-    for (const payable of state.payables) {
-      if (payable.dueEpisode === episode.number && !state.paid.has(payable.id)) {
-        state.finance.cash -= payable.amount;
-        state.paid.add(payable.id);
-      }
+    const due = state.payables.filter(
+      (payable) => payable.dueEpisode === episode.number && !state.paid.has(payable.id)
+    );
+    const dueTotal = due.reduce((sum, payable) => sum + payable.amount, 0);
+    if (dueTotal > state.finance.cash) {
+      state.finance.cash += dueTotal - state.finance.cash + 300;
+      state.pitch.squadDepth = Math.max(0, state.pitch.squadDepth - 8);
+      state.financeCrises += 1;
+    }
+    for (const payable of due) {
+      state.finance.cash -= payable.amount;
+      state.paid.add(payable.id);
     }
 
-    const option = episode.decision.options[optionIndex];
+    const preferred = episode.decision.options[optionIndex];
+    const option = state.finance.cash + (preferred.effects?.finance?.cash || 0) >= 0
+      ? preferred
+      : episode.decision.options.find(
+          (candidate) => state.finance.cash + (candidate.effects?.finance?.cash || 0) >= 0
+        );
+    assert.ok(option, `${episode.id} 在当前现金下没有任何可执行决定`);
     const effects = option.effects || {};
     add(state.finance, effects.finance);
     add(state.operations, effects.operations);
@@ -416,6 +457,7 @@ function simulateRoute(optionIndex) {
     assert.ok(Number.isFinite(value), `路线 ${optionIndex + 1} 结算后存在无效值`);
   }
   assert.equal(state.choices.length, 10, `路线 ${optionIndex + 1} 没有走完十集`);
+  assert.ok(state.finance.cash >= 0, `路线 ${optionIndex + 1} 不得静默进入负现金`);
   assert.ok(state.paid.has("autumn_wages"), "秋季付款没有结算");
   assert.ok(state.paid.has("january_installment"), "一月分期没有结算");
   assert.ok(state.paid.has("season_bonus"), "赛季奖金准备金没有结算");
@@ -434,6 +476,7 @@ console.log(
       routes: routes.map((route, index) => ({
         route: index + 1,
         finalCash: route.finance.cash,
+        financeCrises: route.financeCrises,
         promises: route.promises.length,
         openThreads: route.threads.length
       })),
