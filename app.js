@@ -61,6 +61,7 @@ const ui = {
   stageTitle: $("stageTitle"),
   stageMeta: $("stageMeta"),
   episodeStrip: $("episodeStrip"),
+  journeyMap: $("journeyMap"),
   echoArea: $("echoArea"),
   eventCard: $("eventCard"),
   eventNarrative: $("eventNarrative"),
@@ -141,7 +142,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 6,
+    contentRevision: 7,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -223,6 +224,15 @@ function readSave() {
       saved.visualBeatKey = null;
       saved.visualBeatIndex = 0;
       saved.contentRevision = 6;
+    }
+    if ((saved.contentRevision || 0) < 7) {
+      saved.visualBeatKey = null;
+      saved.visualBeatIndex = 0;
+      if (saved.currentEpisode === 0 && !saved.decisions?.e1) {
+        saved.phase = "scenes";
+        saved.sceneIndex = 0;
+      }
+      saved.contentRevision = 7;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -364,12 +374,22 @@ function getSceneQueue(episode) {
     .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.sourceIndex - b.sourceIndex)
     .slice(0, episode.echoLimit || 3);
   const notices = state.paymentNotices[episode.number] || [];
+  const arrivals = (episode.arrival || []).map((item, index) => ({
+    ...resolveSceneVariant(item),
+    kind: index === 0 ? "承接上回" : "走进俱乐部",
+    visualKey: `${episode.id}.arrival.${index}`
+  }));
   const openings = episode.opening.map((item, index) => ({
     ...resolveSceneVariant(item),
     kind: "现场",
+    routeStep: Number.isInteger(item.routeStep)
+      ? item.routeStep
+      : index === 0
+        ? 1
+        : Math.max(1, (episode.route?.length || 3) - 2),
     visualKey: `${episode.id}.opening.${index}`
   }));
-  return [openings[0], ...notices, ...echoes, ...openings.slice(1)].filter(Boolean);
+  return [...arrivals, openings[0], ...notices, ...echoes, ...openings.slice(1)].filter(Boolean);
 }
 
 function resolveSceneVariant(scene) {
@@ -477,6 +497,33 @@ function renderEpisodeHeader() {
       return `<span class="episode-dot ${status}" title="第${item.number}集：${escapeHtml(item.title)}"><b>${item.number}</b><small>${escapeHtml(item.short)}</small></span>`;
     })
     .join("");
+  renderJourneyMap(episode);
+}
+
+function renderJourneyMap(episode) {
+  const route = episode.route || [];
+  if (!route.length) {
+    ui.journeyMap.classList.add("hidden");
+    ui.journeyMap.innerHTML = "";
+    return;
+  }
+  ui.journeyMap.classList.remove("hidden");
+  let activeStep = route.length - 1;
+  if (state.phase === "scenes") {
+    const queue = getSceneQueue(episode);
+    const scene = queue[state.sceneIndex];
+    activeStep = Number.isInteger(scene?.routeStep)
+      ? scene.routeStep
+      : Math.min(Math.floor((state.sceneIndex / Math.max(queue.length, 1)) * route.length), route.length - 2);
+  } else if (["inquiry", "proactive"].includes(state.phase)) {
+    activeStep = Math.max(0, route.length - 2);
+  }
+  ui.journeyMap.innerHTML = `
+    <div class="journey-heading"><span>本集行程</span><strong>下一扇门通向哪里</strong></div>
+    <ol>${route.map((step, index) => {
+      const status = index < activeStep ? "done" : index === activeStep ? "current" : "future";
+      return `<li class="${status}"><i>${index + 1}</i><span><strong>${escapeHtml(step.label)}</strong><small>${escapeHtml(step.location)}</small></span></li>`;
+    }).join("")}</ol>`;
 }
 
 function renderDossier() {
@@ -584,6 +631,18 @@ function roleForSpeaker(speaker) {
   return person ? displayRoleForCharacter(person) : "";
 }
 
+const characterIntroductionEpisode = {
+  shen: 1,
+  qiao: 1,
+  he: 1,
+  lin: 1,
+  tang: 1,
+  zhao: 2,
+  chen: 2,
+  jiang: 2,
+  gu: 3
+};
+
 function renderCharacters() {
   const episode = currentEpisode();
   const activeIds = new Set();
@@ -592,6 +651,7 @@ function renderCharacters() {
     if (text.includes(person.name)) activeIds.add(person.id);
   });
   const people = gameData.characters
+    .filter((person) => (characterIntroductionEpisode[person.id] || 1) <= episode.number)
     .slice()
     .sort((a, b) => Number(activeIds.has(b.id)) - Number(activeIds.has(a.id)))
     .slice(0, 7);
@@ -663,6 +723,9 @@ function renderPhase() {
       break;
     case "financeCrisis":
       renderFinanceCrisis();
+      break;
+    case "bridge":
+      renderEpisodeBridge();
       break;
     default:
       renderScene();
@@ -1257,14 +1320,23 @@ function renderScene() {
   const episode = currentEpisode();
   const scenes = getSceneQueue(episode);
   const scene = scenes[state.sceneIndex] || scenes[0];
-  setSceneContent(scene, `${episode.date} · ${episode.location}`, scene.visualKey);
+  const sceneDate = scene.date || episode.date;
+  const sceneLocation = scene.location || episode.location;
+  setSceneContent(scene, `${sceneDate} · ${sceneLocation}`, scene.visualKey);
   const last = state.sceneIndex >= scenes.length - 1;
+  const nextScene = scenes[state.sceneIndex + 1];
   const interactionLabels = {
     destination: "发布会前，你最后去哪里",
     stress_test: "拆开一份方案的隐藏条件",
     replay: "重放一次可能失败的时刻"
   };
-  showContinue(last ? (interactionLabels[episode.inquiry.mode] || "进入决策前核实") : "继续", () => {
+  let continueLabel = interactionLabels[episode.inquiry.mode] || "进入决策前核实";
+  if (!last) {
+    const nextLocation = nextScene?.location || episode.location;
+    continueLabel = scene.transitionLabel || nextScene?.entryLabel ||
+      (nextLocation !== sceneLocation ? `前往${nextLocation}` : `继续听${nextScene?.speaker || "下去"}`);
+  }
+  showContinue(continueLabel, () => {
     if (last) {
       state.phase = "inquiry";
       state.activeReply = null;
@@ -1614,17 +1686,54 @@ function renderAftermath() {
         : ""
     }`;
   ui.feedbackScene.classList.remove("hidden");
-  showContinue(episode.match ? "看看比赛如何回应" : episode.number === 10 ? "结束这个赛季" : "进入下一集", () => {
+  showContinue(episode.match ? `去看${episode.match.label}` : episode.number === 10 ? "结束这个赛季" : "离开现场，看看接下来发生什么", () => {
     if (episode.match) {
       state.phase = "match";
       ensureMatchReport(episode);
       saveGame();
       render();
       scrollToStory();
+    } else if (episode.number < gameData.episodes.length) {
+      beginEpisodeBridge();
     } else {
       advanceEpisode();
     }
   });
+}
+
+function beginEpisodeBridge() {
+  const episode = currentEpisode();
+  if (!episode.bridge) {
+    advanceEpisode();
+    return;
+  }
+  state.phase = "bridge";
+  state.visualBeatKey = null;
+  state.visualBeatIndex = 0;
+  saveGame();
+  render();
+  scrollToStory();
+}
+
+function renderEpisodeBridge() {
+  const episode = currentEpisode();
+  const nextEpisode = gameData.episodes[state.currentEpisode + 1];
+  if (!episode.bridge || !nextEpisode) {
+    advanceEpisode();
+    return;
+  }
+  const bridge = resolveSceneVariant(episode.bridge);
+  setSceneContent(
+    { ...bridge, kind: "章节之间" },
+    `${bridge.date || episode.date} · ${bridge.location || "离场前"}`,
+    `${episode.id}.bridge`
+  );
+  const option = selectedOption(episode);
+  ui.eventPrompt.innerHTML = `
+    <strong>刚刚留下：${escapeHtml(option?.label || "这一章的决定")}</strong>
+    <span>下一站：${escapeHtml(nextEpisode.date)} · ${escapeHtml(nextEpisode.location)} · ${escapeHtml(nextEpisode.title)}</span>`;
+  ui.eventPrompt.classList.remove("hidden");
+  showContinue(bridge.nextLabel || `${nextEpisode.date} · 前往${nextEpisode.location}`, advanceEpisode);
 }
 
 function renderConsequenceReceipt(option) {
@@ -1842,9 +1951,9 @@ function renderMatch() {
     </section>` : ""}
     ${report.voices?.length ? `<section class="match-voices"><h3>同一场比赛，两种真实解释</h3>${report.voices.map((voice) => `<blockquote>${renderRichText(voice)}</blockquote>`).join("")}</section>` : ""}
     <p class="match-note">你的经营改变了球队以什么方式创造机会、暴露风险和应对意外；天气、折射和对手发挥仍会改变比分。</p>
-    <button id="matchContinue" class="primary-btn" type="button">${episode.number === 10 ? "查看赛季结局" : "进入下一集"}</button>`;
+    <button id="matchContinue" class="primary-btn" type="button">${episode.number === 10 ? "查看赛季结局" : "赛后，看看下一件事如何找上门"}</button>`;
   ui.matchReport.classList.remove("hidden");
-  $("matchContinue").addEventListener("click", advanceEpisode);
+  $("matchContinue").addEventListener("click", episode.number === 10 ? advanceEpisode : beginEpisodeBridge);
 }
 
 function advanceEpisode() {

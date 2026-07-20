@@ -25,6 +25,7 @@ for (const episode of data.episodes) {
   }
 }
 for (const episode of data.episodes) {
+  (episode.arrival || []).forEach((_, index) => expectedVisualKeys.add(`${episode.id}.arrival.${index}`));
   episode.opening.forEach((_, index) => expectedVisualKeys.add(`${episode.id}.opening.${index}`));
   (episode.echoes || []).forEach((_, index) => expectedVisualKeys.add(`${episode.id}.echo.${index}`));
   if (payableEpisodeNumbers.has(episode.number)) expectedVisualKeys.add(`${episode.id}.payment`);
@@ -36,6 +37,7 @@ for (const episode of data.episodes) {
   for (const option of episode.decision.options) {
     expectedVisualKeys.add(`${episode.id}.aftermath.${option.id}`);
   }
+  if (episode.bridge) expectedVisualKeys.add(`${episode.id}.bridge`);
 }
 assert.deepEqual(
   new Set(Object.keys(visuals.scenes)),
@@ -168,6 +170,13 @@ function validateSpeakerPortraits(key, scene, label) {
 }
 
 for (const episode of data.episodes) {
+  (episode.arrival || []).forEach((scene, index) => {
+    validateSpeakerPortraits(
+      `${episode.id}.arrival.${index}`,
+      scene,
+      `${episode.id}承接场景${index + 1}`
+    );
+  });
   episode.opening.forEach((scene, index) => {
     validateSpeakerPortraits(
       `${episode.id}.opening.${index}`,
@@ -196,12 +205,17 @@ for (const episode of data.episodes) {
       `${episode.id}回声${index + 1}`
     );
   }
+  if (episode.bridge) {
+    validateSpeakerPortraits(`${episode.id}.bridge`, episode.bridge, `${episode.id}章节衔接`);
+  }
 
   const scriptedScenes = [
+    ...(episode.arrival || []),
     ...episode.opening,
     ...episode.inquiry.options,
     ...episode.decision.options.map((option) => option.aftermath),
-    ...(episode.echoes || [])
+    ...(episode.echoes || []),
+    ...(episode.bridge ? [episode.bridge] : [])
   ];
   for (const scene of scriptedScenes) {
     scene.body.forEach((line, index) => {
@@ -220,6 +234,9 @@ const promiseIds = new Set();
 for (const [index, episode] of data.episodes.entries()) {
   assert.equal(episode.number, index + 1, `第 ${index + 1} 集编号不连续`);
   assert.ok(episode.opening.length >= 2, `${episode.id} 缺少冲突现场`);
+  assert.ok(episode.arrival?.length >= 1, `${episode.id} 缺少承接上一章的入场场景`);
+  assert.ok(episode.route?.length >= 4, `${episode.id} 缺少可预期的本集行程`);
+  if (episode.number < 10) assert.ok(episode.bridge?.body?.length >= 2, `${episode.id} 缺少通往下一章的因果桥`);
   assert.equal(episode.inquiry.max, index < 3 ? 1 : 2, `${episode.id} 的互动次数不符合章节设计`);
   assert.equal(episode.inquiry.options.length, 3, `${episode.id} 应提供三条追问线索`);
   assert.equal(episode.decision.options.length, 3, `${episode.id} 应提供三种决定`);
@@ -300,21 +317,22 @@ assert.equal(
   "镜头焦点人物不得覆盖剧情原本的说话人"
 );
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
-assert.match(appSource, /contentRevision: 6/, "旧存档应迁移到对话分镜与动作道具新版");
+assert.match(appSource, /contentRevision: 7/, "旧存档应迁移到球队序章、行程和章节衔接新版");
 assert.match(appSource, /migrateSavedCharacterNames\(saved\)/, "旧存档文本应同步替换人物姓名");
 assert.match(html, /id="proactiveInquiryBtn"/, "总经理案头应提供主动了解入口");
 assert.match(html, /id="focusModeBtn"/, "桌面端应提供剧情聚焦模式");
 assert.match(html, /id="visualCharacterSecondary"/, "视觉舞台应支持双人物同场");
 assert.match(html, /id="visualBackgroundPrevious"/, "换景应保留上一背景完成交叉溶解");
 assert.match(html, /id="eventRole"/, "剧情卡片应在姓名下直接显示人物职务");
+assert.match(html, /id="journeyMap"/, "每集应显示地点与叙事行程，避免换场无预告");
 assert.match(html, /id="glossaryPanel"/, "页面应提供不离开剧情的足球词语解释");
 assert.match(html, /id="forecastValue"/, "财务侧栏应显示已知付款后的现金前景");
 assert.match(appSource, /function roleForSpeaker/, "剧情播放器应按说话人解析当前职务");
 assert.match(appSource, /function renderRichText/, "正文术语应能直接打开白话解释");
 assert.match(appSource, /function renderFinanceCrisis/, "到期现金不足时必须进入可感知的危机现场");
 assert.match(appSource, /function buildMatchEvents/, "比赛结果必须展示决定如何进入具体回合");
-assert.match(html, /styles\.css\?v=director-6/, "体验重构样式必须使用独立缓存版本");
-assert.match(html, /app\.js\?v=director-6/, "体验重构脚本必须使用独立缓存版本");
+assert.match(html, /styles\.css\?v=director-7/, "叙事衔接样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=director-7/, "叙事衔接脚本必须使用独立缓存版本");
 assert.match(html, /rel="preload" as="image"/, "第一幕关键画面应由浏览器优先预载");
 assert.match(appSource, /visualAssetCache = new Map/, "视觉播放器应复用已解码素材");
 assert.match(appSource, /scheduleEpisodeVisualPreload/, "视觉播放器应按集顺序预取素材");

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="一款关于足球俱乐部经营、承诺与后果的沉浸式叙事游戏。" />
     <title>岚城联：一季之内</title>
-    <link rel="preload" as="image" href="assets/visuals/backgrounds/boardroom-morning-v2.webp" fetchpriority="high" />
-    <link rel="preload" as="image" href="assets/visuals/characters/shen/neutral-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=director-6" />
+    <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
+    <link rel="stylesheet" href="styles.css?v=director-7" />
   </head>
   <body>
     <main class="app-shell">
@@ -16,9 +16,16 @@
           <p class="eyebrow">FOOTBALL CLUB STORY</p>
           <h1>岚城联：一季之内</h1>
           <p class="start-lede">
-            你将接手一家账面现金4200万、其中600万不能动用，还有旧账、伤员和彼此冲突承诺的足球俱乐部。
-            这里没有显示“最佳答案”的属性按钮。你能看到事实、合同与人说过的话，却只能在信息不完整时作决定。
+            1987年，岚城的工人、学生和小商户把一支地方队送进全国联赛。五年前，旧股东退出，
+            周绍庭接手才保住职业资格。此后三年，球队始终停在中游；上赛季一度跌进降级区，最后被韩立锋带到第八。
+            新赛季开始时，队长和主教练都只剩一年合同，东看台也到了必须加固的期限。
           </p>
+          <div class="club-history" aria-label="岚城联简史">
+            <div><time>1987</time><strong>第一次升级</strong><span>东看台那幅十二人壁画由此留下。</span></div>
+            <div><time>五年前</time><strong>职业资格保住</strong><span>周绍庭接手，俱乐部没有从联赛消失。</span></div>
+            <div><time>上赛季</time><strong>降级区到第八</strong><span>韩立锋守住成绩，却没有解决阵容和方向。</span></div>
+            <div><time>今天</time><strong>三件事同时到期</strong><span>队长、主帅与东看台都不能再拖一年。</span></div>
+          </div>
           <div class="start-features" aria-label="游戏特点">
             <div><strong>十集</strong><span>跨越一个完整赛季</span></div>
             <div><strong>四次</strong><span>可自行选择时机的主动了解</span></div>
@@ -31,7 +38,7 @@
           <div>
             <p class="eyebrow">任命书</p>
             <h2>开始你的任期</h2>
-            <p>游戏约需35—50分钟。浏览器会在本机保存当前进度。</p>
+            <p>游戏约需45—65分钟。浏览器会在本机保存当前进度。</p>
           </div>
           <label>
             你的名字
@@ -41,7 +48,7 @@
             俱乐部名称
             <input id="teamName" name="teamName" maxlength="18" value="岚城联" autocomplete="off" />
           </label>
-          <button type="submit">走进董事会议室</button>
+          <button type="submit">先从东看台走进去</button>
           <button type="button" id="resumeBtn" class="text-btn hidden">继续上次的赛季</button>
         </form>
       </section>
@@ -105,6 +112,8 @@
               <div class="season-progress-track"><span id="seasonProgress"></span></div>
               <div id="episodeStrip" class="episode-strip" aria-label="赛季章节"></div>
             </div>
+
+            <nav id="journeyMap" class="journey-map" aria-label="本集行程"></nav>
 
             <div id="echoArea" class="echo-area hidden" aria-live="polite"></div>
 
@@ -228,6 +237,6 @@
     </section>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=director-6"></script>
+    <script src="app.js?v=director-7"></script>
   </body>
 </html>
