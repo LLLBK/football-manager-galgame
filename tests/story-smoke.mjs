@@ -352,12 +352,17 @@ for (const episode of data.episodes.slice(0, 9)) {
     assert.ok(consequence.foreshadow?.length >= 20, `${episode.id}/${option.id} 缺少当下伏笔`);
   }
 }
-assert.match(html, /styles\.css\?v=strength-10/, "多维战力样式必须使用独立缓存版本");
-assert.match(html, /app\.js\?v=strength-10/, "多维战力脚本必须使用独立缓存版本");
+assert.match(html, /styles\.css\?v=strength-11/, "主画面战力结算样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=strength-11/, "主画面战力结算脚本必须使用独立缓存版本");
 assert.match(html, /id="startBtn"[^>]*disabled/, "剧情载入前开始按钮必须保持禁用，避免点击后无响应");
 assert.match(html, /id="startStatus"/, "开始页必须说明剧情是否已经载入");
 assert.match(appSource, /setStartReady\(true,/, "剧情载入完成后必须明确解锁开始按钮");
 assert.match(appSource, /function buildStoryBeats/, "剧情播放器应把长段落拆成逐次点击的心理节拍");
+assert.match(appSource, /case "decisionImpact"/, "选择余波后必须进入独立的主画面战力结算阶段");
+assert.match(appSource, /function renderDecisionImpact/, "主画面必须能单独渲染战力结算");
+assert.match(appSource, /查看这项决定如何改变球队/, "余波画面必须明确引导玩家查看战力变化");
+assert.match(appSource, /const visualsReady = await loadVisualData\(\)/, "开始游戏前应等待视觉配置载入");
+assert.match(appSource, /Promise\.allSettled\(sources\.map/, "每集视觉素材应并发预取，避免串行加载拖慢后续场景");
 assert.match(appSource, /function deriveSeasonEnding/, "赛季结局应由累积选择而非最后一次点击单独决定");
 assert.match(html, /rel="preload" as="image"/, "第一幕关键画面应由浏览器优先预载");
 assert.match(appSource, /visualAssetCache = new Map/, "视觉播放器应复用已解码素材");

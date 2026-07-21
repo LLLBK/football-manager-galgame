@@ -2789,6 +2789,11 @@ input {
 .strength-row > strong { text-align: right; font-size: 10px; }
 
 .feedback-scene { padding: 0; overflow: hidden; }
+.feedback-scene.impact-stage {
+  min-height: min(760px, calc(100vh - 32px));
+  border-left-width: 1px;
+  box-shadow: var(--shadow);
+}
 .decision-record { padding: 20px 24px 18px; background: #fbfaf6; }
 .impact-report { padding: clamp(20px, 3vw, 30px); border-top: 1px solid var(--line); background: #f3f0e8; }
 .impact-report.delayed { background: linear-gradient(135deg, #f6f0df 0%, #f1ede4 100%); }
@@ -2819,6 +2824,11 @@ input {
 .foreshadow p { margin: 6px 0 0; font-family: var(--serif); font-size: 13px; line-height: 1.7; }
 .kickoff-odds { display: flex; align-items: center; gap: 15px; margin: 14px 0 18px; padding: 10px 12px; border: 1px solid var(--line-dark); color: rgba(255, 255, 255, .72); font-size: 11px; }
 .kickoff-odds span { margin-right: auto; } .kickoff-odds strong { color: #87ceb6; } .kickoff-odds b { color: #e2bd72; } .kickoff-odds em { color: #e29a91; font-style: normal; }
+.impact-continue {
+  display: block;
+  min-width: min(360px, calc(100% - 40px));
+  margin: 22px auto 28px;
+}
 
 @media (max-width: 600px) {
   .impact-head, .kickoff-odds { align-items: stretch; flex-direction: column; }

@@ -561,8 +561,8 @@ function beginEpisode(index, { fresh = true } = {}) {
     processDuePayments(episode.number);
   }
   saveGame();
-  render();
   scheduleEpisodeVisualPreload(episode.id);
+  render();
 }
 
 function render() {
@@ -963,6 +963,7 @@ function resetStoryPanels() {
   activeVisualPage = null;
   ui.eventCard.classList.remove("hidden");
   ui.feedbackScene.classList.add("hidden");
+  ui.feedbackScene.classList.remove("impact-stage");
   ui.matchReport.classList.add("hidden");
   ui.echoArea.classList.add("hidden");
   ui.knowledgeCard.classList.add("hidden");
@@ -992,6 +993,9 @@ function renderPhase() {
       break;
     case "aftermath":
       renderAftermath();
+      break;
+    case "decisionImpact":
+      renderDecisionImpact();
       break;
     case "match":
       renderMatch();
@@ -1431,10 +1435,9 @@ function updateVisualBackground(background, renderEpoch) {
   element.dataset.pendingSrc = nextSource;
   element.classList.add("asset-pending");
   ui.visualStage.classList.add("visual-loading");
-  if (!canCrossfadeImmediately && currentSource !== nextSource) {
-    element.removeAttribute("src");
-    ui.visualBackgroundPrevious.classList.add("hidden");
-  }
+  // 新背景尚未解码时保留当前背景，避免慢网下整块舞台突然变空。
+  // 人物仍会在换人时清空，防止错误角色残留在下一句台词中。
+  if (!canCrossfadeImmediately && !currentSource) ui.visualBackgroundPrevious.classList.add("hidden");
 
   loadVisualAsset(nextSource, "high").then(() => {
     if (renderEpoch !== visualRenderEpoch || element.dataset.pendingSrc !== nextSource) return;
@@ -1452,10 +1455,10 @@ function updateVisualBackground(background, renderEpoch) {
     restartAnimation(element, "background-enter");
   }).catch(() => {
     if (renderEpoch !== visualRenderEpoch || element.dataset.pendingSrc !== nextSource) return;
-    element.removeAttribute("src");
     element.classList.add("asset-pending");
     ui.visualStage.classList.remove("visual-loading");
-    ui.visualStage.classList.add("visual-fallback");
+    // 单张新图失败时继续显示上一张可靠背景；只有开场也没有可用图时才退回纯文字舞台。
+    if (!element.getAttribute("src")) ui.visualStage.classList.add("visual-fallback");
   });
 }
 
@@ -1575,15 +1578,13 @@ function scheduleEpisodeVisualPreload(episodeId) {
   if (!visualData || !episodeId) return;
   const preloadEpoch = ++episodePreloadEpoch;
   const sources = collectEpisodeVisualSources(episodeId);
-  Promise.resolve().then(async () => {
-    for (const src of sources) {
-      if (preloadEpoch !== episodePreloadEpoch) return;
-      try {
-        await loadVisualAsset(src, "low");
-      } catch (error) {
-        console.warn("视觉素材预取失败。", src);
-      }
-    }
+  Promise.resolve().then(() => {
+    if (preloadEpoch !== episodePreloadEpoch) return;
+    Promise.allSettled(sources.map((src) => loadVisualAsset(src, "low"))).then((results) => {
+      results.forEach((result, index) => {
+        if (result.status === "rejected") console.warn("视觉素材预取失败。", sources[index]);
+      });
+    });
   });
 }
 
@@ -2098,12 +2099,33 @@ function renderAftermath() {
     `${episode.date} · 决定已无法撤回`,
     `${episode.id}.aftermath.${option.id}`
   );
+  showContinue("查看这项决定如何改变球队", () => {
+    state.phase = "decisionImpact";
+    state.visualBeatKey = null;
+    state.visualBeatIndex = 0;
+    saveGame();
+    render();
+    scrollToImpact();
+  });
+}
+
+function renderDecisionImpact() {
+  const episode = currentEpisode();
+  const option = selectedOption(episode);
+  if (!option) {
+    state.phase = "decision";
+    renderDecision();
+    return;
+  }
+
   const addedPromises = option.effects?.promisesAdd || [];
   const spokenLine = option.line || decisionLine(option.id);
   const impact = state.lastDecisionImpact?.episodeId === episode.id
     ? state.lastDecisionImpact
     : { before: captureClubSnapshot(), after: captureClubSnapshot() };
   const deferred = DEFERRED_CONSEQUENCES[option.id];
+  ui.eventCard.classList.add("hidden");
+  ui.feedbackScene.classList.add("impact-stage");
   ui.feedbackScene.innerHTML = `
     <div class="decision-record">
       <p class="eyebrow">记录在案</p>
@@ -2120,20 +2142,30 @@ function renderAftermath() {
       before: impact.before,
       after: impact.after,
       foreshadow: deferred?.foreshadow || ""
-    })}`;
+    })}
+    <button id="impactContinue" class="primary-btn impact-continue" type="button">${episode.match ? `带着这些变化去看${escapeHtml(episode.match.label)}` : episode.number === 10 ? "带着这份结算结束赛季" : "带着这些变化进入下一章"}</button>`;
   ui.feedbackScene.classList.remove("hidden");
-  showContinue(episode.match ? `去看${episode.match.label}` : episode.number === 10 ? "结束这个赛季" : "离开现场，看看接下来发生什么", () => {
-    if (episode.match) {
-      state.phase = "match";
-      ensureMatchReport(episode);
-      saveGame();
-      render();
-      scrollToStory();
-    } else if (episode.number < gameData.episodes.length) {
-      beginEpisodeBridge();
-    } else {
-      advanceEpisode();
-    }
+  document.getElementById("impactContinue").addEventListener("click", continueAfterDecisionImpact);
+}
+
+function continueAfterDecisionImpact() {
+  const episode = currentEpisode();
+  if (episode.match) {
+    state.phase = "match";
+    ensureMatchReport(episode);
+    saveGame();
+    render();
+    scrollToStory();
+  } else if (episode.number < gameData.episodes.length) {
+    beginEpisodeBridge();
+  } else {
+    advanceEpisode();
+  }
+}
+
+function scrollToImpact() {
+  requestAnimationFrame(() => {
+    ui.feedbackScene.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -2146,6 +2178,8 @@ function beginEpisodeBridge() {
   state.phase = "bridge";
   state.visualBeatKey = null;
   state.visualBeatIndex = 0;
+  const nextEpisode = gameData.episodes[state.currentEpisode + 1];
+  if (nextEpisode) scheduleEpisodeVisualPreload(nextEpisode.id);
   saveGame();
   render();
   scrollToStory();
@@ -2852,12 +2886,14 @@ function setStartReady(ready, message) {
 async function loadVisualData() {
   try {
     const visualResponse = await fetch("visual-data.json", { cache: "no-store" });
-    if (!visualResponse.ok) return;
+    if (!visualResponse.ok) return false;
     visualData = await visualResponse.json();
     scheduleEpisodeVisualPreload(visualData.scope?.[0]);
     if (state) render();
+    return true;
   } catch (visualError) {
     console.warn("视觉素材未载入，继续使用文字模式。", visualError);
+    return false;
   }
 }
 
@@ -2866,11 +2902,14 @@ async function boot() {
     const response = await fetch("story-data.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     gameData = await response.json();
+    const visualsReady = await loadVisualData();
     bindEvents();
     setStoryFocus(localStorage.getItem(FOCUS_MODE_KEY) === "1");
     if (readSave()) ui.resumeBtn.classList.remove("hidden");
-    setStartReady(true, "剧情已经载入。现在可以从雨里走进去。");
-    loadVisualData();
+    setStartReady(true, visualsReady
+      ? "剧情与画面已经载入。现在可以从雨里走进去。"
+      : "剧情已经载入；部分画面暂时不可用，但可以继续游戏。"
+    );
   } catch (error) {
     ui.startForm.innerHTML = `
       <h2>剧情数据没有载入</h2>
