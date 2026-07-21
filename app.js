@@ -1,6 +1,58 @@
 const SAVE_KEY = "lancheng-season-v2";
 const FOCUS_MODE_KEY = "lancheng-story-focus";
 const PROACTIVE_INQUIRY_LIMIT = 4;
+const STRENGTH_DIMENSIONS = [
+  { key: "attack", label: "进攻威胁", short: "进攻", description: "创造射门、向前推进和落后时追分的能力" },
+  { key: "defense", label: "防守稳固", short: "防守", description: "限制机会、保护禁区和处理反击的能力" },
+  { key: "fitness", label: "体能储备", short: "体能", description: "维持强度并应对密集赛程的能力" },
+  { key: "cohesion", label: "战术默契", short: "默契", description: "球员彼此预判、补位和共同执行的能力" },
+  { key: "morale", label: "比赛信念", short: "士气", description: "失误或落后后仍敢执行决定的程度" },
+  { key: "squadDepth", label: "阵容深度", short: "深度", description: "轮换、伤病替代和后半场换人的余地" }
+];
+const SUPPORT_DIMENSIONS = [
+  { key: "coachAuthority", label: "教练权威", description: "影响比赛计划能否被稳定执行" },
+  { key: "dressingRoom", label: "更衣室", description: "影响协作、报伤与共同承担失误" },
+  { key: "medicalIntegrity", label: "医疗保障", description: "影响伤病预防与可用阵容" },
+  { key: "academyPathway", label: "青训通道", description: "影响长期补员与年轻球员成长" },
+  { key: "fanTrust", label: "球迷信任", description: "影响主场压力与球队身份认同" },
+  { key: "boardBacking", label: "董事会支持", description: "影响资源稳定和外界目标压力" }
+];
+const FINANCE_DIMENSIONS = {
+  cash: "可动用现金",
+  wageCommitment: "年度工资承诺",
+  transferInstallments: "转会分期",
+  restrictedCash: "受限资金"
+};
+
+const DEFERRED_CONSEQUENCES = {
+  board_mandate: { dueEpisode: 4, title: "前六目标有了市场价格", speaker: "方雯", body: ["“三家经纪人用了同一句话：既然你必须进前六，他们的球员就不是原来的价格。”", "“目标没有变，但每一次失分都开始被换算成你的剩余时间。”"], pitch: { morale: -4 }, operations: { boardBacking: -2 }, foreshadow: "发布会散场时，两名经纪人没有离开。他们站在走廊尽头，低头把同一条新闻转发给各自的球员。" },
+  club_charter: { dueEpisode: 5, title: "公开的边界被人拿回来引用", speaker: "许青禾", body: ["“七月那份治理章程我打印了八千份。今天不是来求情，是来请你按自己的原话办事。”", "周绍庭没有反驳，只把原本放在桌中央的合同收回了半寸。"], operations: { fanTrust: 5, boardBacking: -3 }, foreshadow: "许青禾把治理章程折进旧季票里。她说，以后重要的不是谁记性好，而是谁留着原话。" },
+  sporting_control: { dueEpisode: 6, title: "权力终于遇到一段连败", speaker: "韩立锋", body: ["“七月你说足球决定由你负责。现在董事都在门外，我只问：这句话还算不算？”", "训练场上的球员没有散开，他们在等这间办公室先确定谁说了算。"], operations: { coachAuthority: 3, boardBacking: -4 }, pitch: { cohesion: 2 }, foreshadow: "周绍庭在授权书边上画了一条很短的竖线。没人解释那是签字记号，还是以后收回权力的位置。" },
+  liquidity_first: { dueEpisode: 8, title: "宿舍没有进球，却留住了三个人", speaker: "罗志衡", body: ["“冬训名单里这三个人原本都准备离开。现在他们每天能睡够七小时，不用赶末班车。”", "“一线队仍缺那个夏天没买的中卫；但青训第一次没有因为家里住得远而减员。”"], pitch: { squadDepth: 3, morale: 2 }, operations: { academyPathway: 6 }, foreshadow: "罗志衡把宿舍钥匙分成三串，却把一线队中卫名单压在最下面。两张纸都没有消失。" },
+  first_team_push: { dueEpisode: 6, title: "新中卫的工资单进了更衣室", speaker: "梁一川", body: ["“没人否认他踢得好。问题是，昨晚所有人都知道了他的奖金是老合同的三倍。”", "“被清走的两个柜子还空着。需要换人时，我们才会重新看见他们。”"], pitch: { morale: -4, squadDepth: -3 }, operations: { dressingRoom: -6 }, foreshadow: "新中卫第一天把名牌放进中央柜位。有人帮他鼓掌，也有人盯着旁边两个刚被清空的柜子。" },
+  build_capacity: { dueEpisode: 7, title: "一次没有发生的伤病", speaker: "孟书宁", body: ["“数据组提前四天看见了负荷异常。我们把训练减掉，那条腿今天没有出现在病历里。”", "“没有进球、没有新闻，也没有人会为一次没发生的受伤鼓掌。”"], pitch: { fitness: 5, squadDepth: 2 }, operations: { medicalIntegrity: 4 }, foreshadow: "孟书宁在新系统里建了第一份空病历。文件名只有日期，没有球员名字——她说最好永远不必填上。" },
+  back_he: { dueEpisode: 6, title: "稳定的三条线也有边界", speaker: "韩立锋", body: ["“六场里我们很少被打穿，也有四场没能把比赛提速。”", "他没有请求改变方案，只把落后后的进攻回合单独剪成了一段录像。"], pitch: { defense: 3, attack: -3, cohesion: 2 }, foreshadow: "韩立锋擦掉所有高位磁块，却把一枚前锋磁块留在白板角落，没有放回盒子。" },
+  pressing_identity: { dueEpisode: 6, title: "高压开始向体能讨债", speaker: "孟书宁", body: ["“前四十分钟的夺回次数上升了，七十分钟后的冲刺距离连续三周下降。”", "“这不是叫你放弃，只是身体已经开始替方案记账。”"], pitch: { attack: 3, fitness: -6 }, operations: { academyPathway: 3 }, foreshadow: "训练结束后，年轻人还在兴奋地比谁抢回的球多。两名老球员却坐在草边，多系了一次鞋带才站起来。" },
+  shared_principles: { dueEpisode: 6, title: "三条原则变成了共同语言", speaker: "梁一川", body: ["“教练和年轻人仍然会争，但现在争的是哪一条原则优先，不是猜谁才有最终答案。”", "“有些反击因此慢了一拍，至少我们不再各跑各的。”"], pitch: { cohesion: 5, attack: 1 }, operations: { dressingRoom: 3 }, foreshadow: "梁一川把那三条原则抄在袖标内侧。韩立锋看见了，没有说好，也没有让他擦掉。" },
+  sell_captain: { dueEpisode: 6, title: "空出来的不只是一个柜子", speaker: "装备管理员", body: ["“袖标这六周戴过三个人。每个人拿到它，第一件事都是问梁一川以前怎么做。”", "“转会款到账了，但没人能从账户里取出一次补位提醒。”"], pitch: { cohesion: -5, morale: -3 }, operations: { dressingRoom: -4 }, foreshadow: "清空梁一川柜子时，装备管理员把袖标放在长凳正中。三个人经过，没有人先伸手。" },
+  renew_captain: { dueEpisode: 8, title: "角色交接没有变成驱逐", speaker: "程野", body: ["“我第一次首发失误后，是川哥让我第二次还敢要球。”", "梁一川开始坐替补席，却比以前更早到训练场。"], pitch: { cohesion: 4, morale: 4 }, operations: { dressingRoom: 4, academyPathway: 2 }, foreshadow: "梁一川签完字，把‘不保证首发’那一页单独拍了照。晚上十一点，他把照片发进了只有球员的群。" },
+  last_dance: { dueEpisode: 8, title: "一月第一周真的到了", speaker: "梁一川", body: ["“我没有忘记你说亲自来找我。现在比赛少了，答案不能再藏在赛程里。”", "袖标仍在他手边，但他没有戴上。"], pitch: { morale: -3 }, operations: { coachAuthority: -2 }, foreshadow: "梁一川把一月第一周圈在手机日历里，随后把屏幕扣在桌上。" },
+  full_naming: { dueEpisode: 7, title: "商业履约进入了比赛身体", speaker: "孟书宁", body: ["“合同要求主力完成拍摄，赛程要求他们完成恢复。今天这两个要求用了同一条腿。”", "东看台的标识已经完工，第十二分钟却第一次没有歌声。"], pitch: { fitness: -3, morale: -2 }, operations: { fanTrust: -7, commercialCapacity: 3 }, foreshadow: "赞助商量完最后一块灯箱，许青禾仍举着手机。录音红点在所有人离开后又亮了十二秒。" },
+  hybrid_naming: { dueEpisode: 9, title: "一份麻烦的合同迫使双方继续见面", speaker: "许青禾", body: ["“我们仍会为每块广告吵，但企业票和低价票第一次出现在同一张公开表里。”", "“信任不是和解，是下次争执时还知道去哪里坐下。”"], operations: { fanTrust: 4, commercialCapacity: 2 }, pitch: { morale: 2 }, foreshadow: "合同附件有十七页。赞助代表和许青禾各自用不同颜色的笔圈出了同一个词：每季。" },
+  supporter_bond: { dueEpisode: 8, title: "会员债券没有达到宣传目标", speaker: "方雯", body: ["“到账327万，不是计划里的500万。它不能替代一名大赞助商。”", "“但327万来自六千多个名字；他们现在都会问这笔钱去了哪里。”"], finance: { cash: 327 }, operations: { fanTrust: 5, commercialCapacity: -2 }, foreshadow: "第一张会员债券只有五百元。认购人要求收据上不要印自己的名字，只印东看台的座位号。" },
+  hire_gu: { dueEpisode: 8, title: "新教练的速度撞上旧更衣室", speaker: "梁一川", body: ["“训练强度和向前速度都上来了。可韩教练那批老队员每天都在判断，自己是能力不够，还是已经不属于这里。”", "高竞的四人团队占用了原教练组的办公室，门牌只换了一半。"], pitch: { attack: 3, morale: -4 }, operations: { dressingRoom: -7, fanTrust: -3 }, foreshadow: "高竞进门时掌声很响。走廊另一端，韩立锋抱着纸箱经过荣誉墙，没有一个镜头转过去。" },
+  back_coach: { dueEpisode: 8, title: "公开担责换来了第二次直说", speaker: "韩立锋", body: ["“我不会因为你替我挡过记者就说阵容够用。冬窗我仍要一个能向前传的中场。”", "“但这一次，我会在名单交给经纪人以前先交给你。”"], pitch: { cohesion: 3, morale: 2 }, operations: { coachAuthority: 4, dressingRoom: 3 }, foreshadow: "发布会后韩立锋没有道谢，只把一份划满红线的冬窗名单放回你桌上。名单没有经过主席办公室。" },
+  three_game_review: { dueEpisode: 9, title: "倒计时结束了，生存感没有", speaker: "梁一川", body: ["“三场期限早就结束，可每次丢球后大家还是先看场边。”", "“人会记住被评估的方式，比记住评估表更久。”"], pitch: { morale: -4, cohesion: -2 }, operations: { coachAuthority: -3, dressingRoom: -3 }, foreshadow: "助教擦掉白板上的‘3’，却没擦干净。下一堂训练，仍有人抬头看那个浅灰色轮廓。" },
+  medical_veto: { dueEpisode: 9, title: "一次缺席换回了完整合练", speaker: "孟书宁", body: ["“他错过了那场德比，今天完成了九十分钟合练。”", "“现在球员会在疼痛还只有三级时进来，而不是等到七级。”"], pitch: { fitness: 5, squadDepth: 3 }, operations: { medicalIntegrity: 4, dressingRoom: 2 }, foreshadow: "比赛日名单空着一个最显眼的位置。诊疗室门外却第一次有人在疼痛还不严重时排队。" },
+  informed_choice: { dueEpisode: 9, title: "说不的权利开始被验证", speaker: "受伤球员", body: ["“第二次不舒服时，我在热身前就说了。奖金没有少，第二天的训练位置也还在。”", "“我现在才相信，上次那张纸不只在需要我签字时有效。”"], pitch: { morale: 3, fitness: 2 }, operations: { dressingRoom: 4, medicalIntegrity: 3 }, foreshadow: "球员签完知情书，没有马上拿走。他用拇指反复按着‘不影响奖金与位置’那一行。" },
+  play_and_shoot: { dueEpisode: 8, title: "那条腿在冬天停了下来", speaker: "孟书宁", body: ["“不是三周。影像显示至少八周，恢复进度不能再拿商业日期倒推。”", "“他当时签了字；诊疗室里其他人也看见是谁最后批准。”"], pitch: { attack: -6, fitness: -10, squadDepth: -4, morale: -3 }, operations: { medicalIntegrity: -5, dressingRoom: -4 }, foreshadow: "拍摄结束时，他扶了一下栏杆，看到有人过来又立刻松手。孟书宁没有说话，只记下了时间。" },
+  sell_chen: { dueEpisode: 9, title: "青训队开始计算离开的路径", speaker: "罗志衡", body: ["“程野在那里连续首发，这是好事。这里的孩子看到的却是：要获得比赛，可能必须先离开岚城。”", "“回购条款写着未来，今天的训练场只剩一件空背心。”"], pitch: { morale: -2, squadDepth: -2 }, operations: { academyPathway: -6 }, foreshadow: "程野拿走的行李很少。青年队三个孩子送他到门口，回来后都问了同一个问题：租借名单什么时候定？" },
+  shareholder_loan: { dueEpisode: 10, title: "借款在董事会里有了声音", speaker: "周绍庭", body: ["“1800万还没到账，但它已经到期。下一季预算先由我看，这不是干预，是债权人的责任。”", "新中场仍在训练场送出穿透球，会议室里的否决权也同时变得更具体。"], operations: { boardBacking: 5, coachAuthority: -3 }, pitch: { morale: -2 }, foreshadow: "合影时周绍庭站在新中场旁边。方雯没有入镜，她把写着1800万的付款页翻到了五月。" },
+  hold_course: { dueEpisode: 9, title: "有限轮换终于变成了可理解的路径", speaker: "程野", body: ["“我不是每场都上，但每次下场都知道下次要改什么。”", "“以前‘未来’像一句客气话。现在它至少有下一堂训练的时间。”"], pitch: { cohesion: 4, attack: 2, morale: 2 }, operations: { academyPathway: 3, dressingRoom: 2 }, foreshadow: "程野把八周计划贴在柜门内侧。第一周的首发栏仍是空的，他却先在下面写了明天训练的时间。" },
+  bonus_push: { dueEpisode: 10, title: "名次把每一分钟都标上了价格", speaker: "队长", body: ["“奖金分得公平，但所有人都在算还剩几分、值多少钱。”", "“一次回传失误后，替补席安静得像已经丢掉了700万。”"], pitch: { morale: -3, cohesion: -2 }, operations: { dressingRoom: -2 }, foreshadow: "装备管理员在奖金名单上找到自己的名字后笑了。十分钟后，他也打开积分榜算了一遍还差几分。" },
+  quiet_process: { dueEpisode: 10, title: "同一张复盘表熬过了输赢", speaker: "韩立锋", body: ["“五场我们没有每周换一次目标。球员终于敢在失误后继续做训练里要求的动作。”", "记者觉得这套回答无聊，更衣室却开始相信它不会突然改变。"], pitch: { cohesion: 3, morale: 2 }, operations: { coachAuthority: 3, dressingRoom: 2 }, foreshadow: "第三场复盘结束，助教正要换一张新标题。韩立锋按住纸，只让他把日期改掉。" },
+  identity_runin: { dueEpisode: 10, title: "旧歌声接住了第一次失误", speaker: "梁一川", body: ["“开场那脚回传直接出了边线。看台没有叹气，歌还在继续。”", "“它没有替我们多进一球，却让第二次传球不必先害怕第一次。”"], pitch: { morale: 3, cohesion: 2 }, operations: { fanTrust: 3 }, foreshadow: "十二名老球员走得很慢。年轻球员原本在通道里催时间，听见东看台第一句旧歌后都停了下来。" }
+};
 const LEGACY_CHARACTER_NAMES = {
   沈岳: "周绍庭",
   乔岚: "方雯",
@@ -45,6 +97,10 @@ const ui = {
   resultRestartBtn: $("resultRestartBtn"),
   seasonLabel: $("seasonLabel"),
   clubTitle: $("clubTitle"),
+  overallStrength: $("overallStrength"),
+  strengthRadar: $("strengthRadar"),
+  strengthTable: $("strengthTable"),
+  matchForecast: $("matchForecast"),
   cashValue: $("cashValue"),
   wageValue: $("wageValue"),
   installmentValue: $("installmentValue"),
@@ -144,7 +200,7 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 8,
+    contentRevision: 9,
     managerName,
     clubName,
     currentEpisode: 0,
@@ -173,6 +229,10 @@ function createInitialState(managerName, clubName) {
     knowledge: [],
     interactionFinalized: {},
     causalLedger: [],
+    deferredConsequences: [],
+    resolvedConsequences: [],
+    consequenceNotices: {},
+    lastDecisionImpact: null,
     seenTerms: [],
     pendingCrisis: null,
     crisisReturnPhase: null,
@@ -204,6 +264,10 @@ function readSave() {
     );
     saved.interactionFinalized ||= {};
     saved.causalLedger ||= [];
+    saved.deferredConsequences ||= [];
+    saved.resolvedConsequences ||= [];
+    saved.consequenceNotices ||= {};
+    saved.lastDecisionImpact ??= null;
     saved.seenTerms ||= [];
     saved.pendingCrisis ??= null;
     saved.crisisReturnPhase ??= null;
@@ -244,6 +308,20 @@ function readSave() {
         saved.sceneIndex = 0;
       }
       saved.contentRevision = 8;
+    }
+    if ((saved.contentRevision || 0) < 9) {
+      saved.deferredConsequences ||= [];
+      saved.resolvedConsequences ||= [];
+      saved.consequenceNotices ||= {};
+      saved.lastDecisionImpact = null;
+      Object.values(saved.decisions || {}).forEach((decisionId) => {
+        const consequence = DEFERRED_CONSEQUENCES[decisionId];
+        if (!consequence || consequence.dueEpisode <= (saved.currentEpisode + 1)) return;
+        if (!saved.deferredConsequences.some((item) => item.id === decisionId)) {
+          saved.deferredConsequences.push({ id: decisionId, dueEpisode: consequence.dueEpisode });
+        }
+      });
+      saved.contentRevision = 9;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -347,6 +425,66 @@ function settleDuePayments(due, episodeNumber) {
   }));
 }
 
+function optionById(optionId) {
+  for (const episode of gameData.episodes) {
+    const option = episode.decision.options.find((candidate) => candidate.id === optionId);
+    if (option) return { episode, option };
+  }
+  return null;
+}
+
+function scheduleDeferredConsequence(optionId) {
+  const consequence = DEFERRED_CONSEQUENCES[optionId];
+  if (!consequence || consequence.dueEpisode <= currentEpisode().number) return;
+  if (state.deferredConsequences.some((item) => item.id === optionId)) return;
+  state.deferredConsequences.push({ id: optionId, dueEpisode: consequence.dueEpisode });
+}
+
+function processDeferredConsequences(episodeNumber) {
+  const due = state.deferredConsequences.filter(
+    (item) => item.dueEpisode === episodeNumber && !state.resolvedConsequences.includes(item.id)
+  );
+  if (!due.length) return;
+  state.consequenceNotices[episodeNumber] ||= [];
+
+  due.forEach((scheduled) => {
+    const consequence = DEFERRED_CONSEQUENCES[scheduled.id];
+    if (!consequence) return;
+    const before = captureClubSnapshot();
+    applyNumericEffects(state.finance, consequence.finance);
+    applyNumericEffects(state.operations, consequence.operations);
+    applyNumericEffects(state.pitch, consequence.pitch);
+    Object.keys(state.operations).forEach((key) => {
+      state.operations[key] = clamp(state.operations[key]);
+    });
+    Object.keys(state.pitch).forEach((key) => {
+      state.pitch[key] = clamp(state.pitch[key]);
+    });
+    const after = captureClubSnapshot();
+    const source = optionById(scheduled.id);
+    state.resolvedConsequences.push(scheduled.id);
+    state.consequenceNotices[episodeNumber].push({
+      speaker: consequence.speaker,
+      title: consequence.title,
+      body: clone(consequence.body),
+      kind: "迟来的回声",
+      routeStep: 1,
+      sourceDecision: scheduled.id,
+      sourceLabel: source?.option.label || scheduled.id,
+      sourceEpisode: source?.episode.number || 0,
+      impact: { before, after }
+    });
+    state.history.push({
+      type: "consequence",
+      episode: episodeNumber,
+      title: consequence.title,
+      detail: `第${source?.episode.number || "？"}集“${source?.option.label || scheduled.id}”在今天产生了迟来的影响。`,
+      impact: { before, after }
+    });
+  });
+  state.minCash = Math.min(state.minCash, state.finance.cash);
+}
+
 function financeProjection(extraCash = 0, extraPayables = []) {
   const futurePayables = state.payables
     .filter((item) => !state.paidPayables.includes(item.id))
@@ -385,6 +523,10 @@ function getSceneQueue(episode) {
     .sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.sourceIndex - b.sourceIndex)
     .slice(0, episode.echoLimit || 3);
   const notices = state.paymentNotices[episode.number] || [];
+  const consequences = (state.consequenceNotices[episode.number] || []).map((item, index) => ({
+    ...item,
+    visualKey: `${episode.id}.consequence.${index}`
+  }));
   const arrivals = (episode.arrival || []).map((item, index) => ({
     ...resolveSceneVariant(item),
     kind: index === 0 ? "承接上回" : "走进俱乐部",
@@ -400,7 +542,7 @@ function getSceneQueue(episode) {
         : Math.max(1, (episode.route?.length || 3) - 2),
     visualKey: `${episode.id}.opening.${index}`
   }));
-  return [...arrivals, openings[0], ...notices, ...echoes, ...openings.slice(1)].filter(Boolean);
+  return [...arrivals, openings[0], ...notices, ...consequences, ...echoes, ...openings.slice(1)].filter(Boolean);
 }
 
 function resolveSceneVariant(scene) {
@@ -415,6 +557,7 @@ function beginEpisode(index, { fresh = true } = {}) {
     state.phase = "scenes";
     state.sceneIndex = 0;
     state.activeReply = null;
+    processDeferredConsequences(episode.number);
     processDuePayments(episode.number);
   }
   saveGame();
@@ -432,6 +575,126 @@ function render() {
   renderPhase();
 }
 
+function strengthScore(pitch = state.pitch, operations = state.operations) {
+  const direct =
+    pitch.attack * 0.2 +
+    pitch.defense * 0.2 +
+    pitch.fitness * 0.15 +
+    pitch.cohesion * 0.15 +
+    pitch.morale * 0.1 +
+    (pitch.squadDepth ?? 50) * 0.1;
+  const support =
+    operations.coachAuthority * 0.03 +
+    operations.dressingRoom * 0.03 +
+    operations.medicalIntegrity * 0.015 +
+    operations.academyPathway * 0.005 +
+    operations.fanTrust * 0.01 +
+    operations.boardBacking * 0.01;
+  return Math.round(direct + support);
+}
+
+function captureClubSnapshot() {
+  return {
+    pitch: clone(state.pitch),
+    operations: clone(state.operations),
+    finance: clone(state.finance),
+    overall: strengthScore()
+  };
+}
+
+function matchModel(difficulty, pitch = state.pitch, operations = state.operations) {
+  const shape = {
+    attack: (pitch.attack - difficulty) * 0.27,
+    defense: (pitch.defense - difficulty) * 0.29,
+    lateGame: (pitch.fitness - 50) * 0.14 + ((pitch.squadDepth ?? 50) - 50) * 0.12,
+    collective: (pitch.cohesion - 50) * 0.13 + (pitch.morale - 50) * 0.08,
+    execution: (operations.coachAuthority - 50) * 0.06 + (operations.dressingRoom - 50) * 0.05,
+    support: (operations.medicalIntegrity - 50) * 0.025 +
+      (operations.fanTrust - 50) * 0.015 +
+      (operations.boardBacking - 50) * 0.01
+  };
+  const edge = Object.values(shape).reduce((sum, value) => sum + value, 0);
+  const draw = clamp(0.29 - Math.abs(edge) * 0.006, 0.17, 0.29);
+  const decisive = 1 - draw;
+  const win = decisive / (1 + Math.exp(-edge / 7));
+  const loss = decisive - win;
+  const percentages = {
+    win: Math.round(win * 100),
+    draw: Math.round(draw * 100),
+    loss: Math.round(loss * 100)
+  };
+  percentages.loss += 100 - percentages.win - percentages.draw - percentages.loss;
+  return { shape, edge, probabilities: percentages };
+}
+
+function radarSvg(pitch, previousPitch = null, compact = false) {
+  const size = compact ? 250 : 300;
+  const center = size / 2;
+  const radius = compact ? 84 : 105;
+  const point = (value, index, scale = 1) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / STRENGTH_DIMENSIONS.length;
+    const distance = radius * (value / 100) * scale;
+    return `${(center + Math.cos(angle) * distance).toFixed(1)},${(center + Math.sin(angle) * distance).toFixed(1)}`;
+  };
+  const polygon = (source, scale = 1) => STRENGTH_DIMENSIONS
+    .map((dimension, index) => point(source[dimension.key] ?? 0, index, scale))
+    .join(" ");
+  const grids = [20, 40, 60, 80, 100]
+    .map((level) => `<polygon points="${STRENGTH_DIMENSIONS.map((dimension, index) => point(level, index)).join(" ")}" />`)
+    .join("");
+  const axes = STRENGTH_DIMENSIONS.map((dimension, index) => {
+    const end = point(100, index);
+    const [x, y] = point(118, index).split(",").map(Number);
+    const anchor = x < center - 8 ? "end" : x > center + 8 ? "start" : "middle";
+    return `<line x1="${center}" y1="${center}" x2="${end.split(",")[0]}" y2="${end.split(",")[1]}" /><text x="${x}" y="${y}" text-anchor="${anchor}">${dimension.short}</text>`;
+  }).join("");
+  const previous = previousPitch
+    ? `<polygon class="radar-previous" points="${polygon(previousPitch)}" />`
+    : "";
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="进攻、防守、体能、默契、士气和阵容深度雷达图">
+    <g class="radar-grid">${grids}${axes}</g>
+    ${previous}
+    <polygon class="radar-current" points="${polygon(pitch)}" />
+    ${STRENGTH_DIMENSIONS.map((dimension, index) => {
+      const [x, y] = point(pitch[dimension.key] ?? 0, index).split(",");
+      return `<circle class="radar-point" cx="${x}" cy="${y}" r="3" />`;
+    }).join("")}
+  </svg>`;
+}
+
+function levelLabel(value) {
+  if (value >= 75) return "强项";
+  if (value >= 62) return "良好";
+  if (value >= 48) return "一般";
+  if (value >= 36) return "薄弱";
+  return "危险";
+}
+
+function renderStrengthDashboard() {
+  const score = strengthScore();
+  ui.overallStrength.textContent = score;
+  ui.overallStrength.dataset.level = levelLabel(score);
+  ui.strengthRadar.innerHTML = radarSvg(state.pitch, null, true);
+
+  const difficulty = currentEpisode()?.match?.difficulty ?? 55;
+  const forecast = matchModel(difficulty).probabilities;
+  const opponentLabel = currentEpisode()?.match?.opponent || "同级对手";
+  ui.matchForecast.innerHTML = `
+    <div><span>若现在对阵 ${escapeHtml(opponentLabel)}</span><strong>胜 ${forecast.win}%</strong></div>
+    <div class="forecast-bar" aria-label="胜${forecast.win}%、平${forecast.draw}%、负${forecast.loss}%"><i style="width:${forecast.win}%"></i><b style="width:${forecast.draw}%"></b><em style="width:${forecast.loss}%"></em></div>
+    <small>平 ${forecast.draw}% · 负 ${forecast.loss}% · 已计入组织执行</small>`;
+
+  ui.strengthTable.innerHTML = `
+    <details open><summary>直接战力 · 上场即生效</summary>${STRENGTH_DIMENSIONS.map((dimension) => {
+      const value = state.pitch[dimension.key] ?? 0;
+      return `<div class="strength-row" title="${escapeHtml(dimension.description)}"><span>${dimension.label}</span><i><b style="width:${value}%"></b></i><strong>${Math.round(value)}</strong></div>`;
+    }).join("")}</details>
+    <details><summary>竞技支撑 · 间接生效</summary>${SUPPORT_DIMENSIONS.map((dimension) => {
+      const value = state.operations[dimension.key] ?? 0;
+      return `<div class="strength-row support" title="${escapeHtml(dimension.description)}"><span>${dimension.label}</span><i><b style="width:${value}%"></b></i><strong>${Math.round(value)}</strong></div>`;
+    }).join("")}</details>`;
+}
+
 function renderChrome() {
   ui.clubTitle.textContent = state.clubName;
   ui.seasonLabel.textContent = gameData.meta.season;
@@ -443,6 +706,7 @@ function renderChrome() {
   ui.recordValue.textContent = state.record.games
     ? `${state.record.wins}胜 ${state.record.draws}平 ${state.record.losses}负`
     : "尚未开赛";
+  renderStrengthDashboard();
 
   const futurePayables = state.payables
     .filter((item) => !state.paidPayables.includes(item.id))
@@ -1378,6 +1642,17 @@ function renderScene() {
   const sceneDate = scene.date || episode.date;
   const sceneLocation = scene.location || episode.location;
   setSceneContent(scene, `${sceneDate} · ${sceneLocation}`, scene.visualKey);
+  if (scene.impact) {
+    ui.feedbackScene.innerHTML = renderImpactReport({
+      title: scene.title,
+      sourceLabel: scene.sourceLabel,
+      sourceEpisode: scene.sourceEpisode,
+      before: scene.impact.before,
+      after: scene.impact.after,
+      delayed: true
+    });
+    ui.feedbackScene.classList.remove("hidden");
+  }
   const last = state.sceneIndex >= scenes.length - 1;
   const nextScene = scenes[state.sceneIndex + 1];
   const interactionLabels = {
@@ -1653,10 +1928,101 @@ function applyNumericEffects(target, changes = {}) {
   });
 }
 
+function signedNumber(value) {
+  if (!value) return "0";
+  return `${value > 0 ? "+" : "−"}${Math.abs(Math.round(value))}`;
+}
+
+function metricChanges(before, after, definitions, group, formatter = signedNumber) {
+  return definitions.map((dimension) => {
+    const previous = before?.[dimension.key] ?? 0;
+    const current = after?.[dimension.key] ?? 0;
+    const delta = current - previous;
+    return { ...dimension, group, previous, current, delta, formatted: formatter(delta) };
+  }).filter((item) => item.delta !== 0);
+}
+
+function impactChanges(before, after) {
+  const direct = metricChanges(before.pitch, after.pitch, STRENGTH_DIMENSIONS, "direct");
+  const support = metricChanges(before.operations, after.operations, SUPPORT_DIMENSIONS, "support");
+  const financeDefinitions = Object.entries(FINANCE_DIMENSIONS).map(([key, label]) => ({ key, label }));
+  const finance = metricChanges(before.finance, after.finance, financeDefinitions, "finance", formatMoney);
+  return { direct, support, finance, all: [...direct, ...support, ...finance] };
+}
+
+function impactSentence(title, before, after) {
+  const changes = impactChanges(before, after);
+  const gains = [...changes.direct, ...changes.support].filter((item) => item.delta > 0);
+  const losses = [...changes.direct, ...changes.support].filter((item) => item.delta < 0);
+  const money = changes.finance.map((item) => `${item.label}${item.delta > 0 ? "增加" : "减少"}${formatMoney(Math.abs(item.delta))}`);
+  const clauses = [`由于你选择“${title}”`];
+  if (gains.length) clauses.push(`${gains.slice(0, 3).map((item) => `${item.label}提升${Math.abs(item.delta)}点`).join("、")}`);
+  if (losses.length) clauses.push(`但${losses.slice(0, 3).map((item) => `${item.label}下降${Math.abs(item.delta)}点`).join("、")}`);
+  if (money.length) clauses.push(`财务上，${money.join("、")}`);
+  if (!gains.length && !losses.length) clauses.push("竞技战力没有立刻改变，但权力、现金或未来义务已经移动");
+  return `${clauses.join("；")}。`;
+}
+
+function renderChangeRows(items) {
+  if (!items.length) return '<p class="impact-empty">本组指标没有立即变化</p>';
+  return items.map((item) => {
+    const riskPositive = item.group === "finance" && ["wageCommitment", "transferInstallments"].includes(item.key);
+    const favorable = riskPositive ? item.delta < 0 : item.delta > 0;
+    const formatted = item.group === "finance" ? `${item.delta > 0 ? "+" : "−"}${formatMoney(Math.abs(item.delta))}` : item.formatted;
+    return `<div class="impact-row ${favorable ? "up" : "down"}"><span>${escapeHtml(item.label)}</span><small>${item.group === "finance" ? formatMoney(item.previous) : Math.round(item.previous)} → ${item.group === "finance" ? formatMoney(item.current) : Math.round(item.current)}</small><strong>${formatted}</strong></div>`;
+  }).join("");
+}
+
+function genericForeshadow(before, after) {
+  const changes = impactChanges(before, after);
+  const lowest = [...changes.support, ...changes.direct].sort((a, b) => a.delta - b.delta)[0];
+  const lines = {
+    dressingRoom: "散会后，更衣室里有两只柜门很久没有关上。走廊里的人把声音压得比平时更低。",
+    coachAuthority: "主教练把名单沿原来的折痕又折了一次，没有等你一起离开。",
+    medicalIntegrity: "孟书宁在病历末页留出一格签名栏，然后合上了文件。",
+    academyPathway: "罗志衡把青年队赛程留在空椅上，最下面一个名字被红笔圈了两次。",
+    fanTrust: "东看台的手机录音红点在你离开以后仍亮着。",
+    boardBacking: "周绍庭把钢笔帽又拧紧了一格，合同却没有马上收走。",
+    fitness: "训练结束的哨声响了，有人仍坐在草边重新系鞋带。",
+    cohesion: "第二天的分组对抗里，同一个空当有两个人互相等着对方先补。",
+    morale: "公告发出后，球员群里很快出现了许多已读，却很久没有下一句话。",
+    squadDepth: "装备管理员把空柜子的号码牌放进抽屉，没有丢掉。",
+    attack: "战术板角落还留着一枚前锋磁块，没人决定它下一次该放在哪里。",
+    defense: "助教擦掉最后一条防线时，特意留下了上一场的失球时间。"
+  };
+  return lines[lowest?.key] || "人们陆续离开后，桌上仍有一份文件没有被任何人带走。";
+}
+
+function renderImpactReport({ title, sourceLabel, sourceEpisode, before, after, delayed = false, foreshadow = "" }) {
+  const changes = impactChanges(before, after);
+  const overallDelta = after.overall - before.overall;
+  const origin = delayed
+    ? `<p class="impact-origin">第${sourceEpisode}集的选择“${escapeHtml(sourceLabel)}”，今天终于进入了球队的身体和秩序。</p>`
+    : `<p class="impact-origin">${escapeHtml(impactSentence(title, before, after))}</p>`;
+  return `
+    <div class="impact-report ${delayed ? "delayed" : "immediate"}">
+      <header class="impact-head">
+        <div><p class="eyebrow">${delayed ? "PAST DECISION · NOW" : "DECISION IMPACT"}</p><h3>${delayed ? "旧决定在今天兑现" : "本次决定如何改写球队"}</h3></div>
+        <div class="overall-shift"><span>综合战力</span><strong>${before.overall} → ${after.overall}</strong><b class="${overallDelta >= 0 ? "up" : "down"}">${signedNumber(overallDelta)}</b></div>
+      </header>
+      ${origin}
+      <div class="impact-visual">
+        <div class="impact-radar">${radarSvg(after.pitch, before.pitch, true)}<p><i></i>决定前 <b></b>决定后</p></div>
+        <div class="impact-groups">
+          <section><h4>直接竞技战力</h4>${renderChangeRows(changes.direct)}</section>
+          <section><h4>间接竞技支撑</h4>${renderChangeRows(changes.support)}</section>
+          <section><h4>财务变化</h4>${renderChangeRows(changes.finance)}</section>
+        </div>
+      </div>
+      ${!delayed ? `<aside class="foreshadow"><span>散场时，你还看见</span><p>${escapeHtml(foreshadow || genericForeshadow(before, after))}</p></aside>` : ""}
+    </div>`;
+}
+
 function chooseDecision(option) {
   const episode = currentEpisode();
   if (state.decisions[episode.id]) return;
   const effects = option.effects || {};
+  const before = captureClubSnapshot();
 
   applyNumericEffects(state.finance, effects.finance);
   applyNumericEffects(state.operations, effects.operations);
@@ -1691,6 +2057,10 @@ function chooseDecision(option) {
   (effects.tagsAdd || []).forEach((tag) => {
     if (!state.tags.includes(tag)) state.tags.push(tag);
   });
+  scheduleDeferredConsequence(option.id);
+
+  const after = captureClubSnapshot();
+  state.lastDecisionImpact = { episodeId: episode.id, optionId: option.id, before, after };
 
   state.decisions[episode.id] = option.id;
   state.history.push({
@@ -1699,7 +2069,8 @@ function chooseDecision(option) {
     episodeTitle: episode.title,
     optionId: option.id,
     title: option.label,
-    detail: option.action
+    detail: option.action,
+    impact: { before, after }
   });
   state.minCash = Math.min(state.minCash, state.finance.cash);
   state.phase = "aftermath";
@@ -1729,17 +2100,27 @@ function renderAftermath() {
   );
   const addedPromises = option.effects?.promisesAdd || [];
   const spokenLine = option.line || decisionLine(option.id);
+  const impact = state.lastDecisionImpact?.episodeId === episode.id
+    ? state.lastDecisionImpact
+    : { before: captureClubSnapshot(), after: captureClubSnapshot() };
+  const deferred = DEFERRED_CONSEQUENCES[option.id];
   ui.feedbackScene.innerHTML = `
-    <p class="eyebrow">记录在案</p>
-    <h3>${escapeHtml(option.label)}</h3>
-    ${spokenLine ? `<blockquote>“${escapeHtml(spokenLine)}”</blockquote>` : ""}
-    ${
-      addedPromises.length
+    <div class="decision-record">
+      <p class="eyebrow">记录在案</p>
+      <h3>${escapeHtml(option.label)}</h3>
+      ${spokenLine ? `<blockquote>“${escapeHtml(spokenLine)}”</blockquote>` : ""}
+      ${addedPromises.length
         ? `<div class="receipt-promises"><strong>你因此说过</strong>${addedPromises
             .map((item) => `<span>“${escapeHtml(item.text)}”</span>`)
             .join("")}</div>`
-        : ""
-    }`;
+        : ""}
+    </div>
+    ${renderImpactReport({
+      title: option.label,
+      before: impact.before,
+      after: impact.after,
+      foreshadow: deferred?.foreshadow || ""
+    })}`;
   ui.feedbackScene.classList.remove("hidden");
   showContinue(episode.match ? `去看${episode.match.label}` : episode.number === 10 ? "结束这个赛季" : "离开现场，看看接下来发生什么", () => {
     if (episode.match) {
@@ -1829,32 +2210,17 @@ function ensureMatchReport(episode) {
   const games = [];
 
   for (let index = 0; index < count; index += 1) {
-    const attackEdge = (state.pitch.attack - config.difficulty) * 0.27;
-    const defenseEdge = (state.pitch.defense - config.difficulty) * 0.29;
-    const lateGame =
-      (state.pitch.fitness - 50) * 0.14 +
-      ((state.pitch.squadDepth ?? 50) - 50) * 0.12;
-    const collective =
-      (state.pitch.cohesion - 50) * 0.13 +
-      (state.pitch.morale - 50) * 0.08;
-    const execution =
-      (state.operations.coachAuthority - 50) * 0.06 +
-      (state.operations.dressingRoom - 50) * 0.05;
-    const performance = attackEdge + defenseEdge + lateGame + collective + execution + randomBetween(-8, 8);
-    let outcome = "D";
-    if (performance > 5) outcome = "W";
-    if (performance < -5) outcome = "L";
+    const model = matchModel(config.difficulty);
+    const roll = Math.random() * 100;
+    let outcome = "L";
+    if (roll < model.probabilities.win) outcome = "W";
+    else if (roll < model.probabilities.win + model.probabilities.draw) outcome = "D";
     const score = makeScore(outcome);
     games.push({
       outcome,
       score,
-      shape: {
-        attack: attackEdge,
-        defense: defenseEdge,
-        lateGame,
-        collective,
-        execution
-      }
+      probabilities: clone(model.probabilities),
+      shape: clone(model.shape)
     });
 
     if (competitive) {
@@ -1881,6 +2247,7 @@ function ensureMatchReport(episode) {
     stakes: config.stakes,
     competitive,
     games,
+    strengthAtKickoff: strengthScore(),
     events: buildMatchEvents(episode),
     voices: buildMatchVoices(episode),
     causalSummary: buildCausalSummary()
@@ -1988,6 +2355,7 @@ function renderMatch() {
       <strong>${escapeHtml(report.opponent)}</strong>
     </div>
     <p class="match-stakes">${escapeHtml(report.stakes)}</p>
+    ${report.games[0]?.probabilities ? `<div class="kickoff-odds"><span>开赛前模型 · 综合战力 ${report.strengthAtKickoff}</span><strong>胜 ${report.games[0].probabilities.win}%</strong><b>平 ${report.games[0].probabilities.draw}%</b><em>负 ${report.games[0].probabilities.loss}%</em></div>` : ""}
     <div class="score-strip">
       ${report.games
         .map(
@@ -2138,6 +2506,7 @@ function renderResult() {
   ui.finalStats.innerHTML = `
     <div><span>联赛最终推定</span><strong>第${position}名</strong></div>
     <div><span>关键赛程记录</span><strong>${state.record.wins}胜 ${state.record.draws}平 ${state.record.losses}负</strong></div>
+    <div><span>期末综合战力</span><strong>${strengthScore()}</strong></div>
     <div><span>期末现金</span><strong>${formatMoney(state.finance.cash)}</strong></div>
     <div><span>未来工资承诺</span><strong>${formatMoney(state.finance.wageCommitment)}</strong></div>`;
 
@@ -2296,6 +2665,11 @@ function exportGame() {
     completed: state.completed,
     projectedPosition: state.completed ? projectedPosition() : null,
     finance: state.finance,
+    multidimensionalStrength: {
+      overall: strengthScore(),
+      direct: state.pitch,
+      support: state.operations
+    },
     record: state.record,
     decisions: state.history,
     questionsAsked: state.questions,
@@ -2305,6 +2679,8 @@ function exportGame() {
     promises: state.promises,
     openThreads: state.openThreads,
     matchReports: state.matchReports,
+    deferredConsequences: state.deferredConsequences,
+    resolvedConsequences: state.resolvedConsequences,
     tags: state.tags
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });

@@ -7,7 +7,7 @@
     <title>岚城联：一季之内</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=director-9" />
+    <link rel="stylesheet" href="styles.css?v=strength-10" />
   </head>
   <body>
     <main class="app-shell">
@@ -63,6 +63,14 @@
 
         <div class="layout">
           <aside class="side-panel" aria-label="俱乐部经营信息">
+            <section class="panel strength-panel">
+              <div class="panel-title"><span>球队多维战力</span><strong id="overallStrength">—</strong></div>
+              <p class="panel-note">比赛能力公开可见。六项直接战力决定场上表现，组织支撑会间接改变执行与稳定性。</p>
+              <div id="strengthRadar" class="strength-radar" aria-label="球队六维战力雷达图"></div>
+              <div id="matchForecast" class="match-forecast"></div>
+              <div id="strengthTable" class="strength-table"></div>
+            </section>
+
             <section class="panel finance-panel">
               <div class="panel-title"><span>可动用现金</span><strong id="cashValue">—</strong></div>
               <p class="panel-note">这是扣除受限资金后今天可以支付的钱；不等于未来承担得起的钱。</p>
@@ -231,6 +239,6 @@
     </section>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=director-9"></script>
+    <script src="app.js?v=strength-10"></script>
   </body>
 </html>
