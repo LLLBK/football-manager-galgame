@@ -7,7 +7,7 @@
     <title>岚城联：一季之内</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=strength-11" />
+    <link rel="stylesheet" href="styles.css?v=immersive-12" />
   </head>
   <body>
     <main class="app-shell">
@@ -54,16 +54,32 @@
             <h1 id="clubTitle">岚城联</h1>
           </div>
           <div class="topbar-actions">
+            <button id="clubPanelBtn" class="ghost-btn" type="button" aria-controls="clubDrawer" aria-expanded="false">俱乐部资料</button>
+            <button id="historyPanelBtn" class="ghost-btn" type="button" aria-controls="historyDrawer" aria-expanded="false">人物与记录</button>
             <button id="glossaryBtn" class="ghost-btn" type="button">足球词语</button>
             <button id="focusModeBtn" class="ghost-btn focus-mode-btn" type="button" aria-pressed="false">剧情聚焦</button>
-            <button id="exportBtn" class="ghost-btn" type="button">导出任期记录</button>
-            <button id="restartBtn" class="ghost-btn danger" type="button">重新开始</button>
           </div>
         </header>
 
+        <div class="immersive-hud" aria-label="球队即时状态">
+          <button id="hudFinanceBtn" class="hud-card hud-finance" type="button" aria-label="打开财务资料">
+            <span>可动用现金</span>
+            <strong id="hudCashValue">—</strong>
+          </button>
+          <button id="hudStrengthBtn" class="hud-card hud-strength" type="button" aria-label="打开球队战力资料">
+            <span class="hud-radar" id="hudStrengthRadar" aria-hidden="true"></span>
+            <span>综合战力</span>
+            <strong id="hudOverallStrength">—</strong>
+          </button>
+        </div>
+
         <div class="layout">
-          <aside class="side-panel" aria-label="俱乐部经营信息">
-            <section class="panel strength-panel">
+          <aside id="clubDrawer" class="side-panel game-drawer club-drawer" aria-label="俱乐部经营信息" aria-hidden="true">
+            <header class="drawer-heading">
+              <div><span>CLUB DESK</span><strong>俱乐部资料</strong></div>
+              <button class="drawer-close" type="button" data-close-drawer aria-label="关闭俱乐部资料">×</button>
+            </header>
+            <section id="strengthPanel" class="panel strength-panel">
               <div class="panel-title"><span>球队多维战力</span><strong id="overallStrength">—</strong></div>
               <p class="panel-note">比赛能力公开可见。六项直接战力决定场上表现，组织支撑会间接改变执行与稳定性。</p>
               <div id="strengthRadar" class="strength-radar" aria-label="球队六维战力雷达图"></div>
@@ -71,7 +87,7 @@
               <div id="strengthTable" class="strength-table"></div>
             </section>
 
-            <section class="panel finance-panel">
+            <section id="financePanel" class="panel finance-panel">
               <div class="panel-title"><span>可动用现金</span><strong id="cashValue">—</strong></div>
               <p class="panel-note">这是扣除受限资金后今天可以支付的钱；不等于未来承担得起的钱。</p>
               <div class="finance-grid">
@@ -155,7 +171,11 @@
             <article id="matchReport" class="match-report hidden" aria-live="polite"></article>
           </section>
 
-          <aside class="history-panel" aria-label="人物与任期记录">
+          <aside id="historyDrawer" class="history-panel game-drawer history-drawer" aria-label="人物与任期记录" aria-hidden="true">
+            <header class="drawer-heading">
+              <div><span>MANAGER'S FILE</span><strong>人物与任期记录</strong></div>
+              <button class="drawer-close" type="button" data-close-drawer aria-label="关闭人物与任期记录">×</button>
+            </header>
             <section class="panel dossier-panel">
               <div class="panel-title"><span>总经理案头</span></div>
               <div id="clubDossier" class="club-dossier"></div>
@@ -174,8 +194,13 @@
               <div class="panel-title"><span>任期记录</span></div>
               <div id="historyList" class="history-list"></div>
             </section>
+            <section class="panel drawer-actions">
+              <button id="exportBtn" class="ghost-btn" type="button">导出任期记录</button>
+              <button id="restartBtn" class="ghost-btn danger" type="button">重新开始</button>
+            </section>
           </aside>
         </div>
+        <button id="drawerBackdrop" class="drawer-backdrop hidden" type="button" aria-label="关闭资料面板"></button>
       </section>
 
       <section id="resultScreen" class="result-screen hidden">
@@ -239,6 +264,6 @@
     </section>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=strength-11"></script>
+    <script src="app.js?v=immersive-12"></script>
   </body>
 </html>

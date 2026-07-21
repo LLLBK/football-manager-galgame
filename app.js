@@ -88,6 +88,16 @@ const ui = {
   restartBtn: $("restartBtn"),
   exportBtn: $("exportBtn"),
   focusModeBtn: $("focusModeBtn"),
+  clubPanelBtn: $("clubPanelBtn"),
+  historyPanelBtn: $("historyPanelBtn"),
+  hudFinanceBtn: $("hudFinanceBtn"),
+  hudStrengthBtn: $("hudStrengthBtn"),
+  hudCashValue: $("hudCashValue"),
+  hudStrengthRadar: $("hudStrengthRadar"),
+  hudOverallStrength: $("hudOverallStrength"),
+  clubDrawer: $("clubDrawer"),
+  historyDrawer: $("historyDrawer"),
+  drawerBackdrop: $("drawerBackdrop"),
   glossaryBtn: $("glossaryBtn"),
   glossaryPanel: $("glossaryPanel"),
   glossaryCloseBtn: $("glossaryCloseBtn"),
@@ -351,6 +361,7 @@ function repairSavedMatchScores(saved) {
 }
 
 function showScreen(name) {
+  closeGameDrawers();
   ui.startScreen.classList.toggle("hidden", name !== "start");
   ui.gameScreen.classList.toggle("hidden", name !== "game");
   ui.resultScreen.classList.toggle("hidden", name !== "result");
@@ -675,6 +686,9 @@ function renderStrengthDashboard() {
   ui.overallStrength.textContent = score;
   ui.overallStrength.dataset.level = levelLabel(score);
   ui.strengthRadar.innerHTML = radarSvg(state.pitch, null, true);
+  ui.hudOverallStrength.textContent = score;
+  ui.hudOverallStrength.dataset.level = levelLabel(score);
+  ui.hudStrengthRadar.innerHTML = radarSvg(state.pitch, null, true);
 
   const difficulty = currentEpisode()?.match?.difficulty ?? 55;
   const forecast = matchModel(difficulty).probabilities;
@@ -700,6 +714,8 @@ function renderChrome() {
   ui.seasonLabel.textContent = gameData.meta.season;
   ui.cashValue.textContent = formatMoney(state.finance.cash);
   ui.cashValue.classList.toggle("negative", state.finance.cash < 0);
+  ui.hudCashValue.textContent = formatMoney(state.finance.cash);
+  ui.hudCashValue.classList.toggle("negative", state.finance.cash < 0);
   ui.wageValue.textContent = formatMoney(state.finance.wageCommitment);
   ui.installmentValue.textContent = formatMoney(state.finance.transferInstallments);
   ui.restrictedValue.textContent = formatMoney(state.finance.restrictedCash);
@@ -962,6 +978,8 @@ function renderHistory() {
 function resetStoryPanels() {
   activeVisualPage = null;
   ui.eventCard.classList.remove("hidden");
+  ui.eventCard.classList.remove("impact-backdrop");
+  ui.eventNarrative.classList.remove("hidden");
   ui.feedbackScene.classList.add("hidden");
   ui.feedbackScene.classList.remove("impact-stage");
   ui.matchReport.classList.add("hidden");
@@ -1145,6 +1163,30 @@ function buildStoryBeats(body, speaker, speakers = []) {
   });
 }
 
+const defaultVisualExpressions = {
+  shen: "neutral",
+  tang: "guarded",
+  he: "focused",
+  qiao: "neutral",
+  lin: "steady",
+  zhao: "patient",
+  chen: "nervous",
+  jiang: "clinical",
+  gu: "composed",
+  analyst: "neutral",
+  sponsor: "courteous",
+  player: "composed"
+};
+
+function resolveSpeakerCharacterId(speaker) {
+  if (!speaker || ["你", "现场", "现场动作", "球场广播"].includes(speaker)) return null;
+  if (speaker === "主教练") return "$coach";
+  if (speaker === "队长") return "$captain";
+  const match = Object.entries(visualData?.characters || {})
+    .find(([, character]) => character.name === speaker);
+  return match?.[0] || null;
+}
+
 function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" }, meta, visualKey = null) {
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
@@ -1168,6 +1210,12 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
       visualKey,
       beatIndex
     };
+    const speakerCharacter = resolveSpeakerCharacterId(activeSpeaker);
+    if (!beat.character && speakerCharacter) {
+      beat.character = speakerCharacter;
+      beat.expression = defaultVisualExpressions[resolveVisualCharacterId(speakerCharacter)] || beat.expression;
+      beat.motion = beat.motion || "focus";
+    }
     if (renderVisualStage(beat, meta)) {
       visibleBody = [storyBeat.text];
       activeVisualPage = {
@@ -1432,11 +1480,12 @@ function updateVisualBackground(background, renderEpoch) {
   }
 
   const canCrossfadeImmediately = isVisualAssetReady(nextSource);
+  const hasReliableBackground = Boolean(currentSource && element.complete && element.naturalWidth > 0);
   element.dataset.pendingSrc = nextSource;
-  element.classList.add("asset-pending");
-  ui.visualStage.classList.add("visual-loading");
+  element.classList.add("asset-loading");
+  element.classList.toggle("asset-pending", !hasReliableBackground && !canCrossfadeImmediately);
+  ui.visualStage.classList.toggle("visual-loading", !hasReliableBackground && !canCrossfadeImmediately);
   // 新背景尚未解码时保留当前背景，避免慢网下整块舞台突然变空。
-  // 人物仍会在换人时清空，防止错误角色残留在下一句台词中。
   if (!canCrossfadeImmediately && !currentSource) ui.visualBackgroundPrevious.classList.add("hidden");
 
   loadVisualAsset(nextSource, "high").then(() => {
@@ -1450,15 +1499,20 @@ function updateVisualBackground(background, renderEpoch) {
     element.alt = background.alt || "剧情背景";
     element.hidden = false;
     element.src = nextSource;
-    element.classList.remove("asset-pending");
+    element.classList.remove("asset-pending", "asset-loading");
     ui.visualStage.classList.remove("visual-loading", "visual-fallback");
     restartAnimation(element, "background-enter");
   }).catch(() => {
     if (renderEpoch !== visualRenderEpoch || element.dataset.pendingSrc !== nextSource) return;
-    element.classList.add("asset-pending");
+    element.classList.remove("asset-loading");
     ui.visualStage.classList.remove("visual-loading");
     // 单张新图失败时继续显示上一张可靠背景；只有开场也没有可用图时才退回纯文字舞台。
-    if (!element.getAttribute("src")) ui.visualStage.classList.add("visual-fallback");
+    if (element.getAttribute("src")) {
+      element.classList.remove("asset-pending");
+    } else {
+      element.classList.add("asset-pending");
+      ui.visualStage.classList.add("visual-fallback");
+    }
   });
 }
 
@@ -1505,6 +1559,16 @@ function updatePortrait(element, descriptor) {
   const currentPortrait = element.getAttribute("src");
   const changed = currentPortrait !== descriptor.portrait;
   const sameCharacter = element.dataset.character === descriptor.characterId;
+  const fallbackPortrait = currentPortrait && element.complete && element.naturalWidth > 0 && !element.classList.contains("hidden")
+    ? {
+        src: currentPortrait,
+        className: element.className,
+        character: element.dataset.character,
+        position: element.dataset.position,
+        framing: element.dataset.framing,
+        alt: element.alt
+      }
+    : null;
   const className = `visual-character position-${descriptor.position} framing-${descriptor.framing} is-${descriptor.role}`;
   element.alt = `${descriptor.name}，${descriptor.expression || "当前"}神态`;
   element.dataset.character = descriptor.characterId;
@@ -1522,8 +1586,12 @@ function updatePortrait(element, descriptor) {
     createPortraitExit(element);
   }
   element.dataset.pendingSrc = descriptor.portrait;
-  element.className = `${className} asset-pending`;
-  if (!canSwapImmediately) element.removeAttribute("src");
+  if (!canSwapImmediately && fallbackPortrait) {
+    element.className = `${className} portrait-pending`;
+  } else {
+    element.className = `${className} asset-pending`;
+    if (!canSwapImmediately) element.removeAttribute("src");
+  }
 
   loadVisualAsset(descriptor.portrait, "high").then(() => {
     if (
@@ -1538,8 +1606,17 @@ function updatePortrait(element, descriptor) {
       descriptor.renderEpoch !== visualRenderEpoch ||
       element.dataset.pendingSrc !== descriptor.portrait
     ) return;
-    element.removeAttribute("src");
-    element.classList.add("hidden");
+    if (fallbackPortrait) {
+      element.src = fallbackPortrait.src;
+      element.className = fallbackPortrait.className;
+      element.dataset.character = fallbackPortrait.character || "";
+      element.dataset.position = fallbackPortrait.position || "center";
+      element.dataset.framing = fallbackPortrait.framing || "medium";
+      element.alt = fallbackPortrait.alt || "剧情人物";
+    } else {
+      element.removeAttribute("src");
+      element.classList.add("hidden");
+    }
   });
 }
 
@@ -1570,6 +1647,24 @@ function collectEpisodeVisualSources(episodeId) {
     for (const beat of scene.beats || []) {
       sources.push(...visualLayerSources({ ...scene, ...beat }));
     }
+  }
+  const episode = gameData?.episodes?.find((item) => item.id === episodeId);
+  const speakerNames = new Set();
+  const collectSpeakers = (value) => {
+    if (!value || typeof value !== "object") return;
+    for (const [key, item] of Object.entries(value)) {
+      if (key === "speaker" && typeof item === "string") speakerNames.add(item);
+      else if (key === "speakers" && Array.isArray(item)) item.forEach((name) => speakerNames.add(name));
+      else collectSpeakers(item);
+    }
+  };
+  collectSpeakers(episode);
+  for (const speaker of speakerNames) {
+    const inferred = resolveSpeakerCharacterId(speaker);
+    const characterId = inferred === "$coach" ? "he" : inferred === "$captain" ? "lin" : inferred;
+    const expression = defaultVisualExpressions[characterId];
+    const portrait = visualData?.characters?.[characterId]?.expressions?.[expression];
+    if (portrait) sources.push(portrait);
   }
   return [...new Set(sources)];
 }
@@ -1617,7 +1712,11 @@ function resolveVisualCharacterId(characterId) {
 
 function resolveVisualExpression(expression, characterId) {
   if (expression === "$coach_focus") return characterId === "gu" ? "intense" : "focused";
-  return expression;
+  const expressions = visualData?.characters?.[characterId]?.expressions || {};
+  if (expression && expressions[expression]) return expression;
+  const preferred = defaultVisualExpressions[characterId];
+  if (preferred && expressions[preferred]) return preferred;
+  return Object.keys(expressions)[0] || expression;
 }
 
 function restartAnimation(element, className) {
@@ -2124,7 +2223,26 @@ function renderDecisionImpact() {
     ? state.lastDecisionImpact
     : { before: captureClubSnapshot(), after: captureClubSnapshot() };
   const deferred = DEFERRED_CONSEQUENCES[option.id];
-  ui.eventCard.classList.add("hidden");
+  const visualKey = `${episode.id}.aftermath.${option.id}`;
+  const aftermathVisual = getVisualScene(visualKey);
+  if (aftermathVisual) {
+    const finalVisualBeat = aftermathVisual.beats?.at(-1) || {};
+    const impactBackdrop = {
+      ...aftermathVisual,
+      ...finalVisualBeat,
+      visualKey,
+      beatIndex: Math.max(0, (aftermathVisual.beats?.length || 1) - 1)
+    };
+    const finalSpeaker = option.aftermath.speakers?.at(-1) || option.aftermath.speaker;
+    const speakerCharacter = resolveSpeakerCharacterId(finalSpeaker);
+    if (!impactBackdrop.character && speakerCharacter) {
+      impactBackdrop.character = speakerCharacter;
+      impactBackdrop.expression = defaultVisualExpressions[resolveVisualCharacterId(speakerCharacter)];
+    }
+    renderVisualStage(impactBackdrop, `${episode.date} · 决定的余波仍在现场`);
+  }
+  ui.eventCard.classList.add("impact-backdrop");
+  ui.eventNarrative.classList.add("hidden");
   ui.feedbackScene.classList.add("impact-stage");
   ui.feedbackScene.innerHTML = `
     <div class="decision-record">
@@ -2165,7 +2283,7 @@ function continueAfterDecisionImpact() {
 
 function scrollToImpact() {
   requestAnimationFrame(() => {
-    ui.feedbackScene.scrollIntoView({ behavior: "smooth", block: "start" });
+    ui.feedbackScene.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
 
@@ -2738,9 +2856,32 @@ function restartGame() {
 }
 
 function scrollToStory() {
-  if (window.innerWidth < 1100) {
-    ui.eventCard.scrollIntoView({ behavior: "smooth", block: "start" });
+  // 沉浸式舞台固定占满视口，不再依赖页面滚动定位剧情。
+}
+
+function closeGameDrawers() {
+  for (const drawer of [ui.clubDrawer, ui.historyDrawer]) {
+    if (!drawer) continue;
+    drawer.classList.remove("drawer-open");
+    drawer.setAttribute("aria-hidden", "true");
   }
+  ui.clubPanelBtn?.setAttribute("aria-expanded", "false");
+  ui.historyPanelBtn?.setAttribute("aria-expanded", "false");
+  ui.drawerBackdrop?.classList.add("hidden");
+}
+
+function openGameDrawer(drawer, trigger, target = null) {
+  closeGameDrawers();
+  drawer.classList.add("drawer-open");
+  drawer.setAttribute("aria-hidden", "false");
+  trigger?.setAttribute("aria-expanded", "true");
+  ui.drawerBackdrop.classList.remove("hidden");
+  if (target) {
+    requestAnimationFrame(() => {
+      drawer.scrollTo({ top: Math.max(0, target.offsetTop - 82), behavior: "smooth" });
+    });
+  }
+  drawer.querySelector(".drawer-close")?.focus();
 }
 
 function setStoryFocus(active) {
@@ -2850,7 +2991,18 @@ function bindEvents() {
   ui.resultRestartBtn.addEventListener("click", restartGame);
   ui.exportBtn.addEventListener("click", exportGame);
   ui.resultExportBtn.addEventListener("click", exportGame);
-  ui.proactiveInquiryBtn.addEventListener("click", openProactiveInquiry);
+  ui.proactiveInquiryBtn.addEventListener("click", () => {
+    closeGameDrawers();
+    openProactiveInquiry();
+  });
+  ui.clubPanelBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn));
+  ui.historyPanelBtn.addEventListener("click", () => openGameDrawer(ui.historyDrawer, ui.historyPanelBtn));
+  ui.hudFinanceBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn, $("financePanel")));
+  ui.hudStrengthBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn, $("strengthPanel")));
+  ui.drawerBackdrop.addEventListener("click", closeGameDrawers);
+  document.querySelectorAll("[data-close-drawer]").forEach((button) => {
+    button.addEventListener("click", closeGameDrawers);
+  });
   ui.glossaryBtn.addEventListener("click", () => openGlossary());
   ui.glossaryCloseBtn.addEventListener("click", closeGlossary);
   ui.glossaryPanel.addEventListener("click", (event) => {
@@ -2870,6 +3022,7 @@ function bindEvents() {
       openGlossary(term.dataset.term);
     }
     if (event.key === "Escape" && !ui.glossaryPanel.classList.contains("hidden")) closeGlossary();
+    else if (event.key === "Escape") closeGameDrawers();
   });
   ui.focusModeBtn.addEventListener("click", () => {
     setStoryFocus(ui.focusModeBtn.getAttribute("aria-pressed") !== "true");

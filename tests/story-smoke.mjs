@@ -352,14 +352,23 @@ for (const episode of data.episodes.slice(0, 9)) {
     assert.ok(consequence.foreshadow?.length >= 20, `${episode.id}/${option.id} 缺少当下伏笔`);
   }
 }
-assert.match(html, /styles\.css\?v=strength-11/, "主画面战力结算样式必须使用独立缓存版本");
-assert.match(html, /app\.js\?v=strength-11/, "主画面战力结算脚本必须使用独立缓存版本");
+assert.match(html, /styles\.css\?v=immersive-12/, "沉浸式全屏样式必须使用独立缓存版本");
+assert.match(html, /app\.js\?v=immersive-12/, "沉浸式全屏脚本必须使用独立缓存版本");
+assert.match(html, /id="clubDrawer"/, "完整经营信息应收进可打开的俱乐部资料抽屉");
+assert.match(html, /id="historyDrawer"/, "人物与任期记录应收进独立资料抽屉");
+assert.match(html, /id="hudCashValue"/, "全屏剧情中必须常驻轻量现金角标");
+assert.match(html, /id="hudStrengthRadar"/, "全屏剧情中必须常驻六维战力缩略图");
+assert.match(styles, /\.game-screen:not\(\.hidden\)[\s\S]*position: fixed;[\s\S]*height: 100dvh;/, "游戏主画面必须固定占满整个视口");
 assert.match(html, /id="startBtn"[^>]*disabled/, "剧情载入前开始按钮必须保持禁用，避免点击后无响应");
 assert.match(html, /id="startStatus"/, "开始页必须说明剧情是否已经载入");
 assert.match(appSource, /setStartReady\(true,/, "剧情载入完成后必须明确解锁开始按钮");
 assert.match(appSource, /function buildStoryBeats/, "剧情播放器应把长段落拆成逐次点击的心理节拍");
 assert.match(appSource, /case "decisionImpact"/, "选择余波后必须进入独立的主画面战力结算阶段");
 assert.match(appSource, /function renderDecisionImpact/, "主画面必须能单独渲染战力结算");
+assert.match(appSource, /classList\.add\("impact-backdrop"\)/, "战力结算必须沿用决定余波的背景画面");
+assert.match(appSource, /function resolveSpeakerCharacterId/, "没有显式立绘时应按当前说话人补齐人物");
+assert.match(appSource, /portrait-pending/, "人物素材切换时应保留已加载人物，避免舞台突然无人");
+assert.match(appSource, /hasReliableBackground/, "背景素材切换时应保留已加载背景，避免舞台突然空白");
 assert.match(appSource, /查看这项决定如何改变球队/, "余波画面必须明确引导玩家查看战力变化");
 assert.match(appSource, /const visualsReady = await loadVisualData\(\)/, "开始游戏前应等待视觉配置载入");
 assert.match(appSource, /Promise\.allSettled\(sources\.map/, "每集视觉素材应并发预取，避免串行加载拖慢后续场景");
