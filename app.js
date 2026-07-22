@@ -24,6 +24,86 @@ const FINANCE_DIMENSIONS = {
   restrictedCash: "受限资金"
 };
 
+const BOARD_DISMISSAL_THRESHOLD = 20;
+const BOARD_TRUST_DECISION_DELTAS = {
+  board_mandate: 6, club_charter: -2, sporting_control: -5,
+  liquidity_first: 2, first_team_push: 3, build_capacity: -1,
+  back_he: 1, pressing_identity: 2, shared_principles: 0,
+  sell_captain: 4, renew_captain: 1, last_dance: -2,
+  full_naming: 5, hybrid_naming: 1, supporter_bond: -3,
+  back_coach: -3, hire_gu: 5, three_game_review: 0,
+  medical_veto: -2, informed_choice: 0, play_and_shoot: 2,
+  sell_chen: 3, shareholder_loan: 4, hold_course: -1,
+  bonus_push: 4, quiet_process: 0, identity_runin: -2,
+  institutionalize: 2, personal_project: 5, leave_record: -3
+};
+
+const FREE_AGENT_POOL = [
+  { id: "fa_cb", name: "马蒂亚斯·科斯塔", age: 28, position: "中卫", profile: "正面防守、制空和保护禁区", warning: "转身速度一般，需要身边有人保护大空间", fee: 760, wage: 260, pitch: { defense: 5, squadDepth: 3 }, operations: { dressingRoom: -1 } },
+  { id: "fa_dm", name: "阿列克谢·米罗夫", age: 30, position: "后腰", profile: "抢断后的第一脚向前传球", warning: "要求立即成为主力，可能压缩年轻球员时间", fee: 920, wage: 340, pitch: { defense: 2, cohesion: 4 }, operations: { academyPathway: -2 } },
+  { id: "fa_st", name: "迭戈·巴雷拉", age: 27, position: "前锋", profile: "禁区跑位和把半次机会变成射门", warning: "过去两年换过三支球队，更衣室适应存在风险", fee: 1280, wage: 480, pitch: { attack: 7, squadDepth: 2 }, operations: { dressingRoom: -4 } },
+  { id: "fa_wb", name: "林启昊", age: 25, position: "边后卫", profile: "连续上下冲刺，可覆盖两个边路位置", warning: "防守站位需要教练额外校正", fee: 540, wage: 210, pitch: { fitness: 4, squadDepth: 5, defense: -1 }, operations: {} },
+  { id: "fa_gk", name: "安德烈·佩雷斯", age: 32, position: "门将", profile: "近距离反应和指挥年轻防线", warning: "脚下出球会限制高位推进", fee: 680, wage: 290, pitch: { defense: 4, cohesion: 2, attack: -1 }, operations: { coachAuthority: 1 } },
+  { id: "fa_am", name: "赵闻笙", age: 24, position: "前腰", profile: "在密集防守前接球转身、制造最后一传", warning: "无球防守投入不稳定", fee: 1500, wage: 520, pitch: { attack: 7, cohesion: 2, fitness: -2 }, operations: {} }
+];
+
+const SECOND_SEASON_LEGACIES = {
+  first_team_push: { round: 0, title: "高薪新援的第二张工资单", text: "上赛季迅速补强的主力仍然好用，但更衣室已经把他的奖金当成所有续约谈判的新起点。", pitch: { attack: 2, defense: 2, morale: -4 }, operations: { dressingRoom: -6 }, boardTrust: -2 },
+  build_capacity: { round: 0, title: "去年没有发生的伤病变成了今年的可用阵容", text: "康复和数据团队完整工作了一个夏天，季前名单第一次没有因为旧伤临时删人。", pitch: { fitness: 5, squadDepth: 3 }, operations: { medicalIntegrity: 4 }, boardTrust: 2 },
+  liquidity_first: { round: 1, title: "没有花掉的现金终于获得第二次选择", text: "上赛季保留下来的现金缓冲让俱乐部不必在十一月接受第一份报价。", finance: { cash: 450 }, operations: { boardBacking: 2 }, boardTrust: 3 },
+  hire_gu: { round: 0, title: "新教练的成功仍站在旧教练的影子里", text: "高竞的训练强度提高了，但老教练离开的方式仍让一部分球员和球迷拒绝把进步全部算在你名下。", pitch: { attack: 3, morale: -3 }, operations: { fanTrust: -5, dressingRoom: -4 }, boardTrust: 1 },
+  full_naming: { round: 1, title: "看台商业合同进入续约年", text: "赞助款按时到账，低价季票续订却明显下降；同一块看台同时带来现金和沉默。", finance: { cash: 500 }, operations: { fanTrust: -7, commercialCapacity: 4 }, boardTrust: -3 },
+  hybrid_naming: { round: 1, title: "麻烦的联合名称开始产生耐心", text: "赞助商和球迷仍然争吵，但合同迫使双方继续坐在同一张桌前。", finance: { cash: 260 }, operations: { fanTrust: 4, commercialCapacity: 2 }, boardTrust: 1 },
+  play_and_shoot: { round: 0, title: "那条被批准冒险的腿又疼了", text: "上赛季签过知情书的球员在季前再次停训；其他球员记得最后签字的人是谁。", pitch: { attack: -5, fitness: -5, squadDepth: -3 }, operations: { medicalIntegrity: -5, dressingRoom: -3 }, boardTrust: -5 },
+  shareholder_loan: { round: 2, title: "股东借款在第二年变成否决权", text: "旧借款进入偿付窗口，周绍庭要求先看冬窗名单，再决定是否展期。", finance: { cash: -800 }, operations: { boardBacking: 5, coachAuthority: -3 }, boardTrust: -6 },
+  sell_chen: { round: 2, title: "青训孩子学会了先问离队路线", text: "程野在外面获得比赛，留下的年轻人却把租借和出售看成得到机会的唯一办法。", pitch: { squadDepth: -2, morale: -2 }, operations: { academyPathway: -6 }, boardTrust: -1 },
+  institutionalize: { round: 3, title: "制度第一次在连败时保护了坏消息", text: "足球委员会没有替你赢球，却阻止董事会在一周内发出三套互相矛盾的命令。", pitch: { cohesion: 4, morale: 2 }, operations: { boardBacking: 3, coachAuthority: 3 }, boardTrust: 5 },
+  personal_project: { round: 3, title: "所有成功和错误都只剩一个名字", text: "更大的授权让调整更快；当球队连续失分时，董事会也不再接受任何程序性解释。", pitch: { attack: 3 }, operations: { fanTrust: -4 }, boardTrust: -4 }
+};
+
+const SECOND_SEASON_ROUNDS = [
+  {
+    id: "s2r1", date: "第二年 · 8月", title: "新赛季第一天，旧合同先到了", location: "一线队训练场", background: "training_ground_afternoon", character: "$coach", expression: "$coach_focus",
+    speaker: "主教练", body: "第一年留下的球员、工资和伤病都在这份名单里。新赛季不是重新开档。",
+    match: { label: "第二赛季开局三轮", opponent: "开局对手群", difficulty: 59, stakes: "第一年的建队选择能否经受第二次季前准备", count: 3 },
+    choices: [
+      { id: "s2_integrate", label: "先修复角色和工资秩序", line: "新援是否主力由训练决定；所有奖金结构重新对全队解释。", effects: { pitch: { cohesion: 5, morale: 3 }, operations: { dressingRoom: 5 }, finance: { cash: -220 } }, boardTrust: -1 },
+      { id: "s2_accelerate", label: "继续围绕最强球员加速", line: "不为照顾旧秩序减速。最好的球员先拿到最清楚的资源。", effects: { pitch: { attack: 5, defense: 2, morale: -3 }, operations: { dressingRoom: -4 } }, boardTrust: 3 },
+      { id: "s2_youth_mix", label: "强制加入两名青训轮换", line: "每份比赛名单留两个位置给年轻人，代价由我向董事会解释。", effects: { pitch: { squadDepth: 5, cohesion: -2 }, operations: { academyPathway: 6 }, finance: { cash: -120 } }, boardTrust: -2 }
+    ]
+  },
+  {
+    id: "s2r2", date: "第二年 · 11月", title: "董事会问的不是排名，是还能等多久", location: "董事会议室", background: "boardroom_morning", character: "shen", expression: "stern",
+    speaker: "周绍庭", body: "第一年的故事已经讲完了。现在给我一个期限，以及期限到了以后谁负责。",
+    match: { label: "冬前关键三轮", opponent: "北方赛区对手群", difficulty: 62, stakes: "董事会耐心和球队稳定同时进入倒计时", count: 3 },
+    choices: [
+      { id: "s2_public_target", label: "公开六轮积分目标", line: "六轮拿十一分。做不到，先由我接受董事会问责。", effects: { pitch: { morale: 3 }, operations: { boardBacking: 5, coachAuthority: -2 } }, boardTrust: 6 },
+      { id: "s2_private_review", label: "只做内部复核，不公开倒计时", line: "每场复盘，但不把球员每天训练变成公开生存测试。", effects: { pitch: { cohesion: 4, morale: 2 }, operations: { boardBacking: -2, dressingRoom: 3 } }, boardTrust: -2 },
+      { id: "s2_sell_window", label: "承诺冬窗出售一名主力", line: "我用一笔确定出售换来本季现金安全，名单由足球部门决定。", effects: { finance: { cash: 900 }, pitch: { squadDepth: -5, morale: -3 }, operations: { boardBacking: 6 } }, boardTrust: 5 }
+    ]
+  },
+  {
+    id: "s2r3", date: "第二年 · 2月", title: "身体和现金在同一周变窄", location: "医疗与财务联席会", background: "medical_room", character: "jiang", expression: "concerned",
+    speaker: "孟书宁", body: "三个人能带伤上场，账户也能付奖金。‘能’不是我今天问的问题。",
+    match: { label: "冬季密集三轮", opponent: "保级与争冠混合赛程", difficulty: 64, stakes: "阵容身体、现金和排名无法同时被最大化", count: 3 },
+    choices: [
+      { id: "s2_protect_bodies", label: "轮休主力，接受短期失分", line: "医学红线优先。董事会要解释，我来。", effects: { pitch: { fitness: 6, squadDepth: 3, attack: -2 }, operations: { medicalIntegrity: 6 }, finance: { cash: -180 } }, boardTrust: -4 },
+      { id: "s2_push_bodies", label: "核心球员连续首发", line: "这是决定赛季的位置。风险写清，但最强阵容继续上。", effects: { pitch: { attack: 5, fitness: -7, squadDepth: -4 }, operations: { medicalIntegrity: -4 } }, boardTrust: 4 },
+      { id: "s2_emergency_depth", label: "支付溢价补一名轮换球员", line: "不是明星，只买能让三个位置喘气的人。", effects: { finance: { cash: -650, wageCommitment: 220 }, pitch: { squadDepth: 7, fitness: 3 } }, boardTrust: 1 }
+    ]
+  },
+  {
+    id: "s2r4", date: "第二年 · 5月", title: "两年任期只剩最后三场", location: "主场更衣室", background: "locker_room", character: "$captain", expression: "resolute",
+    speaker: "队长", body: "我们记得第一年你先听了谁。现在大家只想知道，最后三场你还会不会突然变成另一个人。",
+    match: { label: "两年任期最后三轮", opponent: "赛季终局对手群", difficulty: 66, stakes: "最终排名、董事会决定与两年留下的球队同时结算", count: 3 },
+    choices: [
+      { id: "s2_hold_identity", label: "坚持两年来的比赛原则", line: "不为最后三场发明新球队。用我们已经练会的方式结束。", effects: { pitch: { cohesion: 6, morale: 4 }, operations: { coachAuthority: 3, dressingRoom: 3 } }, boardTrust: 1 },
+      { id: "s2_all_in", label: "奖金和进攻全部加码", line: "最后三场只计算结果。奖金立即翻倍，阵型向前。", effects: { finance: { cash: -500 }, pitch: { attack: 7, defense: -4, morale: 4 } }, boardTrust: 5 },
+      { id: "s2_share_burden", label: "让教练、队长共同决定名单", line: "最后的责任仍是我的，但最后的办法不必只来自我。", effects: { pitch: { cohesion: 5, defense: 3 }, operations: { dressingRoom: 5, boardBacking: -2 } }, boardTrust: -1 }
+    ]
+  }
+];
+
 const DEFERRED_CONSEQUENCES = {
   board_mandate: { dueEpisode: 4, title: "前六目标有了市场价格", speaker: "方雯", body: ["“三家经纪人用了同一句话：既然你必须进前六，他们的球员就不是原来的价格。”", "“目标没有变，但每一次失分都开始被换算成你的剩余时间。”"], pitch: { morale: -4 }, operations: { boardBacking: -2 }, foreshadow: "发布会散场时，两名经纪人没有离开。他们站在走廊尽头，低头把同一条新闻转发给各自的球员。" },
   club_charter: { dueEpisode: 5, title: "公开的边界被人拿回来引用", speaker: "许青禾", body: ["“七月那份治理章程我打印了八千份。今天不是来求情，是来请你按自己的原话办事。”", "周绍庭没有反驳，只把原本放在桌中央的合同收回了半寸。"], operations: { fanTrust: 5, boardBacking: -3 }, foreshadow: "许青禾把治理章程折进旧季票里。她说，以后重要的不是谁记性好，而是谁留着原话。" },
@@ -95,6 +175,22 @@ const ui = {
   hudCashValue: $("hudCashValue"),
   hudStrengthRadar: $("hudStrengthRadar"),
   hudOverallStrength: $("hudOverallStrength"),
+  hudBoardTrustBtn: $("hudBoardTrustBtn"),
+  hudBoardTrust: $("hudBoardTrust"),
+  hudBoardTrustBar: $("hudBoardTrustBar"),
+  boardTrustValue: $("boardTrustValue"),
+  boardTrustBar: $("boardTrustBar"),
+  boardTrustStatus: $("boardTrustStatus"),
+  boardTrustReasons: $("boardTrustReasons"),
+  freeAgentAlert: $("freeAgentAlert"),
+  freeAgentModal: $("freeAgentModal"),
+  freeAgentClose: $("freeAgentClose"),
+  freeAgentContent: $("freeAgentContent"),
+  strengthModal: $("strengthModal"),
+  strengthModalClose: $("strengthModalClose"),
+  expandedStrengthRadar: $("expandedStrengthRadar"),
+  expandedMatchForecast: $("expandedMatchForecast"),
+  expandedStrengthTable: $("expandedStrengthTable"),
   clubDrawer: $("clubDrawer"),
   historyDrawer: $("historyDrawer"),
   drawerBackdrop: $("drawerBackdrop"),
@@ -166,6 +262,9 @@ const ui = {
   verdictTitle: $("verdictTitle"),
   verdictBody: $("verdictBody"),
   finalStats: $("finalStats"),
+  finalStrengthRadar: $("finalStrengthRadar"),
+  careerTimeline: $("careerTimeline"),
+  continueSeasonBtn: $("continueSeasonBtn"),
   epilogueList: $("epilogueList"),
   promiseReview: $("promiseReview"),
   debriefList: $("debriefList")
@@ -210,9 +309,15 @@ function createInitialState(managerName, clubName) {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 9,
+    contentRevision: 10,
     managerName,
     clubName,
+    seasonNumber: 1,
+    seasonTwoRound: 0,
+    seasonTwoStep: null,
+    seasonTwoDecisions: {},
+    seasonTwoLegaciesApplied: [],
+    seasonOneComplete: false,
     currentEpisode: 0,
     phase: "scenes",
     sceneIndex: 0,
@@ -250,6 +355,13 @@ function createInitialState(managerName, clubName) {
     tags: [],
     history: [],
     matchReports: [],
+    boardTrust: 62,
+    boardTrustHistory: [{ value: 62, delta: 0, reason: "董事会批准两年任期" }],
+    fired: false,
+    firedReason: null,
+    freeAgentOffers: {},
+    freeAgentSignings: [],
+    activeFreeAgentKey: null,
     record: { wins: 0, draws: 0, losses: 0, points: 0, games: 0 },
     minCash: initial.finance.cash,
     completed: false,
@@ -332,6 +444,23 @@ function readSave() {
         }
       });
       saved.contentRevision = 9;
+    }
+    if ((saved.contentRevision || 0) < 10) {
+      saved.seasonNumber ||= 1;
+      saved.seasonTwoRound ||= 0;
+      saved.seasonTwoStep ||= null;
+      saved.seasonTwoDecisions ||= {};
+      saved.seasonTwoLegaciesApplied ||= [];
+      saved.seasonOneComplete ||= Boolean(saved.completed);
+      saved.boardTrust ??= clamp(58 + Math.round(((saved.operations?.boardBacking ?? 52) - 52) * 0.35), 24, 82);
+      saved.boardTrustHistory ||= [{ value: saved.boardTrust, delta: 0, reason: "旧存档迁移后的董事会信任" }];
+      saved.fired ||= false;
+      saved.firedReason ||= null;
+      saved.freeAgentOffers ||= {};
+      saved.freeAgentSignings ||= [];
+      saved.activeFreeAgentKey ||= null;
+      if (saved.completed && !saved.fired) saved.completed = false;
+      saved.contentRevision = 10;
     }
     repairSavedMatchScores(saved);
     return saved;
@@ -465,6 +594,8 @@ function processDeferredConsequences(episodeNumber) {
     applyNumericEffects(state.finance, consequence.finance);
     applyNumericEffects(state.operations, consequence.operations);
     applyNumericEffects(state.pitch, consequence.pitch);
+    const delayedTrustDelta = Math.round((consequence.operations?.boardBacking || 0) * 0.5) + (state.finance.cash < 0 ? -5 : 0);
+    adjustBoardTrust(delayedTrustDelta, `旧决定兑现：${consequence.title}`);
     Object.keys(state.operations).forEach((key) => {
       state.operations[key] = clamp(state.operations[key]);
     });
@@ -571,6 +702,8 @@ function beginEpisode(index, { fresh = true } = {}) {
     processDeferredConsequences(episode.number);
     processDuePayments(episode.number);
   }
+  if (showDismissalIfNeeded()) return;
+  prepareFreeAgentOffer(episode.id, Boolean(episode.match));
   saveGame();
   scheduleEpisodeVisualPreload(episode.id);
   render();
@@ -609,8 +742,46 @@ function captureClubSnapshot() {
     pitch: clone(state.pitch),
     operations: clone(state.operations),
     finance: clone(state.finance),
+    boardTrust: state.boardTrust,
     overall: strengthScore()
   };
+}
+
+function boardTrustLevel(value = state.boardTrust) {
+  if (value <= BOARD_DISMISSAL_THRESHOLD) return { label: "解雇线", level: "dismissed" };
+  if (value < 35) return { label: "最后警告", level: "danger" };
+  if (value < 50) return { label: "接受审查", level: "fragile" };
+  if (value < 70) return { label: "仍获授权", level: "stable" };
+  return { label: "高度信任", level: "strong" };
+}
+
+function adjustBoardTrust(delta, reason) {
+  if (!delta) return false;
+  const previous = state.boardTrust;
+  state.boardTrust = clamp(previous + delta);
+  state.boardTrustHistory.push({
+    value: state.boardTrust,
+    delta: state.boardTrust - previous,
+    reason,
+    season: state.seasonNumber,
+    episode: state.seasonNumber === 1 ? currentEpisode()?.number : state.seasonTwoRound + 1
+  });
+  if (state.boardTrust <= BOARD_DISMISSAL_THRESHOLD && !state.fired) {
+    state.fired = true;
+    state.completed = true;
+    state.firedReason = reason;
+    state.finishedAt = new Date().toISOString();
+    return true;
+  }
+  return false;
+}
+
+function showDismissalIfNeeded() {
+  if (!state.fired) return false;
+  saveGame();
+  renderResult();
+  showScreen("result");
+  return true;
 }
 
 function matchModel(difficulty, pitch = state.pitch, operations = state.operations) {
@@ -673,6 +844,43 @@ function radarSvg(pitch, previousPitch = null, compact = false) {
   </svg>`;
 }
 
+const PROFILE_RADAR_DIMENSIONS = [
+  ...STRENGTH_DIMENSIONS.map((item) => ({ ...item, source: "pitch" })),
+  ...SUPPORT_DIMENSIONS.map((item) => ({ ...item, short: item.label.replace("支持", "").slice(0, 4), source: "operations" }))
+];
+
+function profileRadarSvg(after, before) {
+  const size = 500;
+  const center = size / 2;
+  const radius = 174;
+  const valueOf = (snapshot, dimension) => snapshot?.[dimension.source]?.[dimension.key] ?? 0;
+  const point = (value, index, scale = 1) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / PROFILE_RADAR_DIMENSIONS.length;
+    const distance = radius * (value / 100) * scale;
+    return [center + Math.cos(angle) * distance, center + Math.sin(angle) * distance];
+  };
+  const polygon = (snapshot) => PROFILE_RADAR_DIMENSIONS
+    .map((dimension, index) => point(valueOf(snapshot, dimension), index).map((value) => value.toFixed(1)).join(","))
+    .join(" ");
+  const grids = [20, 40, 60, 80, 100].map((level) =>
+    `<polygon points="${PROFILE_RADAR_DIMENSIONS.map((dimension, index) => point(level, index).map((value) => value.toFixed(1)).join(",")).join(" ")}" />`
+  ).join("");
+  const axes = PROFILE_RADAR_DIMENSIONS.map((dimension, index) => {
+    const [x, y] = point(100, index);
+    const [labelX, labelY] = point(118, index);
+    const anchor = labelX < center - 10 ? "end" : labelX > center + 10 ? "start" : "middle";
+    const delta = valueOf(after, dimension) - valueOf(before, dimension);
+    return `<line x1="${center}" y1="${center}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" />
+      <text x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${anchor}">${escapeHtml(dimension.short)}</text>
+      ${delta ? `<text class="radar-delta ${delta > 0 ? "up" : "down"}" x="${labelX.toFixed(1)}" y="${(labelY + 13).toFixed(1)}" text-anchor="${anchor}">${signedNumber(delta)}</text>` : ""}`;
+  }).join("");
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="六项直接战力与六项竞技支撑的决定前后对比">
+    <g class="radar-grid profile-grid">${grids}${axes}</g>
+    <polygon class="radar-previous" points="${polygon(before)}" />
+    <polygon class="radar-current" points="${polygon(after)}" />
+  </svg>`;
+}
+
 function levelLabel(value) {
   if (value >= 75) return "强项";
   if (value >= 62) return "良好";
@@ -690,9 +898,12 @@ function renderStrengthDashboard() {
   ui.hudOverallStrength.dataset.level = levelLabel(score);
   ui.hudStrengthRadar.innerHTML = radarSvg(state.pitch, null, true);
 
-  const difficulty = currentEpisode()?.match?.difficulty ?? 55;
+  const activeMatch = state.seasonNumber === 2
+    ? SECOND_SEASON_ROUNDS[state.seasonTwoRound]?.match
+    : currentEpisode()?.match;
+  const difficulty = activeMatch?.difficulty ?? 55;
   const forecast = matchModel(difficulty).probabilities;
-  const opponentLabel = currentEpisode()?.match?.opponent || "同级对手";
+  const opponentLabel = activeMatch?.opponent || "同级对手";
   ui.matchForecast.innerHTML = `
     <div><span>若现在对阵 ${escapeHtml(opponentLabel)}</span><strong>胜 ${forecast.win}%</strong></div>
     <div class="forecast-bar" aria-label="胜${forecast.win}%、平${forecast.draw}%、负${forecast.loss}%"><i style="width:${forecast.win}%"></i><b style="width:${forecast.draw}%"></b><em style="width:${forecast.loss}%"></em></div>
@@ -707,11 +918,142 @@ function renderStrengthDashboard() {
       const value = state.operations[dimension.key] ?? 0;
       return `<div class="strength-row support" title="${escapeHtml(dimension.description)}"><span>${dimension.label}</span><i><b style="width:${value}%"></b></i><strong>${Math.round(value)}</strong></div>`;
     }).join("")}</details>`;
+  ui.expandedStrengthRadar.innerHTML = radarSvg(state.pitch, null, false);
+  ui.expandedMatchForecast.innerHTML = ui.matchForecast.innerHTML;
+  ui.expandedStrengthTable.innerHTML = ui.strengthTable.innerHTML;
+}
+
+function renderBoardTrust() {
+  const trust = Math.round(state.boardTrust);
+  const status = boardTrustLevel(trust);
+  ui.hudBoardTrust.textContent = trust;
+  ui.hudBoardTrust.dataset.level = status.level;
+  ui.hudBoardTrustBar.style.width = `${trust}%`;
+  ui.boardTrustValue.textContent = trust;
+  ui.boardTrustValue.dataset.level = status.level;
+  ui.boardTrustBar.style.width = `${trust}%`;
+  ui.boardTrustBar.dataset.level = status.level;
+  ui.boardTrustStatus.textContent = `${status.label}。信任降至${BOARD_DISMISSAL_THRESHOLD}或以下，董事会会立即终止两年任期。`;
+  ui.boardTrustReasons.innerHTML = state.boardTrustHistory.slice(-4).reverse().map((item) => `
+    <div class="board-trust-reason ${item.delta >= 0 ? "up" : "down"}">
+      <span>${escapeHtml(item.reason)}</span><strong>${signedNumber(item.delta)}</strong>
+    </div>`).join("");
+}
+
+function prepareFreeAgentOffer(scopeId, hasMatch) {
+  if (!hasMatch || !scopeId || state.freeAgentOffers[scopeId]) return;
+  const shouldAppear = Math.random() < 0.64;
+  if (!shouldAppear) {
+    state.freeAgentOffers[scopeId] = { status: "none" };
+    return;
+  }
+  const player = clone(FREE_AGENT_POOL[Math.floor(Math.random() * FREE_AGENT_POOL.length)]);
+  state.freeAgentOffers[scopeId] = {
+    status: "active",
+    player,
+    appearedAt: new Date().toISOString()
+  };
+  state.activeFreeAgentKey = scopeId;
+}
+
+function activeFreeAgentOffer() {
+  const key = state.activeFreeAgentKey;
+  const offer = key ? state.freeAgentOffers[key] : null;
+  return offer?.status === "active" ? { key, offer } : null;
+}
+
+function renderFreeAgentAlert() {
+  const active = activeFreeAgentOffer();
+  const beforeResult = !["match", "decisionImpact"].includes(state.phase);
+  ui.freeAgentAlert.classList.toggle("hidden", !active || !beforeResult);
+  if (active) {
+    ui.freeAgentAlert.setAttribute("aria-label", `自由市场：${active.offer.player.name}等待答复`);
+  }
+}
+
+function openFreeAgentModal() {
+  const active = activeFreeAgentOffer();
+  if (!active) return;
+  const player = active.offer.player;
+  const affordable = state.finance.cash >= player.fee;
+  const pitchGains = Object.entries(player.pitch || {}).map(([key, delta]) => {
+    const dimension = STRENGTH_DIMENSIONS.find((item) => item.key === key);
+    return `<span class="${delta >= 0 ? "up" : "down"}">${escapeHtml(dimension?.label || key)} ${signedNumber(delta)}</span>`;
+  }).join("");
+  ui.freeAgentContent.innerHTML = `
+    <article class="free-agent-card">
+      <div class="free-agent-identity"><span>${escapeHtml(player.position)} · ${player.age}岁</span><h3>${escapeHtml(player.name)}</h3><p>${escapeHtml(player.profile)}</p></div>
+      <dl><div><dt>经纪人报价</dt><dd>${formatMoney(player.fee)}</dd></div><div><dt>年度工资</dt><dd>${formatMoney(player.wage)}</dd></div><div><dt>目前现金</dt><dd>${formatMoney(state.finance.cash)}</dd></div></dl>
+      <div class="free-agent-gains"><strong>签下后立即改变</strong>${pitchGains}</div>
+      <aside><span>球探在门口补了一句</span><p>${escapeHtml(player.warning)}</p></aside>
+      ${affordable ? "" : `<p class="free-agent-insufficient">现金还差${formatMoney(player.fee - state.finance.cash)}，本次无法买入。</p>`}
+      <div class="free-agent-actions"><button id="buyFreeAgent" class="primary-btn" type="button" ${affordable ? "" : "disabled"}>买入</button><button id="declineFreeAgent" class="ghost-btn" type="button">不买入</button></div>
+    </article>`;
+  ui.freeAgentModal.classList.remove("hidden");
+  document.getElementById("buyFreeAgent").addEventListener("click", () => resolveFreeAgentOffer("bought"));
+  document.getElementById("declineFreeAgent").addEventListener("click", () => resolveFreeAgentOffer("declined"));
+}
+
+function closeFreeAgentModal() {
+  ui.freeAgentModal.classList.add("hidden");
+}
+
+function resolveFreeAgentOffer(status) {
+  const active = activeFreeAgentOffer();
+  if (!active) return;
+  const player = active.offer.player;
+  if (status === "bought" && state.finance.cash < player.fee) return;
+  if (status === "bought") {
+    const before = captureClubSnapshot();
+    state.finance.cash -= player.fee;
+    state.finance.wageCommitment += player.wage;
+    applyNumericEffects(state.pitch, player.pitch);
+    applyNumericEffects(state.operations, player.operations);
+    Object.keys(state.pitch).forEach((key) => { state.pitch[key] = clamp(state.pitch[key]); });
+    Object.keys(state.operations).forEach((key) => { state.operations[key] = clamp(state.operations[key]); });
+    adjustBoardTrust(state.finance.cash < 500 ? -4 : 1, `自由市场签下${player.name}`);
+    state.minCash = Math.min(state.minCash, state.finance.cash);
+    const after = captureClubSnapshot();
+    state.freeAgentSignings.push({ ...clone(player), season: state.seasonNumber, scopeId: active.key });
+    state.history.push({
+      type: "transfer", season: state.seasonNumber,
+      episode: state.seasonNumber === 1 ? currentEpisode().number : state.seasonTwoRound + 1,
+      title: `自由签约：${player.name}`, detail: `${player.position} · 报价${formatMoney(player.fee)} · 年薪${formatMoney(player.wage)}`,
+      impact: { before, after }
+    });
+  } else {
+    state.history.push({
+      type: "transfer_pass", season: state.seasonNumber,
+      episode: state.seasonNumber === 1 ? currentEpisode().number : state.seasonTwoRound + 1,
+      title: `放弃自由球员：${player.name}`, detail: `${player.position} · 报价${formatMoney(player.fee)}`
+    });
+  }
+  active.offer.status = status;
+  state.activeFreeAgentKey = null;
+  closeFreeAgentModal();
+  saveGame();
+  if (showDismissalIfNeeded()) return;
+  render();
+}
+
+function expireFreeAgentOffer(scopeId) {
+  const offer = state.freeAgentOffers[scopeId];
+  if (offer?.status === "active") {
+    offer.status = "expired";
+    state.history.push({
+      type: "transfer_pass", season: state.seasonNumber,
+      episode: state.seasonNumber === 1 ? currentEpisode().number : state.seasonTwoRound + 1,
+      title: `自由球员报价过期：${offer.player.name}`,
+      detail: "比赛名单提交后，经纪人撤回了当轮报价。"
+    });
+  }
+  if (state.activeFreeAgentKey === scopeId) state.activeFreeAgentKey = null;
+  closeFreeAgentModal();
 }
 
 function renderChrome() {
   ui.clubTitle.textContent = state.clubName;
-  ui.seasonLabel.textContent = gameData.meta.season;
+  ui.seasonLabel.textContent = state.seasonNumber === 2 ? "第二赛季 · 两年任期终年" : "第一赛季 · 两年任期首年";
   ui.cashValue.textContent = formatMoney(state.finance.cash);
   ui.cashValue.classList.toggle("negative", state.finance.cash < 0);
   ui.hudCashValue.textContent = formatMoney(state.finance.cash);
@@ -723,6 +1065,8 @@ function renderChrome() {
     ? `${state.record.wins}胜 ${state.record.draws}平 ${state.record.losses}负`
     : "尚未开赛";
   renderStrengthDashboard();
+  renderBoardTrust();
+  renderFreeAgentAlert();
 
   const futurePayables = state.payables
     .filter((item) => !state.paidPayables.includes(item.id))
@@ -776,6 +1120,20 @@ function renderChrome() {
 }
 
 function renderEpisodeHeader() {
+  if (state.seasonNumber === 2) {
+    const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+    ui.stageCounter.textContent = `第二赛季 · 第${state.seasonTwoRound + 1}节点 / 共${SECOND_SEASON_ROUNDS.length}节点`;
+    ui.stageTitle.textContent = round.title;
+    ui.stageMeta.textContent = `${round.date} · ${round.location}`;
+    ui.seasonProgress.style.width = `${((state.seasonTwoRound + 1) / SECOND_SEASON_ROUNDS.length) * 100}%`;
+    ui.episodeStrip.innerHTML = SECOND_SEASON_ROUNDS.map((item, index) => {
+      const status = index < state.seasonTwoRound ? "done" : index === state.seasonTwoRound ? "current" : "future";
+      return `<span class="episode-dot ${status}" title="${escapeHtml(item.date)}：${escapeHtml(item.title)}"><b>${index + 1}</b><small>${escapeHtml(item.date.replace("第二年 · ", ""))}</small></span>`;
+    }).join("");
+    ui.journeyMap.classList.add("hidden");
+    ui.journeyMap.innerHTML = "";
+    return;
+  }
   const episode = currentEpisode();
   const total = gameData.episodes.length;
   ui.stageCounter.textContent = `第${toChineseNumber(episode.number)}集 / 共${toChineseNumber(total)}集`;
@@ -818,6 +1176,16 @@ function renderJourneyMap(episode) {
 }
 
 function renderDossier() {
+  if (state.seasonNumber === 2) {
+    const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+    const legacyCount = state.seasonTwoLegaciesApplied.filter((item) => item.round === state.seasonTwoRound).length;
+    ui.clubDossier.innerHTML = `<dl><div><dt>你的职位</dt><dd>足球运营总经理 · 第二年</dd></div><div><dt>当前节点</dt><dd>${escapeHtml(round.date)}</dd></div><div><dt>旧决定到期</dt><dd>${legacyCount}项</dd></div><div><dt>董事会信任</dt><dd>${Math.round(state.boardTrust)} / 100</dd></div></dl><div class="known-facts"><strong>两年任期正在倒数</strong><p>第二赛季只保留四个关键节点；每个节点都包含一次决定和一组具体比赛。</p></div>`;
+    ui.proactiveInquiryCount.textContent = "第二赛季";
+    ui.proactiveInquiryBtn.disabled = true;
+    ui.proactiveInquiryBtn.textContent = "随现场推进";
+    ui.proactiveInquiryNote.textContent = "第二赛季采用压缩叙事，旧决定会直接进入新的现场。";
+    return;
+  }
   const episode = currentEpisode();
   const selected = state.questions[episode.id] || [];
   const proactiveSelected = state.proactiveQuestions[episode.id] || [];
@@ -935,7 +1303,7 @@ const characterIntroductionEpisode = {
 };
 
 function renderCharacters() {
-  const episode = currentEpisode();
+  const episode = state.seasonNumber === 2 ? secondSeasonEpisode() : currentEpisode();
   const activeIds = new Set();
   const text = JSON.stringify(episode);
   gameData.characters.forEach((person) => {
@@ -960,13 +1328,13 @@ function renderCharacters() {
 }
 
 function renderHistory() {
-  const decisions = state.history.filter((item) => item.type === "decision").slice(-6).reverse();
+  const decisions = state.history.filter((item) => ["decision", "transfer", "legacy"].includes(item.type)).slice(-7).reverse();
   ui.historyList.innerHTML = decisions.length
     ? decisions
         .map(
           (item) => `
             <div class="history-item">
-              <span>第${item.episode}集 · ${escapeHtml(item.episodeTitle)}</span>
+              <span>${item.season === 2 ? `第二赛季 · 节点${item.episode}` : `第${item.episode}集`} · ${escapeHtml(item.episodeTitle || (item.type === "legacy" ? "旧决定兑现" : "自由市场"))}</span>
               <strong>${escapeHtml(item.title)}</strong>
               <p>${escapeHtml(item.detail)}</p>
             </div>`
@@ -1024,8 +1392,17 @@ function renderPhase() {
     case "bridge":
       renderEpisodeBridge();
       break;
+    case "seasonTwoScene":
+      renderSeasonTwoScene();
+      break;
+    case "seasonTwoDecision":
+      renderSeasonTwoDecision();
+      break;
+    case "seasonTwoImpact":
+      renderSeasonTwoImpact();
+      break;
     default:
-      renderScene();
+      state.seasonNumber === 2 ? renderSeasonTwoScene() : renderScene();
   }
 }
 
@@ -1102,6 +1479,7 @@ function resolveFinanceCrisis(choice) {
       { sourceDecision: "finance_crisis_bridge", domain: "ownership", direction: "risk", text: "用股东过桥借款解决付款缺口，主席获得更多预算影响力。", canAffect: ["board_pressure", "future_cash"] }
     ]);
     settleDuePayments(crisis.items, crisis.episodeNumber);
+    adjustBoardTrust(2, "用股东过桥借款按时完成付款");
   } else if (choice === "emergency_sale") {
     state.finance.cash += crisis.shortage + 300;
     state.pitch.squadDepth = clamp(state.pitch.squadDepth - 8);
@@ -1110,6 +1488,7 @@ function resolveFinanceCrisis(choice) {
       { sourceDecision: "finance_crisis_sale", domain: "squadDepth", direction: "risk", text: "现金危机迫使俱乐部低价出售轮换球员，替补深度下降。", canAffect: ["late_match_fatigue", "injury_cover"] }
     ]);
     settleDuePayments(crisis.items, crisis.episodeNumber);
+    adjustBoardTrust(-5, "现金危机迫使俱乐部低价出售球员");
   } else {
     for (const dueItem of crisis.items) {
       const payable = state.payables.find((item) => item.id === dueItem.id);
@@ -1125,6 +1504,7 @@ function resolveFinanceCrisis(choice) {
     addCausalEntries([
       { sourceDecision: "finance_crisis_defer", domain: "paymentTrust", direction: "risk", text: "俱乐部延迟到期付款并承担15%追加成本，付款信誉受损。", canAffect: ["staff_trust", "future_cash"] }
     ]);
+    adjustBoardTrust(-14, "已知付款到期后仍选择延期");
   }
 
   state.financeCrises.push(record);
@@ -1133,6 +1513,7 @@ function resolveFinanceCrisis(choice) {
   state.crisisReturnPhase = null;
   state.minCash = Math.min(state.minCash, state.finance.cash);
   saveGame();
+  if (showDismissalIfNeeded()) return;
   render();
   scrollToStory();
 }
@@ -1204,12 +1585,18 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
     const beatIndex = Math.min(state.visualBeatIndex || 0, storyBeats.length - 1);
     const storyBeat = storyBeats[beatIndex];
     activeSpeaker = storyBeat.speaker;
+    const visualBeat = visual.beats?.[storyBeat.visualBeatIndex] || {};
     const beat = {
       ...visual,
-      ...(visual.beats?.[storyBeat.visualBeatIndex] || {}),
+      ...visualBeat,
       visualKey,
       beatIndex
     };
+    // 一旦进入分镜节拍，同场人物必须由该节拍明确声明；不能把上一层的双人构图带进单人特写。
+    if (visual.beats?.length && !Object.hasOwn(visualBeat, "supportingCharacter")) {
+      beat.supportingCharacter = null;
+      beat.supportingExpression = null;
+    }
     const speakerCharacter = resolveSpeakerCharacterId(activeSpeaker);
     if (!beat.character && speakerCharacter) {
       beat.character = speakerCharacter;
@@ -1368,7 +1755,9 @@ function renderVisualStage(scene, meta) {
   const renderEpoch = ++visualRenderEpoch;
   updateVisualBackground(background, renderEpoch);
   ui.visualLocation.textContent = meta;
-  ui.visualEpisodeMark.textContent = `EPISODE ${currentEpisode().number}`;
+  ui.visualEpisodeMark.textContent = state.seasonNumber === 2
+    ? `SEASON 2 · ${state.seasonTwoRound + 1}`
+    : `EPISODE ${currentEpisode().number}`;
   renderVisualProps(scene);
 
   const characterId = resolveVisualCharacterId(scene.character);
@@ -1622,20 +2011,19 @@ function updatePortrait(element, descriptor) {
 
 function visualLayerSources(scene) {
   const sources = [];
-  const background = visualData?.backgrounds?.[scene.background]?.src;
-  if (background) sources.push(background);
-  const characterId = scene.character?.startsWith("$") ? null : scene.character;
-  const portrait = characterId
-    ? visualData?.characters?.[characterId]?.expressions?.[scene.expression]
-    : null;
-  if (portrait) sources.push(portrait);
-  const supportingId = scene.supportingCharacter?.startsWith("$")
-    ? null
-    : scene.supportingCharacter;
-  const supportingPortrait = supportingId
-    ? visualData?.characters?.[supportingId]?.expressions?.[scene.supportingExpression]
-    : null;
-  if (supportingPortrait) sources.push(supportingPortrait);
+  const layers = [scene, ...(scene.beats || []).map((beat) => ({ ...scene, ...beat }))];
+  layers.forEach((layer) => {
+    const background = visualData?.backgrounds?.[layer.background]?.src;
+    if (background) sources.push(background);
+    const characterId = resolveVisualCharacterId(layer.character);
+    const expression = resolveVisualExpression(layer.expression, characterId);
+    const portrait = characterId ? visualData?.characters?.[characterId]?.expressions?.[expression] : null;
+    if (portrait) sources.push(portrait);
+    const supportingId = resolveVisualCharacterId(layer.supportingCharacter);
+    const supportingExpression = resolveVisualExpression(layer.supportingExpression, supportingId);
+    const supportingPortrait = supportingId ? visualData?.characters?.[supportingId]?.expressions?.[supportingExpression] : null;
+    if (supportingPortrait) sources.push(supportingPortrait);
+  });
   return sources;
 }
 
@@ -2047,13 +2435,19 @@ function impactChanges(before, after) {
   const support = metricChanges(before.operations, after.operations, SUPPORT_DIMENSIONS, "support");
   const financeDefinitions = Object.entries(FINANCE_DIMENSIONS).map(([key, label]) => ({ key, label }));
   const finance = metricChanges(before.finance, after.finance, financeDefinitions, "finance", formatMoney);
-  return { direct, support, finance, all: [...direct, ...support, ...finance] };
+  const governance = metricChanges(
+    { boardTrust: before.boardTrust },
+    { boardTrust: after.boardTrust },
+    [{ key: "boardTrust", label: "董事会对你的信任" }],
+    "governance"
+  );
+  return { direct, support, finance, governance, all: [...direct, ...support, ...finance, ...governance] };
 }
 
 function impactSentence(title, before, after) {
   const changes = impactChanges(before, after);
-  const gains = [...changes.direct, ...changes.support].filter((item) => item.delta > 0);
-  const losses = [...changes.direct, ...changes.support].filter((item) => item.delta < 0);
+  const gains = [...changes.direct, ...changes.support, ...changes.governance].filter((item) => item.delta > 0);
+  const losses = [...changes.direct, ...changes.support, ...changes.governance].filter((item) => item.delta < 0);
   const money = changes.finance.map((item) => `${item.label}${item.delta > 0 ? "增加" : "减少"}${formatMoney(Math.abs(item.delta))}`);
   const clauses = [`由于你选择“${title}”`];
   if (gains.length) clauses.push(`${gains.slice(0, 3).map((item) => `${item.label}提升${Math.abs(item.delta)}点`).join("、")}`);
@@ -2107,10 +2501,11 @@ function renderImpactReport({ title, sourceLabel, sourceEpisode, before, after, 
       </header>
       ${origin}
       <div class="impact-visual">
-        <div class="impact-radar">${radarSvg(after.pitch, before.pitch, true)}<p><i></i>决定前 <b></b>决定后</p></div>
+        <div class="impact-radar profile-impact-radar">${profileRadarSvg(after, before)}<p><i></i>决定前 <b></b>决定后</p><strong>六项场上战力 + 六项竞技支撑</strong></div>
         <div class="impact-groups">
           <section><h4>直接竞技战力</h4>${renderChangeRows(changes.direct)}</section>
           <section><h4>间接竞技支撑</h4>${renderChangeRows(changes.support)}</section>
+          <section><h4>任期安全</h4>${renderChangeRows(changes.governance)}</section>
           <section><h4>财务变化</h4>${renderChangeRows(changes.finance)}</section>
         </div>
       </div>
@@ -2159,12 +2554,18 @@ function chooseDecision(option) {
   });
   scheduleDeferredConsequence(option.id);
 
+  let boardTrustDelta = BOARD_TRUST_DECISION_DELTAS[option.id] || 0;
+  if (state.finance.cash < 0) boardTrustDelta -= 8;
+  else if (state.finance.cash < 500) boardTrustDelta -= 3;
+  adjustBoardTrust(boardTrustDelta, `第${episode.number}集：${option.label}`);
+
   const after = captureClubSnapshot();
   state.lastDecisionImpact = { episodeId: episode.id, optionId: option.id, before, after };
 
   state.decisions[episode.id] = option.id;
   state.history.push({
     type: "decision",
+    season: 1,
     episode: episode.number,
     episodeTitle: episode.title,
     optionId: option.id,
@@ -2175,6 +2576,7 @@ function chooseDecision(option) {
   state.minCash = Math.min(state.minCash, state.finance.cash);
   state.phase = "aftermath";
   saveGame();
+  if (showDismissalIfNeeded()) return;
   render();
   scrollToStory();
 }
@@ -2271,6 +2673,7 @@ function continueAfterDecisionImpact() {
   if (episode.match) {
     state.phase = "match";
     ensureMatchReport(episode);
+    if (showDismissalIfNeeded()) return;
     saveGame();
     render();
     scrollToStory();
@@ -2349,7 +2752,7 @@ function decisionLine(optionId) {
     play_and_shoot: "把风险逐条写清。他若仍然要踢，我批准。",
     institutionalize: "我留下。但今年站在门外的人，明年要有椅子。",
     personal_project: "给我三年和最终决定权。结果只找我。",
-    leave_record: "我不续约。交接文件从没兑现的承诺开始写。"
+    leave_record: "我履行第二年合同。记录从没兑现的承诺开始公开。"
   };
   return lines[optionId] || "";
 }
@@ -2357,7 +2760,8 @@ function decisionLine(optionId) {
 function ensureMatchReport(episode) {
   if (state.matchReports.some((item) => item.episodeId === episode.id)) return;
   const config = episode.match;
-  const count = episode.id === "e6" ? 6 : episode.id === "e9" ? 5 : 1;
+  expireFreeAgentOffer(episode.id);
+  const count = config.count || (episode.id === "e6" ? 6 : episode.id === "e9" ? 5 : 1);
   const competitive = episode.id !== "e3";
   const games = [];
 
@@ -2391,6 +2795,14 @@ function ensureMatchReport(episode) {
     }
   }
 
+  const wins = games.filter((game) => game.outcome === "W").length;
+  const losses = games.filter((game) => game.outcome === "L").length;
+  const draws = games.length - wins - losses;
+  let boardTrustChange = wins * 2 - losses * 4 + (draws >= wins && draws > losses ? 1 : 0);
+  if (games.length >= 3 && losses >= Math.ceil(games.length * 0.67)) boardTrustChange -= 5;
+  if (games.length >= 3 && wins >= Math.ceil(games.length * 0.67)) boardTrustChange += 3;
+  adjustBoardTrust(boardTrustChange, `${config.label}：${wins}胜${draws}平${losses}负`);
+
   state.matchReports.push({
     episodeId: episode.id,
     episode: episode.number,
@@ -2400,71 +2812,180 @@ function ensureMatchReport(episode) {
     competitive,
     games,
     strengthAtKickoff: strengthScore(),
-    events: buildMatchEvents(episode),
-    voices: buildMatchVoices(episode),
-    causalSummary: buildCausalSummary()
+    boardTrustChange,
+    stories: buildMatchStories(episode, games),
+    postMatchScene: buildPostMatchScene(episode, games)
   });
 }
 
-function buildMatchEvents(episode) {
-  const events = [];
-  const budget = getDecision("e2");
-  const tactic = getDecision("e3");
+const MATCH_OPPONENTS = {
+  e3: ["海港城"],
+  e6: ["青川FC", "江东联", "城南竞技", "海港城", "岭北", "北岸竞技"],
+  e8: ["北岸竞技"],
+  e9: ["河谷联", "海港城", "江东联", "岭北", "城南竞技"],
+  s2r1: ["澄海", "江东联", "北岸竞技"],
+  s2r2: ["山城", "海港城", "岭北"],
+  s2r3: ["河谷联", "城南竞技", "青川FC"],
+  s2r4: ["江东联", "北岸竞技", "海港城"]
+};
 
-  if (budget === "first_team_push") {
-    events.push({ minute: 18, tone: "help", text: "新中卫抢在海港城前锋之前顶走传中。", source: "第二集：把钱换成即战力", note: "首发防守的确因此更稳定。" });
-    events.push({ minute: 71, tone: "risk", text: "右后卫抽筋，替补席没有同位置球员，梁一川临时回撤。", source: "第二集：清理两名多位置球员", note: "为注册新援付出的阵容深度代价在后半场出现。" });
-  } else if (budget === "liquidity_first") {
-    events.push({ minute: 34, tone: "risk", text: "中卫被对手带到边路，梁一川退回禁区补位，程野独自留在前场。", source: "第二集：没有补进主力中卫", note: "现金被保住了，夏训计划却必须在场上补洞。" });
-    events.push({ minute: 66, tone: "help", text: "替补席仍有完整位置选择，教练连续换上两名体能充足的球员。", source: "第二集：没有清理边缘合同", note: "没有新援，也意味着轮换深度没有被进一步削薄。" });
-  } else if (budget === "build_capacity") {
-    events.push({ minute: 63, tone: "help", text: "康复团队赛前标出的边后卫体能预警生效，教练在抽筋前完成换人。", source: "第二集：投资康复与数据团队", note: "专业能力没有直接进球，却阻止一次可预见的失控。" });
-    events.push({ minute: 28, tone: "risk", text: "现有中卫在大空间里转身较慢，对手获得一次直接射门。", source: "第二集：短期阵容没有补强", note: "更好的信息不能替代缺少的球员。" });
+const MATCH_DECISION_MOMENTS = {
+  liquidity_first: ["保住现金，没有买中卫", "队长不得不回撤补禁区；好处是替补席仍有完整换人位置。"],
+  first_team_push: ["把钱换成即战力", "新中卫赢下第一点，但为注册他清走的轮换球员在最后二十分钟留下空位。"],
+  build_capacity: ["投资康复与数据团队", "体能预警让换人提前发生；它阻止了抽筋，却不能替现有中卫完成转身。"],
+  back_he: ["支持韩立锋的控制型足球", "两条线没有被打散；需要追分时，禁区里也始终少一个提前到位的人。"],
+  pressing_identity: ["建立高位压迫身份", "前场抢断制造了射门；第七十分钟以后，同一片身后空间开始反过来追赶岚城。"],
+  shared_principles: ["用共同原则取代固定答案", "球员在落后后一起前移，但第一次判断是否加速时仍慢了半秒。"],
+  sell_captain: ["出售梁一川", "新队长完成了自己的工作，却有两次补位没人再提前喊出名字。"],
+  renew_captain: ["续约并重新定义队长角色", "梁一川从替补席指出对手第二点位置，年轻中场下一回合真的站到了那里。"],
+  last_dance: ["让队长踢完最后一季", "袖标稳定了最慌的一段时间；一月承诺仍让每次换下他都带着额外沉默。"],
+  full_naming: ["用完整冠名换取现金", "主场设施更完整，第十二分钟的看台却没有用歌声接住第一次失误。"],
+  hybrid_naming: ["让商业和旧名称共存", "看台仍会争吵，但主场落后时没有把对球队的支持一起撤走。"],
+  supporter_bond: ["用会员债券修看台", "钱没有一次到齐，主场却在丢球后继续唱完了同一段旧歌。"],
+  back_coach: ["公开支持韩立锋", "教练在落后时仍敢按训练方案换人，因为他知道赛后不会先收到甩锅声明。"],
+  hire_gu: ["立即聘请高竞", "向前速度明显提高；旧教练留下的球员在第一次失误后仍先看向新教练席。"],
+  three_game_review: ["给教练三场审查期", "白板上的倒计时已经擦掉，球员丢球后却仍用一秒钟确认谁会先被替换。"],
+  medical_veto: ["赋予医疗团队否决权", "主力缺席让首发变弱，但最后十分钟仍有三名能正常冲刺的换人。"],
+  informed_choice: ["保护球员的知情选择", "球员更早报告疼痛，教练及时调整了任务；阵容没有在热身时临时少一人。"],
+  play_and_shoot: ["批准带风险出场", "核心球员制造了最危险的射门，也在下一次回追时明显不敢完全伸腿。"],
+  sell_chen: ["出售程野", "现金到账了，替补席需要速度时却只剩一件没有主人的训练背心。"],
+  shareholder_loan: ["用股东借款完成补强", "新援送出向前传球；主席在看台上也把每次失误记进了自己的预算判断。"],
+  hold_course: ["给程野明确成长计划", "年轻人的第一次触球仍紧张，第二次却因为知道不会立刻被放弃而主动要球。"],
+  bonus_push: ["用奖金推动冲刺", "每个人都知道进球值多少钱；一次可以回传的球因此被强行送进了人群。"],
+  quiet_process: ["坚持同一套复盘过程", "丢球没有换来临时口号，球队用训练过的下一步重新把球送到边路。"],
+  identity_runin: ["用俱乐部记忆组织冲刺", "年轻球员第一次失误时，看台的旧歌没有停，他下一次仍敢把球传向中路。"],
+  s2_integrate: ["重建角色和工资秩序", "替补知道自己为什么上场，领先后的最后一次换人没有引发抱怨。"],
+  s2_accelerate: ["继续围绕最强球员加速", "核心球员连续制造机会，弱侧队友却越来越习惯站着等他解决。"],
+  s2_youth_mix: ["强制加入青训轮换", "年轻腿让最后二十分钟仍有速度，第一次防守选位也直接送出一次机会。"],
+  s2_public_target: ["公开六轮积分目标", "每个进球都带来清晰动力，每次丢球也立刻让替补席开始计算剩余分数。"],
+  s2_private_review: ["拒绝公开倒计时", "球员没有因一次落后改变动作，董事席却在终场前提前离场。"],
+  s2_sell_window: ["承诺冬窗出售主力", "被放进市场的球员仍完成了跑动，但每次对抗后都先看自己是否会被换下。"],
+  s2_protect_bodies: ["医学红线优先", "首发纸面实力下降，比赛末段却没有人因为疼痛停止回追。"],
+  s2_push_bodies: ["让核心球员连续首发", "最强阵容在前六十分钟兑现优势，最后阶段的冲刺距离随后明显坍塌。"],
+  s2_emergency_depth: ["溢价补充轮换深度", "新球员没有成为明星，却让三个位置都能在正确时间换人。"],
+  s2_hold_identity: ["坚持两年来的比赛原则", "落后没有让阵型失去共同距离，球队直到最后一脚仍像自己。"],
+  s2_all_in: ["奖金与进攻全部加码", "禁区人数达到整季最高，身后也只剩两名防守球员。"],
+  s2_share_burden: ["让教练与队长共同决定", "换人发生前所有人已经知道理由，最后阶段没有人拒绝补到陌生位置。"]
+};
+
+function matchRelevantDecisionIds(episode) {
+  if (episode.id.startsWith("s2")) {
+    const chosen = state.seasonTwoDecisions[episode.id];
+    const legacy = state.seasonTwoLegaciesApplied.find((item) => item.round === state.seasonTwoRound)?.sourceDecision;
+    return [chosen, legacy].filter(Boolean);
   }
+  const episodeKeys = {
+    e3: ["e2", "e3"],
+    e6: ["e4", "e5", "e6"],
+    e8: ["e6", "e7", "e8"],
+    e9: ["e5", "e8", "e9"]
+  }[episode.id] || [];
+  return episodeKeys.map((key) => getDecision(key)).filter(Boolean);
+}
 
-  if (tactic === "back_he") {
-    events.push({ minute: 42, tone: "help", text: "两条防线保持距离，对手连续横传后只能远射。", source: "第三集：完整支持控制型足球", note: "中低位的稳定距离限制了直接机会。" });
-    events.push({ minute: 79, tone: "risk", text: "岚城联需要进球，连续三次横传却没有人提前进入禁区。", source: "第三集：控制型足球的进攻上限", note: "球队把比赛留到最后，也缺少主动抬速的办法。" });
-  } else if (tactic === "pressing_identity") {
-    events.push({ minute: 23, tone: "help", text: "程野在前场逼出回传，队友抢断后完成近距离射门。", source: "第三集：主动压迫", note: "前场夺回球权直接变成一次机会。" });
-    events.push({ minute: 76, tone: "risk", text: "压迫慢了半步，对手一脚传到防线身后。", source: "第三集：高位压迫的身后风险", note: (state.pitch.squadDepth ?? 50) < 50 ? "替补变薄让强度更早下降。" : "这是主动站位必须承认的空间代价。" });
-  } else if (tactic === "shared_principles") {
-    events.push({ minute: 70, tone: "help", text: "球队落后后整条中场同时前移十米，第一次形成连续围抢。", source: "第三集：三条共同原则", note: "球员知道何时可以一起改变风险。" });
-    events.push({ minute: 52, tone: "risk", text: "边后卫向前前先看了一眼教练席，反击窗口随犹豫消失。", source: "第三集：共同原则的边界", note: "适应性需要持续沟通，不能靠一张纸自动完成。" });
-  }
+function matchDecisionMoment(decisionId) {
+  if (MATCH_DECISION_MOMENTS[decisionId]) return MATCH_DECISION_MOMENTS[decisionId];
+  const source = optionById(decisionId)?.option;
+  return [source?.label || "此前的管理决定", source?.action || "这项决定改变了球队在场上的选择空间。"];
+}
 
-  const randomEvents = [
-    { minute: 84, tone: "random", text: "突然加大的雨让门将第一次扑救脱手。", source: "不可控：天气", note: "经营可以改变球队如何应对，不能取消偶然。" },
-    { minute: 58, tone: "random", text: "海港城门将完成一次超出正常范围的近距离扑救。", source: "不可控：对手发挥", note: "正确制造机会也不保证每一次都进球。" },
-    { minute: 37, tone: "random", text: "一次折射让原本偏出的射门突然改变方向。", source: "不可控：折射", note: "比分包含无法预先经营掉的部分。" }
+function placeDecisionInsideMatch(decisionText, index) {
+  const matchPhases = [
+    "首发名单公布时，这个决定先改变了谁知道自己为什么在场。",
+    "比分僵持以后，它开始影响替补席是否相信下一次换人。",
+    "进入最后二十分钟，它决定了球队还能不能用同一种答案处理压力。",
+    "对手第一次改阵以后，管理层留下的边界变成了教练可以调用的空间。",
+    "体能和情绪同时下降时，这项选择才显出最昂贵的那一面。",
+    "终场前的最后一次攻防，把这项决定从会议室重新带回了草皮。"
   ];
-  events.push(clone(randomEvents[Math.floor(Math.random() * randomEvents.length)]));
-  return events.sort((a, b) => a.minute - b.minute);
+  return `${matchPhases[index % matchPhases.length]} ${decisionText}`;
 }
 
-function buildMatchVoices() {
-  const tactic = getDecision("e3");
-  const budget = getDecision("e2");
-  const coach = tactic === "back_he"
-    ? "韩立锋：‘距离没有散。若你要问为什么机会少，这也是我方案的账。’"
-    : tactic === "pressing_identity"
-      ? "韩立锋：‘前场确实抢到了球。后半场跑不动，也请把六周和替补人数一起写。’"
-      : "梁一川：‘大家知道七十分钟后能一起往前。下一次输球，别临时加第四条。’";
-  const finance = budget === "first_team_push"
-    ? "方雯：‘新中卫今天帮了球队；一月后只剩100万也没有因此消失。’"
-    : budget === "liquidity_first"
-      ? "方雯：‘现金安全垫还在。没买的人在场上留下的空位，也要由我们承认。’"
-      : "孟书宁：‘提前换人不会出现在比分里，但那条腿明天还能正常训练。’";
-  return [coach, finance];
+function buildMatchStories(episode, games) {
+  const opponents = MATCH_OPPONENTS[episode.id] || Array.from({ length: games.length }, (_, index) => `${episode.match.opponent}${index + 1}`);
+  const decisionIds = matchRelevantDecisionIds(episode);
+  const moments = {
+    W: [
+      [67, "替补上场后的第一次触球就把球送到六码区", "领先以后，球队没有退成十一名只等终场的人。"],
+      [81, "第二点球落到禁区外，队长没有停球直接射门", "这个进球来自整场都没有停止的第二落点争夺。"],
+      [54, "边路连续两次套上，终于把对手的防线拉开", "前一次被挡出的跑动，让后一次传中有了空间。"],
+      [73, "门将扑出单刀，十七秒后岚城完成反击", "一次防守不是比赛的结尾，而是进球的开始。"],
+      [39, "前场抢断后没有急射，第三名球员才完成最后一传", "这次机会来自多等的一脚，而不是更用力的一脚。"],
+      [88, "角球被顶出后，全队仍有五个人留在进攻区域", "最后时刻的风险最终换来制胜球。"]
+    ],
+    D: [
+      [76, "岚城在落后后扳平，随后拒绝把所有人都压进禁区", "一分不是停止进攻，而是在下一次反击前保留了防线。"],
+      [61, "连续三次传中都被解围，第四次改走肋部地面球", "调整制造了扳平机会，却没有剩下足够时间完成反超。"],
+      [84, "替补前锋的射门击中立柱内侧又弹回场内", "正确跑位把机会做到最后，比分仍保留了偶然。"],
+      [47, "丢球后第一次进攻没有加速，第二次才全线前移", "球队没有慌乱，也为谨慎付出了一段时间。"],
+      [70, "两名中场同时补到右路，中路因此漏出一次远射", "共同协防保住了边路，也暴露了移动后的另一块空间。"],
+      [90, "最后一脚任意球越过人墙，被门将单手托出", "比赛走到了计划允许的位置，但结果没有服从计划。"]
+    ],
+    L: [
+      [79, "岚城为追平把边后卫推上去，对手从他身后完成致命反击", "输球不是因为球队没有冒险，而是冒险没有被身后的保护接住。"],
+      [33, "第一次失球后连续三脚传球都在寻找最安全的人", "没人直接犯错，进攻却在集体等待中消失。"],
+      [86, "替补席已经没有同位置球员，抽筋的人仍留在场上", "最后一个失球从名单厚度开始，不只从禁区里的那一下开始。"],
+      [58, "一次成功压迫后无人保护第二点，对手越过整条中场", "主动做对了第一步，却没有足够的人完成第二步。"],
+      [42, "中卫赢下头球，禁区外却没人收回落点", "单个人完成了对抗，球队没有完成这一回合。"],
+      [71, "落后时两名球员同时等教练席给出新手势", "犹豫只持续一秒，对手的反击窗口已经打开。"]
+    ]
+  };
+  return games.map((game, index) => {
+    const opponent = opponents[index] || `${episode.match.opponent}${index + 1}`;
+    const [minute, headline, play] = moments[game.outcome][index % moments[game.outcome].length];
+    const decisionId = decisionIds[index % Math.max(1, decisionIds.length)];
+    const [decisionTitle, decisionText] = matchDecisionMoment(decisionId);
+    return {
+      ...game,
+      opponent,
+      minute,
+      headline,
+      play,
+      decisionId,
+      decisionTitle,
+      decisionText: placeDecisionInsideMatch(decisionText, index)
+    };
+  });
 }
 
-function buildCausalSummary() {
-  const relevant = state.causalLedger.filter((item) =>
-    ["tactic", "defense", "squadDepth", "fitness", "pressure", "authority", "sharedProcess"].includes(item.domain)
-  );
-  const helpful = relevant.filter((item) => item.direction === "help" || item.direction === "mixed").slice(-2);
-  const risks = relevant.filter((item) => item.direction === "risk").slice(-1);
-  return { helpful, risks };
+function buildPostMatchScene(episode, games) {
+  const wins = games.filter((game) => game.outcome === "W").length;
+  const losses = games.filter((game) => game.outcome === "L").length;
+  const mood = wins > losses ? "win" : losses > wins ? "loss" : "draw";
+  const scenes = {
+    e3: {
+      speaker: "韩立锋", location: "录像室的灯还没有关",
+      win: "“他们第一次在比赛里认出了训练过的动作。别把一次成功写成已经完成。”",
+      draw: "“有些动作出来了，有些人还在等答案。现在我们终于知道下一堂训练练什么。”",
+      loss: "“输的不是口号。哪一步没有人接住，明天一帧一帧看。”"
+    },
+    e6: {
+      speaker: state.decisions.e6 === "hire_gu" ? "高竞" : "韩立锋", location: "六轮之后的教练办公室",
+      win: "“成绩给了我们时间，但名单和身体没有因此变厚。下一轮别拿这六场当护身符。”",
+      draw: "“这六场没有替谁证明永远正确。至少球员知道，明天进门时教练还是同一个人。”",
+      loss: "“董事在门外。你可以让他们进来，但先决定进去以后是谁把失败说完整。”"
+    },
+    e8: {
+      speaker: "孟书宁", location: "冬夜的医疗室",
+      win: "“赢球的人也要做检查。疼痛不会因为积分榜好看就晚一天出现。”",
+      draw: "“这场少拿两分，至少没有少一个人。你可以不同意，但要把两本账一起看。”",
+      loss: "“比分已经发生，影像也已经发生。别要求其中一个替另一个消失。”"
+    },
+    e9: {
+      speaker: "梁一川", location: "最后一轮后的更衣室",
+      win: "“我们知道为什么赢，也知道不是所有代价都值得再来一次。现在去看完整赛季。”",
+      draw: "“没人能把这五场概括成一个词。至少最后一次失误后，大家还在要球。”",
+      loss: "“名次会写在门口。更衣室记住的，是落后时谁还愿意做自己答应过的事。”"
+    }
+  };
+  const fallback = {
+    speaker: episode.speaker || "队长", location: "终场后的更衣室",
+    win: "“结果到了。现在别只记得比分，也记得我们是用什么换来的。”",
+    draw: "“这一分没有回答所有问题，但它把问题留到了下一轮。”",
+    loss: "“先别关灯。输球以后还愿不愿意把原因说完整，决定下一场从哪里开始。”"
+  };
+  const scene = scenes[episode.id] || fallback;
+  return { speaker: scene.speaker, location: scene.location, quote: scene[mood], mood };
 }
 
 function randomBetween(min, max) {
@@ -2484,9 +3005,190 @@ function makeScore(outcome) {
   return `${value}-${value}`;
 }
 
+function secondSeasonEpisode(roundIndex = state.seasonTwoRound) {
+  const round = SECOND_SEASON_ROUNDS[roundIndex];
+  return {
+    ...round,
+    number: 11 + roundIndex,
+    short: round.title.slice(0, 6),
+    phase: "第二赛季",
+    speaker: round.speaker
+  };
+}
+
+function setSecondSeasonScene({ speaker, title, body, kind = "第二赛季" }, round = SECOND_SEASON_ROUNDS[state.seasonTwoRound]) {
+  const meta = `${round.date} · ${round.location}`;
+  renderVisualStage({
+    background: round.background,
+    character: round.character,
+    expression: round.expression,
+    motion: "focus",
+    visualKey: `${round.id}.${state.phase}`
+  }, meta);
+  ui.eventMeta.textContent = meta;
+  ui.sceneType.textContent = kind;
+  ui.eventTitle.textContent = title;
+  ui.eventSpeaker.textContent = speaker;
+  const role = roleForSpeaker(speaker);
+  ui.eventRole.textContent = role;
+  ui.eventRole.classList.toggle("hidden", !role);
+  ui.eventScene.innerHTML = body.map((paragraph) => `<p>${renderRichText(paragraph)}</p>`).join("");
+  restartAnimation(ui.eventNarrative, "narrative-enter");
+}
+
+function applySecondSeasonLegacies(roundIndex) {
+  Object.entries(SECOND_SEASON_LEGACIES).forEach(([sourceDecision, legacy]) => {
+    if (legacy.round !== roundIndex || !Object.values(state.decisions).includes(sourceDecision)) return;
+    if (state.seasonTwoLegaciesApplied.some((item) => item.sourceDecision === sourceDecision)) return;
+    const before = captureClubSnapshot();
+    applyNumericEffects(state.finance, legacy.finance);
+    applyNumericEffects(state.operations, legacy.operations);
+    applyNumericEffects(state.pitch, legacy.pitch);
+    Object.keys(state.operations).forEach((key) => { state.operations[key] = clamp(state.operations[key]); });
+    Object.keys(state.pitch).forEach((key) => { state.pitch[key] = clamp(state.pitch[key]); });
+    adjustBoardTrust(legacy.boardTrust || 0, `第二赛季旧账：${legacy.title}`);
+    state.minCash = Math.min(state.minCash, state.finance.cash);
+    const after = captureClubSnapshot();
+    const applied = { ...clone(legacy), sourceDecision, round: roundIndex, before, after };
+    state.seasonTwoLegaciesApplied.push(applied);
+    state.history.push({
+      type: "legacy", season: 2, episode: roundIndex + 1,
+      title: legacy.title, detail: legacy.text, sourceDecision,
+      impact: { before, after }
+    });
+  });
+}
+
+function startSecondSeason() {
+  state.seasonNumber = 2;
+  state.seasonTwoRound = 0;
+  state.seasonTwoStep = "scene";
+  state.phase = "seasonTwoScene";
+  state.completed = false;
+  state.activeFreeAgentKey = null;
+  applySecondSeasonLegacies(0);
+  prepareFreeAgentOffer(SECOND_SEASON_ROUNDS[0].id, true);
+  saveGame();
+  if (showDismissalIfNeeded()) return;
+  showScreen("game");
+  render();
+}
+
+function renderSeasonTwoScene() {
+  const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+  const legacies = state.seasonTwoLegaciesApplied.filter((item) => item.round === state.seasonTwoRound);
+  setSecondSeasonScene({ speaker: round.speaker, title: round.title, body: [round.body] }, round);
+  if (legacies.length) {
+    ui.knowledgeCard.innerHTML = `<strong>第一赛季留下的东西今天找上门</strong>${legacies.map((item) => `<article class="season-legacy"><span>${escapeHtml(item.title)}</span><p>${escapeHtml(item.text)}</p></article>`).join("")}`;
+    ui.knowledgeCard.classList.remove("hidden");
+  }
+  ui.eventPrompt.innerHTML = `<strong>第二年不是重新开始</strong><span>${legacies.length ? "去年的选择已经进入身体、工资或权力；你只能决定今天怎样接住。" : "这一轮没有旧账突然到期，但第一年的球队仍是今天的起点。"}</span>`;
+  ui.eventPrompt.classList.remove("hidden");
+  showContinue("听完现场，作出这一轮决定", () => {
+    state.phase = "seasonTwoDecision";
+    state.seasonTwoStep = "decision";
+    saveGame();
+    render();
+  });
+}
+
+function renderSeasonTwoDecision() {
+  const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+  setSecondSeasonScene({
+    speaker: "你",
+    title: "第二年的决定没有第一年的借口",
+    body: [round.match.stakes],
+    kind: "不可逆决定"
+  }, round);
+  ui.eventPrompt.innerHTML = "<strong>我现在要怎么说</strong><span>这一决定会立刻改变球队，也会进入最后的两年任期记录。</span>";
+  ui.eventPrompt.classList.remove("hidden");
+  round.choices.forEach((option) => {
+    const cashChange = option.effects?.finance?.cash || 0;
+    const affordable = state.finance.cash + cashChange >= 0;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "decision-choice";
+    button.disabled = !affordable;
+    button.innerHTML = `<span class="decision-label">${escapeHtml(option.label)}</span><span class="decision-line">“${escapeHtml(option.line)}”</span>${cashChange ? `<span class="finance-preview"><b>签字后的现金</b>${formatMoney(state.finance.cash + cashChange)}</span>` : ""}${affordable ? "" : '<span class="unavailable-reason">现有资金无法执行这项决定。</span>'}`;
+    button.addEventListener("click", () => chooseSecondSeasonDecision(option));
+    ui.choiceList.appendChild(button);
+  });
+}
+
+function chooseSecondSeasonDecision(option) {
+  const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+  if (state.seasonTwoDecisions[round.id]) return;
+  const before = captureClubSnapshot();
+  applyNumericEffects(state.finance, option.effects?.finance);
+  applyNumericEffects(state.operations, option.effects?.operations);
+  applyNumericEffects(state.pitch, option.effects?.pitch);
+  Object.keys(state.operations).forEach((key) => { state.operations[key] = clamp(state.operations[key]); });
+  Object.keys(state.pitch).forEach((key) => { state.pitch[key] = clamp(state.pitch[key]); });
+  let trustDelta = option.boardTrust || 0;
+  if (state.finance.cash < 0) trustDelta -= 8;
+  else if (state.finance.cash < 500) trustDelta -= 3;
+  adjustBoardTrust(trustDelta, `${round.date}：${option.label}`);
+  state.minCash = Math.min(state.minCash, state.finance.cash);
+  const after = captureClubSnapshot();
+  state.seasonTwoDecisions[round.id] = option.id;
+  state.lastDecisionImpact = { episodeId: round.id, optionId: option.id, before, after };
+  state.history.push({ type: "decision", season: 2, episode: state.seasonTwoRound + 1, episodeTitle: round.title, optionId: option.id, title: option.label, detail: option.line, impact: { before, after } });
+  state.phase = "seasonTwoImpact";
+  state.seasonTwoStep = "impact";
+  saveGame();
+  if (showDismissalIfNeeded()) return;
+  render();
+}
+
+function renderSeasonTwoImpact() {
+  const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+  const option = round.choices.find((item) => item.id === state.seasonTwoDecisions[round.id]);
+  const impact = state.lastDecisionImpact;
+  setSecondSeasonScene({ speaker: round.speaker, title: round.title, body: [round.body] }, round);
+  ui.eventCard.classList.add("impact-backdrop");
+  ui.eventNarrative.classList.add("hidden");
+  ui.feedbackScene.classList.add("impact-stage");
+  ui.feedbackScene.innerHTML = `
+    <div class="decision-record"><p class="eyebrow">第二赛季 · 记录在案</p><h3>${escapeHtml(option.label)}</h3><blockquote>“${escapeHtml(option.line)}”</blockquote></div>
+    ${renderImpactReport({ title: option.label, before: impact.before, after: impact.after, foreshadow: genericForeshadow(impact.before, impact.after) })}
+    <button id="impactContinue" class="primary-btn impact-continue" type="button">带着这些变化去看${escapeHtml(round.match.label)}</button>`;
+  ui.feedbackScene.classList.remove("hidden");
+  document.getElementById("impactContinue").addEventListener("click", () => {
+    state.phase = "match";
+    state.seasonTwoStep = "match";
+    ensureMatchReport(secondSeasonEpisode());
+    if (showDismissalIfNeeded()) return;
+    saveGame();
+    render();
+  });
+}
+
+function finishSecondSeasonRound() {
+  if (state.seasonTwoRound >= SECOND_SEASON_ROUNDS.length - 1) {
+    finishSeason();
+    return;
+  }
+  state.seasonTwoRound += 1;
+  state.seasonTwoStep = "scene";
+  state.phase = "seasonTwoScene";
+  applySecondSeasonLegacies(state.seasonTwoRound);
+  const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
+  prepareFreeAgentOffer(round.id, true);
+  saveGame();
+  if (showDismissalIfNeeded()) return;
+  render();
+  scrollToStory();
+}
+
 function renderMatch() {
-  const episode = currentEpisode();
+  const episode = state.seasonNumber === 2 ? secondSeasonEpisode() : currentEpisode();
   const report = state.matchReports.find((item) => item.episodeId === episode.id);
+  if (!report) {
+    ensureMatchReport(episode);
+    return renderMatch();
+  }
+  if (!report.stories?.length) report.stories = buildMatchStories(episode, report.games);
+  if (!report.postMatchScene) report.postMatchScene = buildPostMatchScene(episode, report.games);
   const wins = report.games.filter((game) => game.outcome === "W").length;
   const draws = report.games.filter((game) => game.outcome === "D").length;
   const losses = report.games.filter((game) => game.outcome === "L").length;
@@ -2508,27 +3210,24 @@ function renderMatch() {
     </div>
     <p class="match-stakes">${escapeHtml(report.stakes)}</p>
     ${report.games[0]?.probabilities ? `<div class="kickoff-odds"><span>开赛前模型 · 综合战力 ${report.strengthAtKickoff}</span><strong>胜 ${report.games[0].probabilities.win}%</strong><b>平 ${report.games[0].probabilities.draw}%</b><em>负 ${report.games[0].probabilities.loss}%</em></div>` : ""}
-    <div class="score-strip">
-      ${report.games
-        .map(
-          (game, index) => `<div class="score ${game.outcome.toLowerCase()}"><span>${report.games.length > 1 ? `第${index + 1}场` : "比分"}</span><strong>${game.score}</strong></div>`
-        )
-        .join("")}
-    </div>
-    ${report.events?.length ? `<section class="match-timeline"><h3>比赛怎样走到这个比分</h3>${report.events.map((event) => `
-      <article class="match-event ${event.tone}">
-        <time>${event.minute}'</time>
-        <div><strong>${renderRichText(event.text)}</strong><span>${renderRichText(event.source)}</span><p>${renderRichText(event.note)}</p></div>
-      </article>`).join("")}</section>` : ""}
-    ${report.causalSummary ? `<section class="match-causes"><h3>你的旧决定仍在起作用</h3>
-      ${report.causalSummary.helpful.map((item) => `<p class="help">${renderRichText(item.text)}</p>`).join("")}
-      ${report.causalSummary.risks.map((item) => `<p class="risk">${renderRichText(item.text)}</p>`).join("")}
-    </section>` : ""}
-    ${report.voices?.length ? `<section class="match-voices"><h3>同一场比赛，两种真实解释</h3>${report.voices.map((voice) => `<blockquote>${renderRichText(voice)}</blockquote>`).join("")}</section>` : ""}
-    <p class="match-note">你的经营改变了球队以什么方式创造机会、暴露风险和应对意外；天气、折射和对手发挥仍会改变比分。</p>
-    <button id="matchContinue" class="primary-btn" type="button">${episode.number === 10 ? "查看赛季结局" : "赛后，看看下一件事如何找上门"}</button>`;
+    <section class="match-stories">
+      <header><span>不再用模板概括整轮</span><h3>${report.games.length > 1 ? `${report.games.length}场球，${report.games.length}个不同的转折` : "这一场球，具体怎样被你的决定改变"}</h3></header>
+      ${report.stories.map((story, index) => `
+        <article class="match-story ${story.outcome.toLowerCase()}">
+          <div class="match-story-score"><span>第${index + 1}场 · ${escapeHtml(story.opponent)}</span><strong>${story.score}</strong><b>${story.outcome === "W" ? "胜" : story.outcome === "D" ? "平" : "负"}</b></div>
+          <div class="match-story-play"><time>${story.minute}'</time><div><h4>${escapeHtml(story.headline)}</h4><p>${escapeHtml(story.play)}</p></div></div>
+          <aside><span>你的决定进入了这个回合</span><strong>${escapeHtml(story.decisionTitle)}</strong><p>${escapeHtml(story.decisionText)}</p></aside>
+        </article>`).join("")}
+    </section>
+    <section class="post-match-scene ${report.postMatchScene.mood}">
+      <div><span>${escapeHtml(report.postMatchScene.location)}</span><strong>${escapeHtml(report.postMatchScene.speaker)}</strong></div>
+      <blockquote>${escapeHtml(report.postMatchScene.quote)}</blockquote>
+    </section>
+    <div class="match-board-trust ${report.boardTrustChange >= 0 ? "up" : "down"}"><span>赛果进入董事会记录</span><strong>信任 ${signedNumber(report.boardTrustChange || 0)}</strong><small>当前 ${Math.round(state.boardTrust)} / 100 · ${escapeHtml(boardTrustLevel().label)}</small></div>
+    <p class="match-note">每场比赛只把一个真实回合钉在你的管理决定上；比分仍保留对手发挥、折射和临场偶然。</p>
+    <button id="matchContinue" class="primary-btn" type="button">${state.seasonNumber === 2 ? (state.seasonTwoRound === SECOND_SEASON_ROUNDS.length - 1 ? "查看两年任期最终结局" : "走进第二赛季的下一个节点") : "赛后，看看下一件事如何找上门"}</button>`;
   ui.matchReport.classList.remove("hidden");
-  $("matchContinue").addEventListener("click", episode.number === 10 ? advanceEpisode : beginEpisodeBridge);
+  $("matchContinue").addEventListener("click", state.seasonNumber === 2 ? finishSecondSeasonRound : beginEpisodeBridge);
 }
 
 function advanceEpisode() {
@@ -2558,7 +3257,12 @@ function projectedPosition() {
 }
 
 function finishSeason() {
-  state.completed = true;
+  if (state.seasonNumber === 1 && !state.fired) {
+    state.seasonOneComplete = true;
+    state.completed = false;
+  } else {
+    state.completed = true;
+  }
   state.finishedAt = new Date().toISOString();
   saveGame();
   renderResult();
@@ -2575,12 +3279,20 @@ const decisionTendencies = {
   medical_veto: "institution", informed_choice: "relationship", play_and_shoot: "ascent",
   sell_chen: "ascent", shareholder_loan: "authority", hold_course: "institution",
   bonus_push: "ascent", quiet_process: "institution", identity_runin: "relationship",
-  institutionalize: "institution", personal_project: "authority", leave_record: "relationship"
+  institutionalize: "institution", personal_project: "authority", leave_record: "relationship",
+  s2_integrate: "institution", s2_accelerate: "ascent", s2_youth_mix: "relationship",
+  s2_public_target: "authority", s2_private_review: "institution", s2_sell_window: "ascent",
+  s2_protect_bodies: "institution", s2_push_bodies: "ascent", s2_emergency_depth: "ascent",
+  s2_hold_identity: "relationship", s2_all_in: "ascent", s2_share_burden: "institution"
 };
 
 function deriveSeasonEnding(position) {
   const tendencyCounts = { ascent: 0, institution: 0, authority: 0, relationship: 0 };
   Object.values(state.decisions).forEach((decisionId) => {
+    const tendency = decisionTendencies[decisionId];
+    if (tendency) tendencyCounts[tendency] += 1;
+  });
+  Object.values(state.seasonTwoDecisions || {}).forEach((decisionId) => {
     const tendency = decisionTendencies[decisionId];
     if (tendency) tendencyCounts[tendency] += 1;
   });
@@ -2603,9 +3315,7 @@ function deriveSeasonEnding(position) {
   }[strongest];
 
   let title = "终场哨没有替你回答这一季";
-  if (getDecision("e10") === "leave_record") {
-    title = "你离开了，别人仍能沿着记录找到你说过的话";
-  } else if (position <= 6 && strongest === "ascent" && state.finance.cash < 1000) {
+  if (position <= 6 && strongest === "ascent" && state.finance.cash < 1000) {
     title = "上升故事兑现了，下一张账单也已经到门口";
   } else if (strongest === "institution" && openDoors >= 5) {
     title = "俱乐部终于学会在坏消息发生前反对你";
@@ -2635,9 +3345,22 @@ function renderResult() {
   const position = projectedPosition();
   const finalChoice = getDecision("e10");
   const seasonEnding = deriveSeasonEnding(position);
-  ui.resultTitle.textContent = `${state.clubName}的一季结束了`;
-  ui.resultSubtitle.textContent = `${state.managerName}的任期记录 · ${gameData.meta.season}`;
-  ui.verdictTitle.textContent = seasonEnding.title;
+  const interim = state.seasonNumber === 1 && state.seasonOneComplete && !state.fired && !state.completed;
+  ui.resultTitle.textContent = state.fired
+    ? "董事会终止了你的任期"
+    : interim
+      ? `${state.clubName}的第一赛季结束了`
+      : `${state.clubName}的两年任期结束了`;
+  ui.resultSubtitle.textContent = state.fired
+    ? `${state.managerName} · 任期在第${state.seasonNumber}赛季提前结束`
+    : interim
+      ? `${state.managerName}的中期记录 · 两年合同还剩一个赛季`
+      : `${state.managerName}的完整两年任期记录`;
+  ui.verdictTitle.textContent = state.fired
+    ? `信任降至${Math.round(state.boardTrust)}，董事会不再让你进入下一场比赛`
+    : interim
+      ? "第一年不是结局：你做过的选择将进入第二年"
+      : seasonEnding.title;
 
   const financeSentence = state.finance.cash >= 1000
     ? `俱乐部以${formatMoney(state.finance.cash)}现金结束赛季，仍有选择空间。`
@@ -2649,20 +3372,34 @@ function renderResult() {
     : state.operations.dressingRoom >= 45
       ? "更衣室没有瓦解，但人们会先确认风险由谁承担。"
       : "更衣室已经学会先保护自己，再听管理层解释。";
-  ui.verdictBody.innerHTML = `
-    <p>${seasonEnding.patternCopy}</p>
-    <p>${financeSentence}</p>
-    <p>${culture} ${seasonEnding.accessSentence}</p>
-    <p>${seasonEnding.promiseSentence}</p>`;
+  ui.verdictBody.innerHTML = state.fired
+    ? `<p>直接原因：${escapeHtml(state.firedReason || "赛果与经营风险连续越过董事会底线")}。</p><p>${financeSentence}</p><p>这不是普通的失败结算：两年合同允许董事会在信任跌至${BOARD_DISMISSAL_THRESHOLD}或以下时提前终止任期。</p>`
+    : `<p>${seasonEnding.patternCopy}</p><p>${financeSentence}</p><p>${culture} ${seasonEnding.accessSentence}</p><p>${seasonEnding.promiseSentence}</p>${interim ? "<p>下一页不是重新开档。高薪、伤病、旧借款、看台积怨和制度投资，会在第二赛季按各自的时间到期。</p>" : ""}`;
 
   ui.finalStats.innerHTML = `
-    <div><span>联赛最终推定</span><strong>第${position}名</strong></div>
+    <div><span>${interim ? "第一赛季推定" : "任期最终推定"}</span><strong>第${position}名</strong></div>
     <div><span>关键赛程记录</span><strong>${state.record.wins}胜 ${state.record.draws}平 ${state.record.losses}负</strong></div>
     <div><span>期末综合战力</span><strong>${strengthScore()}</strong></div>
+    <div><span>董事会信任</span><strong>${Math.round(state.boardTrust)} / 100</strong></div>
     <div><span>期末现金</span><strong>${formatMoney(state.finance.cash)}</strong></div>
     <div><span>未来工资承诺</span><strong>${formatMoney(state.finance.wageCommitment)}</strong></div>`;
 
-  const epilogues = buildEpilogues(finalChoice);
+  ui.finalStrengthRadar.innerHTML = `${radarSvg(state.pitch, null, false)}<div class="final-radar-values">${STRENGTH_DIMENSIONS.map((dimension) => `<span>${dimension.short}<strong>${Math.round(state.pitch[dimension.key])}</strong></span>`).join("")}</div>`;
+  const timelineItems = state.history.filter((item) => ["decision", "transfer", "transfer_pass", "legacy"].includes(item.type));
+  ui.careerTimeline.innerHTML = timelineItems.length ? timelineItems.map((item) => {
+    const season = item.season || 1;
+    const nodeLabel = season === 2 ? `第二赛季 · 节点${item.episode}` : `第一赛季 · 第${item.episode}集`;
+    const typeLabel = item.type === "decision" ? "你的选择" : item.type === "legacy" ? "长期影响兑现" : item.type === "transfer" ? "自由球员买入" : "自由球员未签";
+    return `<article class="career-event ${item.type}"><div><span>${nodeLabel}</span><b>${typeLabel}</b></div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.detail || "")}</p></article>`;
+  }).join("") : '<p class="empty-state">任期尚未留下可回顾的决定。</p>';
+
+  ui.continueSeasonBtn.classList.toggle("hidden", !interim);
+  ui.continueSeasonBtn.textContent = "进入第二赛季：让第一年的后果到来";
+
+  const epilogues = state.fired ? [
+    { who: "董事会", text: `信任降至${Math.round(state.boardTrust)}。董事会收回比赛与转会授权，你的两年合同在这里提前终止。` },
+    { who: "更衣室", text: "下一堂训练仍会开始，但名单、伤病和你留下的承诺将由临时管理组接手。被解雇不会让已经发生的选择消失。" }
+  ] : buildEpilogues(finalChoice);
   ui.epilogueList.innerHTML = epilogues
     .map((item) => `<article><span>${escapeHtml(item.who)}</span><p>${escapeHtml(item.text)}</p></article>`)
     .join("");
@@ -2772,7 +3509,7 @@ function buildEpilogues(finalChoice) {
   } else if (finalChoice === "personal_project") {
     result.push({ who: "俱乐部", text: "预算与期待一起增加。岚城联更像你的球队，也更容易在你判断错误时没有第二种语言。" });
   } else {
-    result.push({ who: "俱乐部", text: "继任者收到一份不讨好的交接记录。离开没有保证承诺被履行，却让遗忘变得更困难。" });
+    result.push({ who: "俱乐部", text: "第一赛季以一份不讨好的公开记录结束。你仍要履行第二年合同，也因此无法假装那些伤病、付款与承诺从未发生。" });
   }
   return result;
 }
@@ -2815,6 +3552,12 @@ function exportGame() {
     manager: state.managerName,
     club: state.clubName,
     completed: state.completed,
+    seasonNumber: state.seasonNumber,
+    seasonOneComplete: state.seasonOneComplete,
+    fired: state.fired,
+    firedReason: state.firedReason,
+    boardTrust: state.boardTrust,
+    boardTrustHistory: state.boardTrustHistory,
     projectedPosition: state.completed ? projectedPosition() : null,
     finance: state.finance,
     multidimensionalStrength: {
@@ -2824,6 +3567,10 @@ function exportGame() {
     },
     record: state.record,
     decisions: state.history,
+    secondSeasonDecisions: state.seasonTwoDecisions,
+    secondSeasonLegacies: state.seasonTwoLegaciesApplied,
+    freeAgentOffers: state.freeAgentOffers,
+    freeAgentSignings: state.freeAgentSignings,
     questionsAsked: state.questions,
     proactiveInquiries: state.proactiveQuestions,
     proactiveInquiriesRemaining: state.proactiveRemaining,
@@ -2978,9 +3725,12 @@ function bindEvents() {
     const saved = readSave();
     if (!saved) return;
     state = saved;
-    if (state.completed) {
+    if (state.completed || state.fired || (state.seasonNumber === 1 && state.seasonOneComplete)) {
       renderResult();
       showScreen("result");
+    } else if (state.seasonNumber === 2) {
+      showScreen("game");
+      render();
     } else {
       showScreen("game");
       beginEpisode(state.currentEpisode, { fresh: false });
@@ -2989,6 +3739,7 @@ function bindEvents() {
 
   ui.restartBtn.addEventListener("click", restartGame);
   ui.resultRestartBtn.addEventListener("click", restartGame);
+  ui.continueSeasonBtn.addEventListener("click", startSecondSeason);
   ui.exportBtn.addEventListener("click", exportGame);
   ui.resultExportBtn.addEventListener("click", exportGame);
   ui.proactiveInquiryBtn.addEventListener("click", () => {
@@ -2998,7 +3749,17 @@ function bindEvents() {
   ui.clubPanelBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn));
   ui.historyPanelBtn.addEventListener("click", () => openGameDrawer(ui.historyDrawer, ui.historyPanelBtn));
   ui.hudFinanceBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn, $("financePanel")));
-  ui.hudStrengthBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn, $("strengthPanel")));
+  ui.hudStrengthBtn.addEventListener("click", () => ui.strengthModal.classList.remove("hidden"));
+  ui.hudBoardTrustBtn.addEventListener("click", () => openGameDrawer(ui.clubDrawer, ui.clubPanelBtn, $("boardTrustPanel")));
+  ui.strengthModalClose.addEventListener("click", () => ui.strengthModal.classList.add("hidden"));
+  ui.strengthModal.addEventListener("click", (event) => {
+    if (event.target === ui.strengthModal) ui.strengthModal.classList.add("hidden");
+  });
+  ui.freeAgentAlert.addEventListener("click", openFreeAgentModal);
+  ui.freeAgentClose.addEventListener("click", closeFreeAgentModal);
+  ui.freeAgentModal.addEventListener("click", (event) => {
+    if (event.target === ui.freeAgentModal) closeFreeAgentModal();
+  });
   ui.drawerBackdrop.addEventListener("click", closeGameDrawers);
   document.querySelectorAll("[data-close-drawer]").forEach((button) => {
     button.addEventListener("click", closeGameDrawers);
@@ -3021,7 +3782,9 @@ function bindEvents() {
       event.preventDefault();
       openGlossary(term.dataset.term);
     }
-    if (event.key === "Escape" && !ui.glossaryPanel.classList.contains("hidden")) closeGlossary();
+    if (event.key === "Escape" && !ui.freeAgentModal.classList.contains("hidden")) closeFreeAgentModal();
+    else if (event.key === "Escape" && !ui.strengthModal.classList.contains("hidden")) ui.strengthModal.classList.add("hidden");
+    else if (event.key === "Escape" && !ui.glossaryPanel.classList.contains("hidden")) closeGlossary();
     else if (event.key === "Escape") closeGameDrawers();
   });
   ui.focusModeBtn.addEventListener("click", () => {

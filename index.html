@@ -4,25 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="一款关于足球俱乐部经营、承诺与后果的沉浸式叙事游戏。" />
-    <title>岚城联：一季之内</title>
+    <title>岚城联：两年之约</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=immersive-12" />
+    <link rel="stylesheet" href="styles.css?v=two-year-13" />
   </head>
   <body>
     <main class="app-shell">
       <section id="startScreen" class="start-screen">
         <div class="start-copy">
           <p class="eyebrow">FOOTBALL CLUB STORY</p>
-          <h1>岚城联：一季之内</h1>
+          <h1>岚城联：两年之约</h1>
           <p class="start-lede">
             早上七点十六分，东看台还在下雨。你尚未见到主席，先扶住了一桶差点泼上旧壁画的黑金漆。
-            二十一天后，董事、球员、会员和潜在投资人会同时走进这座球场。到那时，每个人都会记得你今天先听了谁的话。
+            你签下的是一份完整的两年任期。第一年，每一个决定都会被记录；第二年，那些当时看不见的代价会回来找你。
           </p>
           <div class="start-features" aria-label="游戏特点">
-            <div><strong>十集</strong><span>跨越一个完整赛季</span></div>
+            <div><strong>两年</strong><span>董事会可以提前终止任期</span></div>
             <div><strong>四次</strong><span>可自行选择时机的主动了解</span></div>
-            <div><strong>延迟后果</strong><span>承诺会在几个月后回来</span></div>
+            <div><strong>延迟后果</strong><span>第一年的选择会进入第二年</span></div>
           </div>
           <blockquote>“你决定的不是一个数字怎么变，而是以后谁还愿意把坏消息告诉你。”</blockquote>
         </div>
@@ -31,7 +31,7 @@
           <div>
             <p class="eyebrow">任命书</p>
             <h2>开始你的任期</h2>
-            <p>游戏约需45—65分钟。浏览器会在本机保存当前进度。</p>
+            <p>完整两年任期约需60—85分钟。浏览器会在本机保存当前进度。</p>
           </div>
           <label>
             你的名字
@@ -71,7 +71,14 @@
             <span>综合战力</span>
             <strong id="hudOverallStrength">—</strong>
           </button>
+          <button id="hudBoardTrustBtn" class="hud-card hud-board-trust" type="button" aria-label="打开董事会信任说明">
+            <span>董事会信任</span>
+            <strong id="hudBoardTrust">—</strong>
+            <i><b id="hudBoardTrustBar"></b></i>
+          </button>
         </div>
+
+        <button id="freeAgentAlert" class="free-agent-alert hidden" type="button" aria-label="自由球员市场出现新机会">!</button>
 
         <div class="layout">
           <aside id="clubDrawer" class="side-panel game-drawer club-drawer" aria-label="俱乐部经营信息" aria-hidden="true">
@@ -85,6 +92,13 @@
               <div id="strengthRadar" class="strength-radar" aria-label="球队六维战力雷达图"></div>
               <div id="matchForecast" class="match-forecast"></div>
               <div id="strengthTable" class="strength-table"></div>
+            </section>
+
+            <section id="boardTrustPanel" class="panel board-trust-panel">
+              <div class="panel-title"><span>董事会对你的信任</span><strong id="boardTrustValue">—</strong></div>
+              <div class="board-trust-track"><i id="boardTrustBar"></i><b>20</b></div>
+              <p id="boardTrustStatus" class="panel-note">低于20，董事会会立即终止你的两年任期。</p>
+              <div id="boardTrustReasons" class="board-trust-reasons"></div>
             </section>
 
             <section id="financePanel" class="panel finance-panel">
@@ -216,6 +230,17 @@
             <h2 id="verdictTitle"></h2>
             <div id="verdictBody"></div>
             <div id="finalStats" class="final-stats"></div>
+            <div class="final-radar-wrap">
+              <div><p class="eyebrow">FINAL TEAM PROFILE</p><h3>最终球队多维战力</h3></div>
+              <div id="finalStrengthRadar" class="final-strength-radar"></div>
+            </div>
+          </section>
+
+          <section class="result-card career-timeline-card">
+            <p class="eyebrow">YOUR TWO-YEAR RECORD</p>
+            <h2>你在每个节点做了什么</h2>
+            <p>从第一天到最终结局，所有不可逆选择都保留在这里。</p>
+            <div id="careerTimeline" class="career-timeline"></div>
           </section>
 
           <div class="result-grid">
@@ -242,6 +267,7 @@
               <p>可导出完整决定、已知信息、比赛结果和人物关系，用于课堂讨论或再次比较。</p>
             </div>
             <div class="result-actions">
+              <button id="continueSeasonBtn" class="primary-btn hidden" type="button">进入第二赛季</button>
               <button id="resultExportBtn" class="primary-btn" type="button">导出 JSON</button>
               <button id="resultRestartBtn" class="ghost-btn" type="button">重新开始</button>
             </div>
@@ -263,7 +289,24 @@
       </div>
     </section>
 
+    <section id="strengthModal" class="game-modal hidden" role="dialog" aria-modal="true" aria-labelledby="strengthModalTitle">
+      <div class="game-modal-dialog strength-modal-dialog">
+        <header><div><p class="eyebrow">TEAM PROFILE</p><h2 id="strengthModalTitle">球队多维战力</h2></div><button id="strengthModalClose" class="drawer-close" type="button" aria-label="关闭放大战力图">×</button></header>
+        <div class="expanded-strength-layout">
+          <div id="expandedStrengthRadar" class="expanded-strength-radar"></div>
+          <div><div id="expandedMatchForecast" class="match-forecast"></div><div id="expandedStrengthTable" class="strength-table"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="freeAgentModal" class="game-modal hidden" role="dialog" aria-modal="true" aria-labelledby="freeAgentTitle">
+      <div class="game-modal-dialog free-agent-dialog">
+        <header><div><p class="eyebrow">FREE AGENT MARKET</p><h2 id="freeAgentTitle">自由市场出现了新球员</h2></div><button id="freeAgentClose" class="drawer-close" type="button" aria-label="暂时关闭自由球员窗口">×</button></header>
+        <div id="freeAgentContent"></div>
+      </div>
+    </section>
+
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=immersive-12"></script>
+    <script src="app.js?v=two-year-13"></script>
   </body>
 </html>
