@@ -2840,6 +2840,132 @@ input {
   }
 }
 
+/* 主角选择与三幕前情提要 */
+.gender-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; padding: 0; border: 0; }
+.gender-picker legend { grid-column: 1 / -1; margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.gender-picker label { position: relative; cursor: pointer; }
+.gender-picker input { position: absolute; opacity: 0; pointer-events: none; }
+.gender-picker span {
+  display: grid; min-height: 64px; place-content: center; padding: 10px 14px;
+  border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.55);
+  text-align: center; transition: 160ms ease;
+}
+.gender-picker b, .gender-picker small { display: block; }
+.gender-picker b { color: var(--ink); font-family: var(--serif); font-size: 16px; }
+.gender-picker small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.gender-picker input:checked + span { border-color: var(--gold); background: #173d32; box-shadow: 0 0 0 2px rgba(190,148,67,.16); }
+.gender-picker input:checked + span b { color: white; }
+.gender-picker input:checked + span small { color: rgba(255,255,255,.62); }
+.gender-picker input:focus-visible + span { outline: 3px solid rgba(211,169,87,.34); outline-offset: 2px; }
+
+.briefing-screen:not(.hidden) {
+  position: fixed; inset: 0; z-index: 300; display: block; min-height: 100dvh;
+  overflow: hidden; background: #07100e; color: white;
+}
+.briefing-background, .briefing-shade, .briefing-character, .briefing-artifact { position: absolute; }
+.briefing-background {
+  z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  animation: briefing-background-in 600ms ease both;
+}
+.briefing-shade {
+  z-index: 1; inset: 0;
+  background: linear-gradient(90deg, rgba(2,8,6,.68), transparent 46%, rgba(2,8,6,.2)),
+    linear-gradient(0deg, rgba(2,8,6,.96), transparent 58%, rgba(2,8,6,.16));
+}
+.briefing-character {
+  z-index: 3; right: 3vw; bottom: -8%; width: auto; height: 94%; max-width: 48vw;
+  object-fit: contain; object-position: bottom; filter: drop-shadow(0 22px 30px rgba(0,0,0,.48));
+  animation: briefing-character-in 500ms cubic-bezier(.2,.72,.24,1) both;
+}
+.briefing-artifact {
+  z-index: 4; top: clamp(72px,12vh,132px); left: clamp(24px,7vw,120px);
+  width: min(520px,42vw); animation: briefing-artifact-in 460ms cubic-bezier(.2,.72,.24,1) both;
+}
+.briefing-document {
+  position: relative; overflow: hidden; padding: clamp(22px,3vw,38px);
+  border: 1px solid rgba(64,48,26,.34); border-radius: 4px;
+  background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(71,56,32,.08) 32px 33px),
+    linear-gradient(145deg,#f4eddc,#d8c9a8);
+  box-shadow: 0 26px 80px rgba(0,0,0,.44); color: #242a27; transform: rotate(-1.4deg);
+}
+.briefing-document::after { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(57,46,27,.18); pointer-events: none; }
+.briefing-document .doc-head { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 2px solid #1b493b; }
+.briefing-document .doc-head span, .briefing-document .doc-grid span, .briefing-document .doc-signature span {
+  display: block; color: #72736d; font-size: 10px; font-weight: 800; letter-spacing: .12em;
+}
+.briefing-document .doc-head strong { font-family: var(--serif); font-size: clamp(22px,2.5vw,34px); }
+.briefing-document .doc-rank { display: flex; align-items: baseline; gap: 10px; margin: 28px 0 18px; }
+.briefing-document .doc-rank strong { color: #173d32; font-family: var(--serif); font-size: clamp(64px,8vw,108px); line-height: .8; }
+.briefing-document .doc-rank b { color: #9a3e36; font-size: 14px; }
+.briefing-document .doc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(50,55,50,.22); }
+.briefing-document .doc-grid div { padding: 13px; background: rgba(247,241,226,.92); }
+.briefing-document .doc-grid strong { display: block; margin-top: 5px; font-size: 18px; }
+.briefing-document.contract { transform: rotate(1deg); }
+.briefing-document.contract h2 { margin: 22px 0 10px; font-family: var(--serif); font-size: clamp(28px,3.2vw,42px); }
+.briefing-document.contract p { margin: 9px 0; font-size: 13px; line-height: 1.75; }
+.briefing-document .doc-signature { display: flex; justify-content: space-between; gap: 20px; margin-top: 32px; padding-top: 16px; border-top: 1px solid rgba(50,55,50,.3); }
+.briefing-document .doc-signature strong { display: block; margin-top: 6px; font-family: var(--serif); font-size: 20px; }
+.briefing-document .contract-stamp {
+  position: absolute; right: 34px; bottom: 38px; display: grid; width: 96px; height: 96px; place-items: center;
+  border: 5px double rgba(143,43,37,.72); border-radius: 50%; color: rgba(143,43,37,.78);
+  font-size: 12px; font-weight: 900; letter-spacing: .12em; rotate: -14deg;
+}
+.briefing-mandate {
+  width: min(420px,35vw); padding: 22px 24px; border-left: 4px solid #c64b42;
+  background: rgba(5,15,12,.82); box-shadow: 0 22px 58px rgba(0,0,0,.36); backdrop-filter: blur(16px);
+}
+.briefing-mandate span, .briefing-mandate strong { display: block; }
+.briefing-mandate span { color: rgba(255,255,255,.54); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.briefing-mandate strong { margin: 10px 0; color: white; font-family: var(--serif); font-size: clamp(26px,3vw,42px); line-height: 1.15; }
+.briefing-mandate b { color: #efaa82; font-size: 14px; }
+.briefing-progress { position: absolute; z-index: 8; top: 24px; left: 50%; width: min(420px,calc(100vw - 48px)); translate: -50% 0; text-align: center; }
+.briefing-progress span { color: rgba(255,255,255,.72); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.briefing-progress i { display: block; height: 2px; margin-top: 8px; overflow: hidden; background: rgba(255,255,255,.2); }
+.briefing-progress b { display: block; height: 100%; background: #d3a957; transition: width 280ms ease; }
+.briefing-caption {
+  position: absolute; z-index: 10; right: clamp(18px,6vw,92px); bottom: clamp(18px,6vh,70px);
+  width: min(620px,calc(100vw - 36px)); padding: 22px 26px 24px;
+  border: 1px solid rgba(255,255,255,.18); border-radius: 8px; background: rgba(5,15,12,.86);
+  box-shadow: 0 24px 74px rgba(0,0,0,.45); backdrop-filter: blur(18px);
+}
+.briefing-caption h1 { margin: 0 0 10px; font-family: var(--serif); font-size: clamp(30px,4vw,52px); line-height: 1.08; }
+.briefing-caption p:not(.eyebrow) { margin: 7px 0; color: rgba(255,255,255,.82); font-size: clamp(14px,1.3vw,17px); line-height: 1.75; }
+.briefing-caption .primary-btn { width: 100%; margin-top: 16px; }
+
+.event-narrative[data-speaker-side="player"] { border-right: 3px solid #d3a957; }
+.event-narrative[data-speaker-side="npc"] { border-left: 3px solid #86b8a6; }
+
+.second-season-review, .legacy-review { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 18px; }
+.second-season-review article, .legacy-review article { padding: 16px; border: 1px solid var(--line); background: rgba(255,253,248,.72); }
+.second-season-review article span, .legacy-review article span { color: var(--gold); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.second-season-review article h3, .legacy-review article h3 { margin: 7px 0; font-family: var(--serif); font-size: 18px; }
+.second-season-review article p, .legacy-review article p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+@keyframes briefing-background-in { from { opacity: .25; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
+@keyframes briefing-character-in { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes briefing-artifact-in { from { opacity: 0; transform: translateY(18px) rotate(-1deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
+
+@media (max-width: 900px) {
+  .briefing-artifact { top: 72px; left: 18px; width: min(480px,calc(100vw - 36px)); }
+  .briefing-character { right: -12vw; height: 82%; max-width: 76vw; opacity: .82; }
+  .briefing-caption { right: 12px; bottom: 12px; width: calc(100vw - 24px); }
+  .briefing-mandate { width: min(390px,calc(100vw - 36px)); }
+}
+
+@media (max-width: 600px) {
+  .start-screen { padding-bottom: 36px; }
+  .briefing-artifact { top: 64px; }
+  .briefing-document { padding: 18px; transform: none; }
+  .briefing-document .doc-grid div { padding: 9px 7px; }
+  .briefing-document .doc-rank { margin: 18px 0 12px; }
+  .briefing-document .contract-stamp { right: 18px; bottom: 22px; width: 70px; height: 70px; font-size: 9px; }
+  .briefing-character { right: -28vw; bottom: 18%; height: 70%; max-width: 100vw; opacity: .7; }
+  .briefing-caption { padding: 17px; }
+  .briefing-caption h1 { font-size: 28px; }
+  .briefing-caption p:not(.eyebrow) { font-size: 14px; line-height: 1.58; }
+  .second-season-review, .legacy-review { grid-template-columns: 1fr; }
+}
+
 /* 多维战力系统 */
 .strength-panel { overflow: hidden; }
 .strength-panel .panel-title strong {

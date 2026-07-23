@@ -8,7 +8,7 @@
     <title>岚城联：两年之约</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=two-year-16" />
+    <link rel="stylesheet" href="styles.css?v=two-year-17" />
   </head>
   <body>
     <main class="app-shell">
@@ -26,14 +26,14 @@
             <div><strong>延迟后果</strong><span>第一年的选择会进入第二年</span></div>
           </div>
           <blockquote>“你决定的不是一个数字怎么变，而是以后谁还愿意把坏消息告诉你。”</blockquote>
-          <p class="build-stamp">构建 <strong data-build-label>two-year-16</strong> · 存档架构 v3</p>
+          <p class="build-stamp">构建 <strong data-build-label>two-year-17</strong> · 存档架构 v3</p>
         </div>
 
         <form id="startForm" class="start-form">
           <div>
             <p class="eyebrow">任命书</p>
             <h2>开始你的任期</h2>
-            <p>完整两年任期约需60—85分钟。浏览器会在本机保存当前进度。</p>
+            <p>完整两年任期约需75—105分钟。浏览器会在本机保存当前进度。</p>
           </div>
           <label>
             你的名字
@@ -43,12 +43,40 @@
             俱乐部名称
             <input id="teamName" name="teamName" maxlength="18" value="岚城联" autocomplete="off" />
           </label>
+          <fieldset class="gender-picker">
+            <legend>主角形象</legend>
+            <label>
+              <input type="radio" name="managerGender" value="male" checked />
+              <span><b>男性</b><small>足球运营总经理</small></span>
+            </label>
+            <label>
+              <input type="radio" name="managerGender" value="female" />
+              <span><b>女性</b><small>足球运营总经理</small></span>
+            </label>
+          </fieldset>
           <button id="startBtn" type="submit" disabled aria-busy="true">正在载入球队…</button>
           <p id="startStatus" class="start-status" role="status">正在读取这一季的第一场雨。</p>
           <section id="saveSummary" class="save-summary hidden" aria-live="polite"></section>
           <small id="newSeasonIdentityHint" class="new-season-identity-hint hidden"></small>
           <button type="button" id="resumeBtn" class="text-btn hidden">继续上次的赛季</button>
         </form>
+      </section>
+
+      <section id="briefingScreen" class="briefing-screen hidden" aria-live="polite">
+        <img id="briefingBackground" class="briefing-background" alt="" />
+        <div class="briefing-shade"></div>
+        <img id="briefingCharacter" class="briefing-character hidden" alt="" />
+        <div id="briefingArtifact" class="briefing-artifact" aria-hidden="true"></div>
+        <div class="briefing-progress">
+          <span id="briefingCounter">前情提要 · 1 / 3</span>
+          <i><b id="briefingProgressBar"></b></i>
+        </div>
+        <article class="briefing-caption">
+          <p id="briefingKicker" class="eyebrow">上赛季成绩单</p>
+          <h1 id="briefingTitle">第八名，不是安全区</h1>
+          <div id="briefingBody"></div>
+          <button id="briefingContinue" class="primary-btn" type="button">翻开任命合同</button>
+        </article>
       </section>
 
       <section id="gameScreen" class="game-screen hidden">
@@ -60,7 +88,7 @@
           <div class="topbar-actions">
             <details id="persistenceDetails" class="persistence-details">
               <summary id="persistenceStatus" class="persistence-status" role="status">尚未保存</summary>
-              <small id="persistenceTechnical">构建 two-year-16 · 存档详情</small>
+              <small id="persistenceTechnical">构建 two-year-17 · 存档详情</small>
             </details>
             <button id="clubPanelBtn" class="ghost-btn" type="button" aria-controls="clubDrawer" aria-expanded="false">俱乐部资料</button>
             <button id="historyPanelBtn" class="ghost-btn" type="button" aria-controls="historyDrawer" aria-expanded="false">人物与记录</button>
@@ -256,6 +284,19 @@
             <div id="careerTimeline" class="career-timeline"></div>
           </section>
 
+          <section class="result-card second-season-review-card">
+            <p class="eyebrow">THE SECOND YEAR</p>
+            <h2>第二赛季不是四个匆忙的比分</h2>
+            <p>六个节点把第一年的合同、身体、看台、青训与权力重新送回你的桌面。</p>
+            <div id="secondSeasonReview" class="second-season-review"></div>
+          </section>
+
+          <section class="result-card legacy-review-card">
+            <p class="eyebrow">WHAT REMAINS</p>
+            <h2>两年以后，仍未结束的事</h2>
+            <div id="legacyReview" class="legacy-review"></div>
+          </section>
+
           <div class="result-grid">
             <section class="result-card">
               <h2>人们记住的事</h2>
@@ -336,6 +377,6 @@
     </section>
 
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=two-year-16"></script>
+    <script src="app.js?v=two-year-17"></script>
   </body>
 </html>

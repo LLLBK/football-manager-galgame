@@ -1,4 +1,4 @@
-const BUILD_VERSION = "two-year-16";
+const BUILD_VERSION = "two-year-17";
 const SAVE_SCHEMA_VERSION = 3;
 const SAVE_CONTEXT = (new URLSearchParams(window.location.search).get("save") || "default")
   .replace(/[^a-zA-Z0-9_-]/g, "-")
@@ -56,21 +56,22 @@ const FREE_AGENT_POOL = [
 const SECOND_SEASON_LEGACIES = {
   first_team_push: { round: 0, title: "高薪新援的第二张工资单", text: "上赛季迅速补强的主力仍然好用，但更衣室已经把他的奖金当成所有续约谈判的新起点。", pitch: { attack: 2, defense: 2, morale: -4 }, operations: { dressingRoom: -6 }, boardTrust: -2 },
   build_capacity: { round: 0, title: "去年没有发生的伤病变成了今年的可用阵容", text: "康复和数据团队完整工作了一个夏天，季前名单第一次没有因为旧伤临时删人。", pitch: { fitness: 5, squadDepth: 3 }, operations: { medicalIntegrity: 4 }, boardTrust: 2 },
-  liquidity_first: { round: 1, title: "没有花掉的现金终于获得第二次选择", text: "上赛季保留下来的现金缓冲让俱乐部不必在十一月接受第一份报价。", finance: { cash: 450 }, operations: { boardBacking: 2 }, boardTrust: 3 },
+  liquidity_first: { round: 2, title: "没有花掉的现金终于获得第二次选择", text: "上赛季保留下来的现金缓冲让俱乐部不必在十二月接受第一份报价。", finance: { cash: 450 }, operations: { boardBacking: 2 }, boardTrust: 3 },
   hire_gu: { round: 0, title: "新教练的成功仍站在旧教练的影子里", text: "高竞的训练强度提高了，但老教练离开的方式仍让一部分球员和球迷拒绝把进步全部算在你名下。", pitch: { attack: 3, morale: -3 }, operations: { fanTrust: -5, dressingRoom: -4 }, boardTrust: 1 },
   full_naming: { round: 1, title: "看台商业合同进入续约年", text: "赞助款按时到账，低价季票续订却明显下降；同一块看台同时带来现金和沉默。", finance: { cash: 500 }, operations: { fanTrust: -7, commercialCapacity: 4 }, boardTrust: -3 },
   hybrid_naming: { round: 1, title: "麻烦的联合名称开始产生耐心", text: "赞助商和球迷仍然争吵，但合同迫使双方继续坐在同一张桌前。", finance: { cash: 260 }, operations: { fanTrust: 4, commercialCapacity: 2 }, boardTrust: 1 },
   play_and_shoot: { round: 0, title: "那条被批准冒险的腿又疼了", text: "上赛季签过知情书的球员在季前再次停训；其他球员记得最后签字的人是谁。", pitch: { attack: -5, fitness: -5, squadDepth: -3 }, operations: { medicalIntegrity: -5, dressingRoom: -3 }, boardTrust: -5 },
-  shareholder_loan: { round: 2, title: "股东借款在第二年变成否决权", text: "旧借款进入偿付窗口，周绍庭要求先看冬窗名单，再决定是否展期。", finance: { cash: -800 }, operations: { boardBacking: 5, coachAuthority: -3 }, boardTrust: -6 },
-  sell_chen: { round: 2, title: "青训孩子学会了先问离队路线", text: "程野在外面获得比赛，留下的年轻人却把租借和出售看成得到机会的唯一办法。", pitch: { squadDepth: -2, morale: -2 }, operations: { academyPathway: -6 }, boardTrust: -1 },
-  institutionalize: { round: 3, title: "制度第一次在连败时保护了坏消息", text: "足球委员会没有替你赢球，却阻止董事会在一周内发出三套互相矛盾的命令。", pitch: { cohesion: 4, morale: 2 }, operations: { boardBacking: 3, coachAuthority: 3 }, boardTrust: 5 },
-  personal_project: { round: 3, title: "所有成功和错误都只剩一个名字", text: "更大的授权让调整更快；当球队连续失分时，董事会也不再接受任何程序性解释。", pitch: { attack: 3 }, operations: { fanTrust: -4 }, boardTrust: -4 }
+  shareholder_loan: { round: 4, title: "股东借款在第二年变成否决权", text: "旧借款进入偿付窗口，周绍庭要求先看夏窗名单，再决定是否展期。", finance: { cash: -800 }, operations: { boardBacking: 5, coachAuthority: -3 }, boardTrust: -6 },
+  sell_chen: { round: 4, title: "青训孩子学会了先问离队路线", text: "程野在外面获得比赛，留下的年轻人却把租借和出售看成得到机会的唯一办法。", pitch: { squadDepth: -2, morale: -2 }, operations: { academyPathway: -6 }, boardTrust: -1 },
+  institutionalize: { round: 5, title: "制度第一次在连败时保护了坏消息", text: "足球委员会没有替你赢球，却阻止董事会在一周内发出三套互相矛盾的命令。", pitch: { cohesion: 4, morale: 2 }, operations: { boardBacking: 3, coachAuthority: 3 }, boardTrust: 5 },
+  personal_project: { round: 5, title: "所有成功和错误都只剩一个名字", text: "更大的授权让调整更快；当球队连续失分时，董事会也不再接受任何程序性解释。", pitch: { attack: 3 }, operations: { fanTrust: -4 }, boardTrust: -4 }
 };
 
 const SECOND_SEASON_ROUNDS = [
   {
     id: "s2r1", date: "第二年 · 8月", title: "新赛季第一天，旧合同先到了", location: "一线队训练场", background: "training_ground_afternoon", character: "$coach", expression: "$coach_focus",
     speaker: "主教练", body: "第一年留下的球员、工资和伤病都在这份名单里。新赛季不是重新开档。",
+    reply: "“我不把它当新开档。先把角色、工资和伤病逐项说清，再谈我们今年想成为谁。”",
     match: { label: "第二赛季开局三轮", opponent: "开局对手群", difficulty: 59, stakes: "第一年的建队选择能否经受第二次季前准备", count: 3 },
     choices: [
       { id: "s2_integrate", label: "先修复角色和工资秩序", line: "新援是否主力由训练决定；所有奖金结构重新对全队解释。", effects: { pitch: { cohesion: 5, morale: 3 }, operations: { dressingRoom: 5 }, finance: { cash: -220 } }, boardTrust: -1 },
@@ -79,8 +80,20 @@ const SECOND_SEASON_ROUNDS = [
     ]
   },
   {
-    id: "s2r2", date: "第二年 · 11月", title: "董事会问的不是排名，是还能等多久", location: "董事会议室", background: "boardroom_morning", character: "shen", expression: "stern",
+    id: "s2r2", date: "第二年 · 10月", title: "看台续约把第一年的名字重新念了一遍", location: "东看台商业联席会", background: "east_stand_commercial", character: "tang", expression: "resolute",
+    speaker: "许青禾", body: "赞助商要续约，会员也带着去年的表决记录来了。你不能只问这块看台今年值多少钱。",
+    reply: "“那就把钱、票价、名字和表决权放在同一张桌上。任何一方都不能替另一方说已经同意。”",
+    match: { label: "秋季两个主场", opponent: "主场赛程", difficulty: 60, stakes: "商业收入、球迷信任与主场情绪能否继续共存", count: 2 },
+    choices: [
+      { id: "s2_stand_compact", label: "签订逐季公开的看台协定", line: "赞助金额、企业票和低价票每季公开；会员代表拥有违约复核席位。", effects: { finance: { cash: 320 }, pitch: { morale: 3 }, operations: { fanTrust: 6, commercialCapacity: 2 } }, boardTrust: -1 },
+      { id: "s2_max_commercial", label: "接受更高报价与更多企业票", line: "先拿确定收入。票区调整由运营部门执行，不再重开表决。", effects: { finance: { cash: 620 }, operations: { commercialCapacity: 5, fanTrust: -8 }, pitch: { morale: -3 } }, boardTrust: 4 },
+      { id: "s2_member_control", label: "把冠名续约交回会员表决", line: "看台不是只在缺钱时才属于会员；新合同由一人一票决定。", effects: { finance: { cash: 120 }, operations: { fanTrust: 9, commercialCapacity: -3 }, pitch: { morale: 4 } }, boardTrust: -4 }
+    ]
+  },
+  {
+    id: "s2r3", date: "第二年 · 12月", title: "董事会问的不是排名，是还能等多久", location: "董事会议室", background: "boardroom_morning", character: "shen", expression: "stern",
     speaker: "周绍庭", body: "第一年的故事已经讲完了。现在给我一个期限，以及期限到了以后谁负责。",
+    reply: "“期限可以写，责任也写我的名字。但我不会把每天训练变成一场公开淘汰。”",
     match: { label: "冬前关键三轮", opponent: "北方赛区对手群", difficulty: 62, stakes: "董事会耐心和球队稳定同时进入倒计时", count: 3 },
     choices: [
       { id: "s2_public_target", label: "公开六轮积分目标", line: "六轮拿十一分。做不到，先由我接受董事会问责。", effects: { pitch: { morale: 3 }, operations: { boardBacking: 5, coachAuthority: -2 } }, boardTrust: 6 },
@@ -89,8 +102,9 @@ const SECOND_SEASON_ROUNDS = [
     ]
   },
   {
-    id: "s2r3", date: "第二年 · 2月", title: "身体和现金在同一周变窄", location: "医疗与财务联席会", background: "medical_room", character: "jiang", expression: "concerned",
+    id: "s2r4", date: "第二年 · 2月", title: "身体和现金在同一周变窄", location: "医疗与财务联席会", background: "medical_room", character: "jiang", expression: "concerned",
     speaker: "孟书宁", body: "三个人能带伤上场，账户也能付奖金。‘能’不是我今天问的问题。",
+    reply: "“医学红线不由积分榜改写。把短期能做、长期不能承受的分别告诉我，比赛压力由我去回答。”",
     match: { label: "冬季密集三轮", opponent: "保级与争冠混合赛程", difficulty: 64, stakes: "阵容身体、现金和排名无法同时被最大化", count: 3 },
     choices: [
       { id: "s2_protect_bodies", label: "轮休主力，接受短期失分", line: "医学红线优先。董事会要解释，我来。", effects: { pitch: { fitness: 6, squadDepth: 3, attack: -2 }, operations: { medicalIntegrity: 6 }, finance: { cash: -180 } }, boardTrust: -4 },
@@ -99,14 +113,63 @@ const SECOND_SEASON_ROUNDS = [
     ]
   },
   {
-    id: "s2r4", date: "第二年 · 5月", title: "两年任期只剩最后三场", location: "主场更衣室", background: "locker_room", character: "$captain", expression: "resolute",
+    id: "s2r5", date: "第二年 · 4月", title: "青训名单和股东借款在同一天到期", location: "青训宿舍与财务办公室", background: "academy_dormitory", character: "zhao", expression: "concerned",
+    speaker: "罗志衡", body: "三个孩子可以进一线队，但必须有人真的给他们分钟。方雯那边也在等：旧借款要不要用卖人来还。",
+    reply: "“不拿‘未来’拖延今天。把谁能上场、谁可能被卖、哪笔钱哪天到期，都写成可以核对的日期。”",
+    match: { label: "青年轮换与冲刺两轮", opponent: "中游与争六对手", difficulty: 64, stakes: "青训路径、偿债压力与冲刺阵容必须同时落到具体人身上", count: 2 },
+    choices: [
+      { id: "s2_protect_pathway", label: "保留年轻人并分期偿债", line: "不靠清空青训还旧债；谈分期，年轻人的八周轮换表今天生效。", effects: { finance: { cash: -420 }, pitch: { squadDepth: 5, cohesion: 2 }, operations: { academyPathway: 8, boardBacking: -4 } }, boardTrust: -4 },
+      { id: "s2_sell_prospect", label: "出售一名潜力球员完成偿债", line: "先解除债务约束，保留回购和二次分成；我向青训解释这条路线。", effects: { finance: { cash: 980 }, pitch: { squadDepth: -4, morale: -2 }, operations: { academyPathway: -6, boardBacking: 5 } }, boardTrust: 5 },
+      { id: "s2_first_team_bridge", label: "将两名青训正式纳入轮换", line: "不用口号保护青训。两名球员进入比赛计划，空出来的预算从夏窗补强里扣。", effects: { finance: { cash: -260 }, pitch: { squadDepth: 7, attack: -1 }, operations: { academyPathway: 7, dressingRoom: 3 } }, boardTrust: -1 }
+    ]
+  },
+  {
+    id: "s2r6", date: "第二年 · 5月", title: "两年任期只剩最后三场", location: "主场更衣室", background: "locker_room", character: "$captain", expression: "resolute",
     speaker: "队长", body: "我们记得第一年你先听了谁。现在大家只想知道，最后三场你还会不会突然变成另一个人。",
+    reply: "“不会。我不为最后三场发明另一个自己；今天的办法仍要让你们知道由谁负责、为什么不变。”",
     match: { label: "两年任期最后三轮", opponent: "赛季终局对手群", difficulty: 66, stakes: "最终排名、董事会决定与两年留下的球队同时结算", count: 3 },
     choices: [
       { id: "s2_hold_identity", label: "坚持两年来的比赛原则", line: "不为最后三场发明新球队。用我们已经练会的方式结束。", effects: { pitch: { cohesion: 6, morale: 4 }, operations: { coachAuthority: 3, dressingRoom: 3 } }, boardTrust: 1 },
       { id: "s2_all_in", label: "奖金和进攻全部加码", line: "最后三场只计算结果。奖金立即翻倍，阵型向前。", effects: { finance: { cash: -500 }, pitch: { attack: 7, defense: -4, morale: 4 } }, boardTrust: 5 },
       { id: "s2_share_burden", label: "让教练、队长共同决定名单", line: "最后的责任仍是我的，但最后的办法不必只来自我。", effects: { pitch: { cohesion: 5, defense: 3 }, operations: { dressingRoom: 5, boardBacking: -2 } }, boardTrust: -1 }
     ]
+  }
+];
+
+const PRELUDE_SCENES = [
+  {
+    kicker: "上赛季成绩单",
+    title: "第八名，不是安全区",
+    background: "assets/visuals/backgrounds/empty-stadium-morning-v2.webp",
+    body: [
+      "岚城联上赛季直到最后六轮才离开降级区。主教练韩立锋把球队带到第八，但阵容老化、看台漏雨和旧账一项都没有消失。",
+      "董事会要的不只是多赢几场：它要一个能同时处理足球、现金和人的总经理。"
+    ],
+    artifact: "score",
+    next: "翻开任命合同"
+  },
+  {
+    kicker: "两年任命合同",
+    title: "你是足球运营总经理",
+    background: "assets/visuals/backgrounds/boardroom-season-end-v2.webp",
+    body: [
+      "合同把转会、预算、教练支持和长期建队交给你。你不排首发，但你决定球队把钱和信任押在哪里。",
+      "两年内，你要让球队站稳、现金不断、坏消息还能抵达你的桌面。"
+    ],
+    artifact: "contract",
+    next: "走进董事会"
+  },
+  {
+    kicker: "董事会最后通牒",
+    title: "排名和现金，两样都不能失控",
+    background: "assets/visuals/backgrounds/boardroom-morning-v2.webp",
+    character: "assets/visuals/characters/shen/stern-v2.webp",
+    body: [
+      "主席周绍庭已经替你画好红线：十二月同时复核排名和现金；董事会信任跌到20，你的两年合同会被提前终止。",
+      "现在，你知道自己是谁，也知道所有人为什么在等你开口。"
+    ],
+    artifact: "mandate",
+    next: "以总经理身份走进第一场雨"
   }
 ];
 
@@ -177,6 +240,16 @@ const ui = {
   newSeasonIdentityHint: $("newSeasonIdentityHint"),
   managerName: $("managerName"),
   teamName: $("teamName"),
+  briefingScreen: $("briefingScreen"),
+  briefingBackground: $("briefingBackground"),
+  briefingCharacter: $("briefingCharacter"),
+  briefingArtifact: $("briefingArtifact"),
+  briefingCounter: $("briefingCounter"),
+  briefingProgressBar: $("briefingProgressBar"),
+  briefingKicker: $("briefingKicker"),
+  briefingTitle: $("briefingTitle"),
+  briefingBody: $("briefingBody"),
+  briefingContinue: $("briefingContinue"),
   resumeBtn: $("resumeBtn"),
   persistenceStatus: $("persistenceStatus"),
   persistenceTechnical: $("persistenceTechnical"),
@@ -289,6 +362,8 @@ const ui = {
   finalStats: $("finalStats"),
   finalStrengthRadar: $("finalStrengthRadar"),
   careerTimeline: $("careerTimeline"),
+  secondSeasonReview: $("secondSeasonReview"),
+  legacyReview: $("legacyReview"),
   continueSeasonBtn: $("continueSeasonBtn"),
   epilogueList: $("epilogueList"),
   promiseReview: $("promiseReview"),
@@ -351,6 +426,7 @@ function stateHash(value) {
 
 function checkpointSummary(value = state) {
   if (!value) return "尚未开始";
+  if (!value.introComplete) return `前情提要 · 第${(value.preludeIndex || 0) + 1}幕`;
   if (value.seasonNumber === 2) {
     return `第二赛季 · 节点${(value.seasonTwoRound || 0) + 1} · ${value.phase || "现场"}`;
   }
@@ -373,13 +449,16 @@ function formatSavedTime(value) {
   }
 }
 
-function createInitialState(managerName, clubName) {
+function createInitialState(managerName, clubName, managerGender = "male") {
   const initial = clone(gameData.initial);
   return {
     version: 2,
-    contentRevision: 13,
+    contentRevision: 14,
     managerName,
     clubName,
+    managerGender,
+    introComplete: false,
+    preludeIndex: 0,
     seasonNumber: 1,
     seasonTwoRound: 0,
     seasonTwoStep: null,
@@ -628,6 +707,15 @@ function readSave() {
       }
       saved.contentRevision = 13;
     }
+    if ((saved.contentRevision || 0) < 14) {
+      saved.managerGender ||= "male";
+      saved.introComplete ??= true;
+      saved.preludeIndex ||= 0;
+      saved.contentRevision = 14;
+    }
+    saved.managerGender ||= "male";
+    saved.introComplete ??= true;
+    saved.preludeIndex ||= 0;
     saved.persistence ||= {
       schemaVersion: SAVE_SCHEMA_VERSION,
       buildVersion: "legacy-v2",
@@ -689,6 +777,8 @@ function renderSaveSummary(saved = readSave()) {
   const metadata = saved.persistence || {};
   ui.managerName.value = saved.managerName;
   ui.teamName.value = saved.clubName;
+  const savedGender = ui.startForm.querySelector(`input[name="managerGender"][value="${saved.managerGender || "male"}"]`);
+  if (savedGender) savedGender.checked = true;
   ui.saveSummary.classList.remove("hidden");
   ui.saveSummary.innerHTML = `<strong>${escapeHtml(saved.managerName)} · ${escapeHtml(saved.clubName)}</strong>
     <p>${escapeHtml(metadata.checkpoint || checkpointSummary(saved))}</p>
@@ -723,9 +813,80 @@ function showScreen(name) {
   closeGameDrawers({ returnFocus: false });
   closeGlossary(false);
   ui.startScreen.classList.toggle("hidden", name !== "start");
+  ui.briefingScreen.classList.toggle("hidden", name !== "briefing");
   ui.gameScreen.classList.toggle("hidden", name !== "game");
   ui.resultScreen.classList.toggle("hidden", name !== "result");
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderPrelude() {
+  const index = Math.min(state.preludeIndex || 0, PRELUDE_SCENES.length - 1);
+  const scene = PRELUDE_SCENES[index];
+  ui.briefingCounter.textContent = `前情提要 · ${index + 1} / ${PRELUDE_SCENES.length}`;
+  ui.briefingProgressBar.style.width = `${((index + 1) / PRELUDE_SCENES.length) * 100}%`;
+  ui.briefingKicker.textContent = scene.kicker;
+  ui.briefingTitle.textContent = scene.title;
+  ui.briefingBody.innerHTML = scene.body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+  ui.briefingContinue.textContent = scene.next;
+  ui.briefingBackground.src = scene.background;
+  ui.briefingBackground.alt = `${scene.kicker}背景`;
+  ui.briefingCharacter.classList.toggle("hidden", !scene.character);
+  if (scene.character) {
+    ui.briefingCharacter.src = scene.character;
+    ui.briefingCharacter.alt = "俱乐部主席周绍庭正在施压";
+  } else {
+    ui.briefingCharacter.removeAttribute("src");
+  }
+
+  if (scene.artifact === "score") {
+    ui.briefingArtifact.innerHTML = `
+      <div class="briefing-document score">
+        <div class="doc-head"><span>2025—26 · 最终成绩</span><strong>${escapeHtml(state.clubName)}</strong></div>
+        <div class="doc-rank"><strong>8</strong><b>/ 14支球队 · 最后六轮脱离降级区</b></div>
+        <div class="doc-grid">
+          <div><span>联赛排名</span><strong>第8名</strong></div>
+          <div><span>可动用现金</span><strong>3,600万</strong></div>
+          <div><span>东看台</span><strong>漏雨待修</strong></div>
+        </div>
+      </div>`;
+  } else if (scene.artifact === "contract") {
+    ui.briefingArtifact.innerHTML = `
+      <div class="briefing-document contract">
+        <div class="doc-head"><span>两年任命合同</span><strong>${escapeHtml(state.clubName)}</strong></div>
+        <h2>足球运营总经理</h2>
+        <p>受任人：<strong>${escapeHtml(state.managerName)}</strong></p>
+        <p>职责：预算、转会、教练支持、组织制度与两年建队方向。</p>
+        <p>边界：不越级决定首发；必须为资源、承诺与后果负责。</p>
+        <div class="doc-signature"><div><span>任期</span><strong>完整两赛季</strong></div><div><span>解约线</span><strong>董事会信任 ≤ 20</strong></div></div>
+        <i class="contract-stamp">任命生效</i>
+      </div>`;
+  } else {
+    ui.briefingArtifact.innerHTML = `
+      <div class="briefing-mandate">
+        <span>DECEMBER REVIEW</span>
+        <strong>排名 + 现金</strong>
+        <b>两项同时失控，先被卖掉的可能不是球员。</b>
+      </div>`;
+  }
+
+  ui.briefingContinue.onclick = () => {
+    if (index < PRELUDE_SCENES.length - 1) {
+      state.preludeIndex = index + 1;
+      saveGame();
+      renderPrelude();
+      return;
+    }
+    state.introComplete = true;
+    saveGame();
+    showScreen("game");
+    beginEpisode(0, { fresh: true });
+  };
+}
+
+function beginPrelude() {
+  state.preludeIndex = Math.min(state.preludeIndex || 0, PRELUDE_SCENES.length - 1);
+  showScreen("briefing");
+  renderPrelude();
 }
 
 function currentEpisode() {
@@ -1609,7 +1770,7 @@ function displayRoleForCharacter(person) {
 
 function roleForSpeaker(speaker) {
   if (speaker === state.managerName) return "足球运营总经理";
-  if (speaker === "你") return "足球运营总经理 · 内心";
+  if (speaker === "你") return "足球运营总经理";
   const person = gameData.characters.find((candidate) => candidate.name === speaker);
   return person ? displayRoleForCharacter(person) : "";
 }
@@ -1929,6 +2090,84 @@ function splitStoryParagraph(paragraph) {
   return pieces.map((item) => isChineseQuote ? `“${item}”` : item);
 }
 
+const MANAGER_REPLY_BANK = {
+  finance: [
+    "“把到期日、最坏情况和受影响的人写在同一页。我不拿尚未到账的钱回答你。”",
+    "“今天能付，不等于这赛季付得起。先圈出最早出事的日期，我按那个日期作决定。”",
+    "“我听见了数字。现在把数字会落到谁身上也说清，不能只让现金表替我们承担。”"
+  ],
+  coach: [
+    "“白线内由你负责；合同、资源和这套方案失败后的解释由我负责。把你最怕失去的条件说出来。”",
+    "“我不替你排首发，也不会让楼上替你改训练。你给我真实方案，我给你清楚边界。”",
+    "“别只给我最好看的那一段。把这套踢法最可能怎样失败也留下，我会按同一标准复盘。”"
+  ],
+  board: [
+    "“目标和期限我都听见了。要我签字，就把资源、红线和谁承担代价一起写上。”",
+    "“我可以对结果负责，但不会用一句‘必须赢’代替预算和程序。请把你的底线说完整。”",
+    "“这份授权我接。相应地，坏消息也必须直接到我的桌上，不能等它变成新闻。”"
+  ],
+  medical: [
+    "“医学结论不接受排名改写。把不能做什么说清，赛果和商业压力由我去解释。”",
+    "“先保护他说不的权利，再问他想不想上场。奖金、位置和合同不能藏在问题后面。”",
+    "“我需要的是风险边界，不是替决定背书。红线写你的名字，最后选择写我的名字。”"
+  ],
+  captain: [
+    "“我不让更衣室替楼上猜答案。角色、期限和代价，今天就在这里当面说。”",
+    "“你把沉默说出来了。接下来我会告诉全队哪件事不会因为下一场输赢突然改变。”",
+    "“袖标不能替管理层传话。该由我说的，我现在说；该由教练决定的，我不会越线。”"
+  ],
+  supporter: [
+    "“这不是一项等着处置的资产。把会员授权的边界留在桌上，商业方案从边界以内开始谈。”",
+    "“我不会拿你个人的点头代替会员表决。名称、壁画和低价票，逐项写进正式记录。”",
+    "“你们不是来替俱乐部怀旧的。涉及共同记忆的决定，必须让共同所有者真正表决。”"
+  ],
+  youth: [
+    "“不再用‘未来’拖延今天。把训练、出场和复核日期写出来，让年轻人知道下一步在哪里。”",
+    "“我不能保证他一定成功，但可以保证路径不是一句海报文案。把每个节点写成能核对的时间。”",
+    "“留下和离开都要回答比赛时间。先听球员自己怎么说，再谈我们想从他身上得到什么。”"
+  ],
+  staff: [
+    "“我先不走。你把现场真正会坏在哪里说完，我再带着这句话上楼。”",
+    "“这件事不该等到出事故才进入会议。把你看见的风险直接告诉我。”",
+    "“谢谢你没有把坏消息修饰成小问题。需要谁签字、哪天完成，我现在记下来。”"
+  ],
+  public: [
+    "“这句话记我的名字。决定可以被质疑，但不能让别人替我承担我没有说出口的部分。”",
+    "“先把事实和承诺分开记录。事实今天核对，承诺以后按原话结算。”",
+    "“我会回答，但不拿一句口号遮住条件。请把问题完整保留在记录里。”"
+  ]
+};
+
+function managerReplyForScene(scene, speakers) {
+  const text = `${scene.title || ""} ${(scene.body || []).join(" ")}`;
+  const namedSpeakers = speakers.filter((speaker) => !["你", state.managerName, "现场", "现场动作", "球场广播"].includes(speaker));
+  const speaker = namedSpeakers.at(-1) || scene.speaker;
+  let category = "public";
+  if (speaker === "方雯" || /现金|付款|工资|预算|分期|借款|注册|账户/.test(text)) category = "finance";
+  else if (["韩立锋", "高竞", "主教练", "数据分析师"].includes(speaker) || /训练|战术|首发|比赛模型/.test(text)) category = "coach";
+  else if (speaker === "周绍庭" || /董事会|授权|任命|主席/.test(text)) category = "board";
+  else if (["孟书宁", "受伤球员"].includes(speaker) || /伤|疼|医学|医疗|恢复/.test(text)) category = "medical";
+  else if (["梁一川", "队长", "装备管理员"].includes(speaker) || /更衣室|袖标|队长/.test(text)) category = "captain";
+  else if (["许青禾", "曜石集团代表"].includes(speaker) || /看台|会员|球迷|赞助/.test(text)) category = "supporter";
+  else if (["罗志衡", "程野"].includes(speaker) || /青训|年轻|成长|出场时间/.test(text)) category = "youth";
+  else if (["维修师傅", "安全顾问", "球场运营主管"].includes(speaker)) category = "staff";
+  const choices = MANAGER_REPLY_BANK[category];
+  const hash = [...`${scene.title || ""}${speaker || ""}`].reduce((sum, char) => sum + char.codePointAt(0), 0);
+  return choices[hash % choices.length];
+}
+
+function prepareSceneDialogue(scene) {
+  const body = [...(scene.body || [])];
+  const speakers = body.map((_, index) => scene.speakers?.[index] || scene.speaker);
+  const hasPlayerVoice = speakers.some((speaker) => speaker === "你" || speaker === state.managerName);
+  const hasOtherVoice = speakers.some((speaker) => !["你", state.managerName, "现场", "现场动作"].includes(speaker));
+  if (!hasPlayerVoice && hasOtherVoice && scene.managerReply !== false) {
+    body.push(managerReplyForScene(scene, speakers));
+    speakers.push("你");
+  }
+  return { body, speakers };
+}
+
 function buildStoryBeats(body, speaker, speakers = []) {
   const paragraphs = body.map((text, paragraphIndex) => ({
     text,
@@ -1976,11 +2215,27 @@ const defaultVisualExpressions = {
   gu: "composed",
   analyst: "neutral",
   sponsor: "courteous",
-  player: "composed"
+  player: "composed",
+  "manager-male": "composed",
+  "manager-female": "composed",
+  maintenance: "neutral",
+  reporter: "neutral",
+  safety: "neutral",
+  equipment: "neutral",
+  operations: "neutral",
+  "captain-successor": "resolute"
 };
 
+function managerExpressionForText(text) {
+  if (/突然|没想到|最后通牒|解雇|事故|停了下来|疼得/.test(text)) return "surprised";
+  if (/风险|担忧|现金|伤|失去|代价|没有|不能|最坏/.test(text)) return "concerned";
+  if (/负责|决定|保证|写下来|红线|不会|必须|现在/.test(text)) return "resolute";
+  return "composed";
+}
+
 function resolveSpeakerCharacterId(speaker) {
-  if (!speaker || ["你", "现场", "现场动作", "球场广播"].includes(speaker)) return null;
+  if (!speaker || ["现场", "现场动作", "球场广播"].includes(speaker)) return null;
+  if (speaker === "你" || speaker === state?.managerName) return "$manager";
   if (speaker === "主教练") return "$coach";
   if (speaker === "队长") return "$captain";
   const match = Object.entries(visualData?.characters || {})
@@ -1988,13 +2243,14 @@ function resolveSpeakerCharacterId(speaker) {
   return match?.[0] || null;
 }
 
-function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" }, meta, visualKey = null) {
+function setSceneContent({ speaker, speakers = [], title, body, kind = "现场", managerReply = true }, meta, visualKey = null) {
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
   const visual = getVisualScene(visualKey);
-  const storyBeats = buildStoryBeats(body, speaker, speakers);
-  let visibleBody = body;
+  const preparedDialogue = prepareSceneDialogue({ speaker, speakers, title, body, managerReply });
+  const storyBeats = buildStoryBeats(preparedDialogue.body, speaker, preparedDialogue.speakers);
+  let visibleBody = preparedDialogue.body;
   let activeSpeaker = speaker;
 
   if (visual && storyBeats.length) {
@@ -2018,9 +2274,20 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
       beat.supportingExpression = null;
     }
     const speakerCharacter = resolveSpeakerCharacterId(activeSpeaker);
-    if (!beat.character && speakerCharacter) {
+    if (speakerCharacter) {
+      const resolvedSpeakerCharacter = resolveVisualCharacterId(speakerCharacter);
+      const resolvedBeatCharacter = resolveVisualCharacterId(beat.character);
+      if (beat.character && resolvedBeatCharacter !== resolvedSpeakerCharacter) {
+        beat.supportingCharacter = beat.character;
+        beat.supportingExpression = beat.expression;
+        beat.supportingPosition = activeSpeaker === "你" || activeSpeaker === state.managerName ? "left" : "right";
+        beat.supportingFraming = "wide";
+      }
       beat.character = speakerCharacter;
-      beat.expression = defaultVisualExpressions[resolveVisualCharacterId(speakerCharacter)] || beat.expression;
+      beat.expression = speakerCharacter === "$manager"
+        ? managerExpressionForText(storyBeat.texts.join(" "))
+        : defaultVisualExpressions[resolvedSpeakerCharacter] || beat.expression;
+      beat.position = speakerCharacter === "$manager" ? "right" : "left";
       beat.motion = beat.motion || "focus";
     }
     if (renderVisualStage(beat, meta)) {
@@ -2041,7 +2308,16 @@ function setSceneContent({ speaker, speakers = [], title, body, kind = "现场" 
     hideVisualStage();
   }
 
-  ui.eventSpeaker.textContent = activeSpeaker === "现场" ? "现场动作" : activeSpeaker;
+  ui.eventSpeaker.textContent = activeSpeaker === "现场"
+    ? "现场动作"
+    : activeSpeaker === "你"
+      ? state.managerName
+      : activeSpeaker;
+  ui.eventNarrative.dataset.speakerSide = activeSpeaker === "你" || activeSpeaker === state.managerName
+    ? "player"
+    : ["现场", "现场动作"].includes(activeSpeaker)
+      ? "stage"
+      : "npc";
   const speakerRole = roleForSpeaker(activeSpeaker);
   ui.eventRole.textContent = speakerRole;
   ui.eventRole.classList.toggle("hidden", !speakerRole);
@@ -2076,7 +2352,12 @@ function showContinue(label, handler) {
 function getVisualScene(key) {
   const episodeId = currentEpisode()?.id;
   if (!key || !visualData?.scope?.includes(episodeId)) return null;
-  return visualData?.scenes?.[key] || null;
+  const exact = visualData?.scenes?.[key];
+  if (exact) return exact;
+  const fallback = visualData?.scenes?.[`${episodeId}.arrival.0`] ||
+    visualData?.scenes?.[`${episodeId}.decision`] ||
+    visualData?.scenes?.[`${episodeId}.opening.0`];
+  return fallback ? { ...fallback, character: null, supportingCharacter: null, beats: [] } : null;
 }
 
 function hideVisualStage() {
@@ -2141,7 +2422,15 @@ const characterDefaultProps = {
   gu: ["contract"],
   analyst: ["analysis-tablet"],
   sponsor: ["contract"],
-  player: ["ice-pack"]
+  player: ["ice-pack"],
+  "manager-male": ["contract"],
+  "manager-female": ["contract"],
+  maintenance: ["water-bucket"],
+  reporter: ["phone"],
+  safety: ["safety-folder"],
+  equipment: ["armband"],
+  operations: ["safety-folder"],
+  "captain-successor": ["armband"]
 };
 
 function propsForScene(scene) {
@@ -2332,17 +2621,25 @@ function updateVisualBackground(background, renderEpoch) {
 
 const defaultCharacterPositions = {
   shen: "left",
-  tang: "right",
+  tang: "left",
   he: "left",
-  qiao: "right",
+  qiao: "left",
   lin: "left",
-  zhao: "right",
+  zhao: "left",
   chen: "left",
-  jiang: "right",
+  jiang: "left",
   gu: "left",
-  analyst: "right",
-  sponsor: "right",
-  player: "left"
+  analyst: "left",
+  sponsor: "left",
+  player: "left",
+  "manager-male": "right",
+  "manager-female": "right",
+  maintenance: "left",
+  reporter: "left",
+  safety: "left",
+  equipment: "left",
+  operations: "left",
+  "captain-successor": "left"
 };
 
 function resolveVisualPosition(position, characterId, hasPartner = false, isSupporting = false) {
@@ -2472,9 +2769,10 @@ function collectEpisodeVisualSources(episodeId) {
     }
   };
   collectSpeakers(episode);
+  speakerNames.add("你");
   for (const speaker of speakerNames) {
     const inferred = resolveSpeakerCharacterId(speaker);
-    const characterId = inferred === "$coach" ? "he" : inferred === "$captain" ? "lin" : inferred;
+    const characterId = resolveVisualCharacterId(inferred);
     const expression = defaultVisualExpressions[characterId];
     const portrait = visualData?.characters?.[characterId]?.expressions?.[expression];
     if (portrait) sources.push(portrait);
@@ -2514,11 +2812,14 @@ function resolveVisualAtmosphere(backgroundId, explicitAtmosphere) {
 }
 
 function resolveVisualCharacterId(characterId) {
+  if (characterId === "$manager") {
+    return state?.managerGender === "female" ? "manager-female" : "manager-male";
+  }
   if (characterId === "$coach") {
-    return state.decisions.e6 === "hire_gu" ? "gu" : "he";
+    return state?.decisions?.e6 === "hire_gu" ? "gu" : "he";
   }
   if (characterId === "$captain") {
-    return state.decisions.e4 === "sell_captain" ? null : "lin";
+    return state?.decisions?.e4 === "sell_captain" ? "captain-successor" : "lin";
   }
   return characterId;
 }
@@ -3710,17 +4011,20 @@ function secondSeasonEpisode(roundIndex = state.seasonTwoRound) {
 
 function setSecondSeasonScene({ speaker, title, body, kind = "第二赛季" }, round = SECOND_SEASON_ROUNDS[state.seasonTwoRound]) {
   const meta = `${round.date} · ${round.location}`;
+  const isManager = speaker === "你" || speaker === state.managerName;
   renderVisualStage({
     background: round.background,
-    character: round.character,
-    expression: round.expression,
+    character: isManager ? "$manager" : round.character,
+    expression: isManager ? managerExpressionForText(body.join(" ")) : round.expression,
+    position: isManager ? "right" : "left",
     motion: "focus",
     visualKey: `${round.id}.${state.phase}`
   }, meta);
   ui.eventMeta.textContent = meta;
   ui.sceneType.textContent = kind;
   ui.eventTitle.textContent = title;
-  ui.eventSpeaker.textContent = speaker;
+  ui.eventSpeaker.textContent = speaker === "你" ? state.managerName : speaker;
+  ui.eventNarrative.dataset.speakerSide = isManager ? "player" : "npc";
   const role = roleForSpeaker(speaker);
   ui.eventRole.textContent = role;
   ui.eventRole.classList.toggle("hidden", !role);
@@ -3769,16 +4073,26 @@ function startSecondSeason() {
 function renderSeasonTwoScene() {
   const round = SECOND_SEASON_ROUNDS[state.seasonTwoRound];
   const legacies = state.seasonTwoLegaciesApplied.filter((item) => item.round === state.seasonTwoRound);
-  setSecondSeasonScene({ speaker: round.speaker, title: round.title, body: [round.body] }, round);
+  const replying = state.seasonTwoStep === "reply";
+  setSecondSeasonScene(
+    replying
+      ? { speaker: "你", title: "我不能只听完就点一个选项", body: [round.reply], kind: "你的回应" }
+      : { speaker: round.speaker, title: round.title, body: [round.body] },
+    round
+  );
   if (legacies.length) {
     ui.knowledgeCard.innerHTML = `<strong>第一赛季留下的东西今天找上门</strong>${legacies.map((item) => `<article class="season-legacy"><span>${escapeHtml(item.title)}</span><p>${escapeHtml(item.text)}</p></article>`).join("")}`;
     ui.knowledgeCard.classList.remove("hidden");
   }
-  ui.eventPrompt.innerHTML = `<strong>第二年不是重新开始</strong><span>${legacies.length ? "去年的选择已经进入身体、工资或权力；你只能决定今天怎样接住。" : "这一轮没有旧账突然到期，但第一年的球队仍是今天的起点。"}</span>`;
+  ui.eventPrompt.innerHTML = `<strong>${replying ? "你已经对现场作出回应" : "第二年不是重新开始"}</strong><span>${replying ? "下一步才是不可逆决定；这句话先让在场的人知道你怎样理解局面。" : legacies.length ? "去年的选择已经进入身体、工资或权力；你必须先回应眼前的人，再决定怎样接住。" : "这一轮没有旧账突然到期，但第一年的球队仍是今天的起点。"}</span>`;
   ui.eventPrompt.classList.remove("hidden");
-  showContinue("听完现场，作出这一轮决定", () => {
-    state.phase = "seasonTwoDecision";
-    state.seasonTwoStep = "decision";
+  showContinue(replying ? "带着这句回应，作出这一轮决定" : `回应${round.speaker}`, () => {
+    if (replying) {
+      state.phase = "seasonTwoDecision";
+      state.seasonTwoStep = "decision";
+    } else {
+      state.seasonTwoStep = "reply";
+    }
     saveGame();
     render();
   });
@@ -4095,6 +4409,56 @@ function renderResult() {
     const typeLabel = item.type === "decision" ? "你的选择" : item.type === "legacy" ? "长期影响兑现" : item.type === "transfer" ? "自由球员买入" : "自由球员未签";
     return `<article class="career-event ${item.type}"><div><span>${nodeLabel}</span><b>${typeLabel}</b></div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.detail || "")}</p></article>`;
   }).join("") : '<p class="empty-state">任期尚未留下可回顾的决定。</p>';
+
+  const secondSeasonEntries = SECOND_SEASON_ROUNDS.map((round, index) => {
+    const decisionId = state.seasonTwoDecisions?.[round.id];
+    const choice = round.choices.find((item) => item.id === decisionId);
+    if (!choice) return null;
+    const legacies = state.seasonTwoLegaciesApplied.filter((item) => item.round === index);
+    const legacyLine = legacies.length
+      ? `本幕同时兑现：${legacies.map((item) => item.title).join("、")}。`
+      : "这一幕没有旧账突然到期，但仍沿用第一年的阵容、现金和关系。";
+    return `<article><span>${escapeHtml(round.date)}</span><h3>${escapeHtml(round.title)}</h3><p><strong>${escapeHtml(choice.label)}</strong>：${escapeHtml(choice.line)} ${escapeHtml(legacyLine)}</p></article>`;
+  }).filter(Boolean);
+  ui.secondSeasonReview.innerHTML = secondSeasonEntries.length
+    ? secondSeasonEntries.join("")
+    : `<article><span>尚未进入</span><h3>第二赛季仍在合同里</h3><p>完成第一赛季中期复盘后，六个节点会依次处理角色与工资、看台续约、董事会期限、身体与现金、青训与债务、最终三场。</p></article>`;
+
+  const unresolvedPayables = state.payables.filter((item) => !state.paidPayables.includes(item.id));
+  const unresolvedPromises = state.promises
+    .map((promise) => ({ promise, result: evaluatePromise(promise.id, position) }))
+    .filter((item) => item.result.status !== "kept");
+  const legacyItems = [
+    {
+      label: "未决事项",
+      title: `${state.openThreads.length}项仍需下一任期回答`,
+      text: state.openThreads.length
+        ? state.openThreads.slice(0, 4).map((item) => item.text || item.title).filter(Boolean).join("；")
+        : "主要议题已经形成处理路径，但路径仍需要下一赛季持续执行。"
+    },
+    {
+      label: "未来付款",
+      title: unresolvedPayables.length ? `${unresolvedPayables.length}笔义务没有随终场哨消失` : "已知到期款已经结清",
+      text: unresolvedPayables.length
+        ? unresolvedPayables.slice(0, 4).map((item) => `${item.label || item.name} ${formatMoney(item.amount)}`).join("；")
+        : `期末现金${formatMoney(state.finance.cash)}仍需覆盖尚未确定的夏窗与工资风险。`
+    },
+    {
+      label: "承诺余波",
+      title: unresolvedPromises.length ? `${unresolvedPromises.length}句话仍在等结果` : "到期承诺没有失信",
+      text: unresolvedPromises.length
+        ? unresolvedPromises.slice(0, 4).map((item) => item.promise.text).join("；")
+        : "承诺结清不等于所有关系恢复，它只说明这些话经得起本次到期核对。"
+    },
+    {
+      label: "组织能力",
+      title: state.operations.dressingRoom >= 55 ? "坏消息仍有路走到桌面" : "沉默已经成为下一任期的成本",
+      text: `${Math.max(0, Object.values(state.characterStates).filter((person) => person.behavior === "open").length)}个人仍愿意直接说明坏消息；董事会信任为${Math.round(state.boardTrust)}。`
+    }
+  ];
+  ui.legacyReview.innerHTML = legacyItems
+    .map((item) => `<article><span>${escapeHtml(item.label)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></article>`)
+    .join("");
 
   ui.continueSeasonBtn.classList.toggle("hidden", !interim);
   ui.continueSeasonBtn.textContent = "进入第二赛季：让第一年的后果到来";
@@ -4445,16 +4809,18 @@ function bindEvents() {
     if (SAVE_CONTEXT === "default") localStorage.removeItem(LEGACY_SAVE_KEY);
     const managerName = ui.managerName.value.trim() || "无名经理";
     const clubName = ui.teamName.value.trim() || gameData.initial.clubName;
-    state = createInitialState(managerName, clubName);
-    showScreen("game");
-    beginEpisode(0, { fresh: true });
+    const managerGender = ui.startForm.querySelector('input[name="managerGender"]:checked')?.value || "male";
+    state = createInitialState(managerName, clubName, managerGender);
+    beginPrelude();
   });
 
   ui.resumeBtn.addEventListener("click", () => {
     const saved = readSave();
     if (!saved) return;
     state = saved;
-    if (state.completed || state.fired || (state.seasonNumber === 1 && state.seasonOneComplete)) {
+    if (!state.introComplete) {
+      beginPrelude();
+    } else if (state.completed || state.fired || (state.seasonNumber === 1 && state.seasonOneComplete)) {
       renderResult();
       showScreen("result");
     } else if (state.seasonNumber === 2) {

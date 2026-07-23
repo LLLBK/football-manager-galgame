@@ -317,7 +317,7 @@ assert.equal(
   "镜头焦点人物不得覆盖剧情原本的说话人"
 );
 assert.match(appSource, /PROACTIVE_INQUIRY_LIMIT = 4/, "每赛季应提供四次主动了解机会");
-assert.match(appSource, /contentRevision: 13/, "旧存档应迁移到第三轮收束版");
+assert.match(appSource, /contentRevision: 14/, "旧存档应迁移到主角系统与前情提要版");
 assert.match(appSource, /SAVE_SCHEMA_VERSION = 3/, "存档必须声明独立于内容版本的架构版本");
 assert.match(appSource, /persistence\.stateHash = stateHash\(state\)/, "每次保存必须写入完整状态hash");
 assert.match(appSource, /storedRevision > localRevision/, "旧标签页不得静默覆盖较新revision");
@@ -360,8 +360,8 @@ for (const episode of data.episodes.slice(0, 9)) {
     assert.ok(consequence.foreshadow?.length >= 20, `${episode.id}/${option.id} 缺少当下伏笔`);
   }
 }
-assert.match(html, /styles\.css\?v=two-year-16/, "第三轮改进样式必须使用新的缓存版本");
-assert.match(html, /app\.js\?v=two-year-16/, "第三轮改进脚本必须使用新的缓存版本");
+assert.match(html, /styles\.css\?v=two-year-17/, "主角系统样式必须使用新的缓存版本");
+assert.match(html, /app\.js\?v=two-year-17/, "主角系统脚本必须使用新的缓存版本");
 assert.match(html, /id="saveSummary"/, "首页必须显示最近存档检查点");
 assert.match(html, /id="persistenceStatus"/, "游戏内必须显示构建、revision和存档context");
 assert.match(html, /id="persistenceTechnical"/, "构建、revision和存档context必须收进可展开详情");
@@ -395,7 +395,15 @@ for (const viewportWidth of [360, 390, 412]) {
 }
 assert.match(html, /id="finalStrengthRadar"/, "任期结算必须展示最终球队战力图");
 assert.match(html, /id="careerTimeline"/, "赛季复盘必须逐节点回顾玩家选择");
+assert.match(html, /id="briefingScreen"/, "正式剧情前必须有可视化前情");
+assert.match(html, /name="managerGender"/, "新任期必须先选择主角性别");
+assert.match(html, /id="secondSeasonReview"/, "最终总结必须单列第二赛季六个节点");
+assert.match(html, /id="legacyReview"/, "最终总结必须列出两年后仍未解决的事项");
+assert.match(appSource, /const PRELUDE_SCENES = \[/, "开场必须以多幕场景交代身份、任务和压力");
+assert.match(appSource, /function prepareSceneDialogue/, "NPC剧情必须补入主角的情境化回应");
+assert.match(appSource, /characterId === "\$manager"/, "视觉解析必须支持男女主角动态立绘");
 assert.match(appSource, /const SECOND_SEASON_ROUNDS = \[/, "第一赛季完成后必须存在第二赛季剧情节点");
+assert.match(appSource, /id: "s2r6"/, "第二赛季必须扩展为六个完整节点");
 assert.match(appSource, /function startSecondSeason/, "第一赛季结算必须能进入第二赛季");
 assert.match(appSource, /const BOARD_DISMISSAL_THRESHOLD = 20/, "董事会信任跌破门槛必须触发解雇");
 assert.match(appSource, /function prepareFreeAgentOffer/, "自由球员报价必须按比赛轮次准备并持久化");
@@ -623,7 +631,7 @@ const makePersistenceHarness = (localStorage, initialState, writerId) => Functio
   "localStorage", "initialState", "writerId",
   `const SAVE_KEY = "isolated-save";
    const SAVE_SCHEMA_VERSION = 3;
-   const BUILD_VERSION = "two-year-16";
+   const BUILD_VERSION = "two-year-17";
    const SAVE_CONTEXT = "matrix-a";
    const TAB_WRITER_ID = writerId;
    let state = initialState;
