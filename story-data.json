@@ -261,6 +261,12 @@
       },
       "decision": {
         "prompt": "发布会的门已经打开。公关总监把最终讲稿递到我手里。我要当着他们的面，用哪一句话开始这个赛季？",
+        "brief": {
+          "goal": "只公开一条赛季治理路线，并留下日后可复核的原话。",
+          "constraint": "发布会必须当场作出一项公开承诺；原话会进入12月复核，不能在会后换成另一种说法。",
+          "knownRisk": "目标书会同时触发排名与现金问责；共同章程会增加协商时间；个人授权会集中权力与坏消息上报路径。",
+          "unverified": "你只来得及核实一个人的边界；另外两人的主张仍是未核实信息。"
+        },
         "options": [
           {
             "id": "board_mandate",
@@ -314,6 +320,36 @@
               "title": "“原话和到期日，我都记下”",
               "body": ["“我建了一张新表。第一列是你刚才的原话，第二列是到期日。以后别跟我说‘大概意思’。”", "“讲稿我已经拍下来了。论坛第一条回复是：‘留着这张图，冬天再看。’我也会留着。”"]
             },
+            "impactScenes": [
+              {
+                "metric": "dressingRoom",
+                "place": "发布会后的更衣室",
+                "speaker": "梁一川",
+                "quote": "“以后真要卖队里的人，至少得先让我们把话说完。”",
+                "body": "队长梁一川把章程截图发进球员群，没有人刷庆祝表情，几名老队员却第一次追问下一次队长会议的日期。球员们并没有因此更喜欢彼此；他们只是确认，涉及球队根基的决定不会在某间办公室里突然落下。替补和主力都更愿意提前说出伤情、角色不满和续约顾虑，更衣室因此增加6点。"
+              },
+              {
+                "metric": "fanTrust",
+                "place": "东看台出口",
+                "speaker": "许青禾",
+                "quote": "“别急着替他鼓掌。先把这句话存好——下次卖看台、改队徽，我们拿它回来对照。”",
+                "body": "许青禾把你的原话贴进8437名会员的群，下面没有出现惯常的“又是公关稿”，而是在逐条讨论季度财务摘要该公开什么。球迷信任的不是你永远会站在他们一边，而是他们第一次获得了正式席位、书面承诺和日后追责的依据，所以球迷信任增加12点。"
+              },
+              {
+                "metric": "boardBacking",
+                "place": "散场后的董事会议室",
+                "speaker": "周绍庭",
+                "quote": "“原本明早就能批的事，现在要多摆三把椅子。那笔机动预算先别动。”",
+                "body": "董事们原本期待你用明确目标换取快速授权；共同章程却让重大资产处置必须提前协商，部分谈判信息也会更早公开。几名董事担心经纪人和赞助商借程序拖延抬价，于是暂缓机动预算，并要求重要方案先过正式会议。可调用的资源和快速背书一起减少，董事会支持下降6点。"
+              },
+              {
+                "metric": "boardTrust",
+                "place": "董事会走廊",
+                "speaker": "周绍庭",
+                "quote": "“你给俱乐部立了规矩，也给自己绑了手。接下来让我看看，你还能不能按时把事办成。”",
+                "body": "主席没有否定章程，但你没有采用他期待的目标书，还当众限制了管理层快速转向的空间。他对你的判断力仍有基本认可，对你的执行速度和政治敏感度却多了一层观察，因此不是决裂，而是董事会对你的个人信任小幅下降2点。"
+              }
+            ],
             "receipt": { "happened": ["方雯建立带到期日的承诺表；许青禾把讲稿交给会员保存。"], "promised": ["重大资产决定前完成正式协商，并公开季度财务摘要。"], "seeded": ["谈判对手可能更早看见俱乐部软肋，决定也会变慢。"], "people": ["许青禾和方雯愿意提前带来坏消息；周绍庭改用正式会议下目标。"] }
           },
           {
@@ -432,6 +468,12 @@
       },
       "decision": {
         "prompt": "我要在同一张纸上定下现金纪律和注册纪律。银行余额只能告诉我付不付得出；联赛限额还要问，钱花了，人能不能上场。",
+        "brief": {
+          "goal": "在现金安全、联赛注册与本季竞争力之间选一条可执行路线。",
+          "constraint": "本季已知付款2500万已在付款日历中；新中卫注册成本缺口180万，整改期按1:4需先清理720万旧成本。",
+          "knownRisk": "现金与注册成本空间是两条独立通道；现金不能直接填补注册空间。",
+          "unverified": "卖人和赞助收入尚未签约，不得计入可用现金；未做压力测试的方案代价仍属未核实。"
+        },
         "options": [
           {
             "id": "liquidity_first",
@@ -442,6 +484,8 @@
             "bet": "保留冬季选择权和青训路径，能抵消本季后防没有立即补强的风险。",
             "burden": "韩立锋和现有后卫承担开局成绩压力；你承担‘没有兑现竞争目标’的质疑。",
             "known": ["现金链最稳", "一线队会认为俱乐部没有兑现竞争野心"],
+            "riskTags": ["短期防守", "教练信任"],
+            "riskShape": "偏长期成长；现金更稳，但中卫缺口与开局防守风险继续存在。",
             "effects": { "finance": { "cash": -450 }, "operations": { "academyPathway": 12, "boardBacking": -4, "coachAuthority": -6 }, "pitch": { "defense": -4, "cohesion": 2 }, "characters": { "qiao": 10, "zhao": 12, "he": -8, "chen": 5 }, "characterStates": { "qiao": { "behavior": "open", "memories": ["玩家保留现金安全垫"] }, "zhao": { "behavior": "open", "memories": ["青训宿舍获批"] }, "he": { "behavior": "guarded", "memories": ["玩家拒绝主力中卫方案"] } }, "causalAdd": [{ "sourceDecision": "liquidity_first", "domain": "defense", "direction": "risk", "text": "没有签下主力中卫，梁一川可能被迫回撤，主动压迫的身后风险更高。", "canAffect": ["center_back_recovery", "captain_position", "pressing_risk"] }, { "sourceDecision": "liquidity_first", "domain": "academy", "direction": "help", "text": "青训宿舍让家庭资源较少的球员获得稳定训练条件，但不会立即变成本场加成。", "canAffect": ["youth_retention", "long_term_pathway"] }], "promisesAdd": [{ "id": "cash_floor", "text": "现金不得主动降到1000万以下", "to": "财务部门", "due": "冬窗前" }], "threadsResolve": ["academy_housing"], "tagsAdd": ["流动性优先"] },
             "aftermath": { "speaker": "韩立锋", "speakers": ["韩立锋", "罗志衡"], "title": "“发布会别说是财务部不批”", "body": ["“发布会若问为什么没买，别说财务部不批。你就说：这是我选的阵容。”", "“这张床给程野。还有两个孩子每天赶末班车，床位我已经量好了。你今天批的不是三张床，是他们明天还能不能准时训练。”"] },
             "receipt": { "happened": ["现金3600万降至3150万；青训宿舍开工。"], "promised": ["冬窗前不主动让现金跌破1000万。"], "seeded": ["球队仍缺主力中卫；主动高压会放大身后速度问题。"], "people": ["罗志衡会提前报告青训问题；韩立锋只回答你问到的训练信息。"] }
@@ -455,6 +499,8 @@
             "bet": "新中卫带来的首发稳定，足以抵消替补变薄与冬季现金缺口。",
             "burden": "两名离队球员先失去位置；密集赛程由更薄的替补席承担；冬窗的你失去议价时间。",
             "known": ["新中卫能直接提高后防下限", "为注册一名主力必须先清理两份合同，阵容深度与一月现金同时受压"],
+            "riskTags": ["现金缺口", "阵容深度", "注册成本"],
+            "riskShape": "偏短期即战力；防线更强，但一月现金与替补覆盖最脆弱。",
             "effects": { "finance": { "cash": -1400, "wageCommitment": -120, "transferInstallments": 700 }, "operations": { "boardBacking": 7, "coachAuthority": 8, "academyPathway": -5, "medicalIntegrity": -3, "dressingRoom": -3 }, "pitch": { "defense": 12, "cohesion": 1, "fitness": -3, "squadDepth": -10 }, "characters": { "he": 12, "shen": 5, "qiao": -8, "zhao": -5 }, "characterStates": { "he": { "behavior": "open", "memories": ["玩家签下韩立锋要求的中卫"] }, "qiao": { "behavior": "oppositional", "memories": ["已知付款将在赛季奖金前出现300万缺口"] }, "zhao": { "behavior": "guarded", "memories": ["青训宿舍被推迟到冬天"] }, "jiang": { "behavior": "guarded", "memories": ["康复团队被推迟到冬天"] } }, "causalAdd": [{ "sourceDecision": "first_team_push", "domain": "defense", "direction": "help", "text": "主力中卫提高禁区防守与回追能力。", "canAffect": ["aerial_duel", "center_back_recovery"] }, { "sourceDecision": "first_team_push", "domain": "squadDepth", "direction": "risk", "text": "为注册新中卫清理两名多位置球员，替补深度下降。", "canAffect": ["late_match_fatigue", "injury_cover"] }, { "sourceDecision": "first_team_push", "domain": "cash", "direction": "risk", "text": "秋季工资和一月旧分期后只剩100万，赛季奖金前存在300万已知缺口。", "canAffect": ["forced_sale", "bridge_loan", "winter_window"] }], "promisesAdd": [{ "id": "winter_review_services", "text": "冬天重新审议医疗与青训设施", "to": "孟书宁与罗志衡", "due": "一月" }], "threadsAdd": [{ "id": "known_cash_gap", "text": "赛季奖金前至少需要新增300万确定资金", "due": "冬窗前" }], "tagsAdd": ["即战力优先", "1:4注册"] },
             "aftermath": { "speaker": "方雯", "speakers": ["方雯", "梁一川"], "title": "“灯是绿了，两个柜子也空了”", "body": ["“注册灯刚变绿。你先别庆祝——这页写着一月只剩100万，奖金发放前还差300万。请在我旁边签字。”", "“新中卫的位置我摆好了，可分组对抗少两个人。离开的那两个，谁去送？别告诉我大家只记得迎接新援。”"] },
             "receipt": { "happened": ["现金3600万降至2200万；新中卫完成注册；两名边缘球员离队。"], "promised": ["一月重新审议医疗与青训设施。"], "seeded": ["一月付款后只剩100万；赛季奖金前存在300万缺口；替补深度明显下降。"], "people": ["韩立锋开始主动报告阵容问题；方雯改走正式纪要并组织董事会压力。"] }
@@ -468,7 +514,9 @@
             "bet": "减少一次坏伤病、坏签约或错误用人，价值会大于眼前没有补强的损失。",
             "burden": "韩立锋承担短期阵容没有改善；新增团队工资继续压缩现金。",
             "known": ["短期提升不明显", "以后会得到更好的信息，但教练必须分享部分权力"],
-            "effects": { "finance": { "cash": -900, "wageCommitment": 260 }, "operations": { "medicalIntegrity": 11, "commercialCapacity": 5, "coachAuthority": -4 }, "pitch": { "fitness": 7, "cohesion": 2 }, "characters": { "jiang": 12, "qiao": 6, "he": -4, "shen": -3 }, "characterStates": { "jiang": { "behavior": "open", "memories": ["医疗部门获得独立风险报告权"] }, "qiao": { "behavior": "open", "memories": ["新增团队工资被写入付款计划"] }, "he": { "behavior": "guarded", "memories": ["数据和医疗获得部分否决权"] } }, "causalAdd": [{ "sourceDecision": "build_capacity", "domain": "fitness", "direction": "help", "text": "康复与数据团队能提前识别体能风险并准备换人。", "canAffect": ["late_match_fatigue", "injury_prevention"] }, { "sourceDecision": "build_capacity", "domain": "authority", "direction": "mixed", "text": "专业部门获得独立报告权，风险更早暴露，也会与教练权威发生摩擦。", "canAffect": ["information_access", "coach_conflict"] }], "promisesAdd": [{ "id": "independent_review", "text": "医疗与数据部门可独立报告风险", "to": "专业部门", "due": "每次重大用人与伤病决定" }], "tagsAdd": ["能力建设"] },
+            "riskTags": ["短期战力", "权力边界", "持续工资"],
+            "riskShape": "偏长期成长；独立报告权立即生效，身体收益到下一集训练复核。",
+            "effects": { "finance": { "cash": -900, "wageCommitment": 260 }, "operations": { "medicalIntegrity": 11, "commercialCapacity": 5, "coachAuthority": -4 }, "pendingPitch": { "fitness": 7, "cohesion": 2 }, "pendingDueEpisode": 3, "pendingTrigger": "episodeStart", "pendingReceipt": "康复与数据岗位完成第一次联合负荷复核：体能覆盖与训练协同从这次复核起计入球队，而不是在签字当天凭空上涨。", "characters": { "jiang": 12, "qiao": 6, "he": -4, "shen": -3 }, "characterStates": { "jiang": { "behavior": "open", "memories": ["医疗部门获得独立风险报告权"] }, "qiao": { "behavior": "open", "memories": ["新增团队工资被写入付款计划"] }, "he": { "behavior": "guarded", "memories": ["数据和医疗获得部分否决权"] } }, "causalAdd": [{ "sourceDecision": "build_capacity", "domain": "fitness", "direction": "help", "text": "康复与数据团队能提前识别体能风险并准备换人。", "canAffect": ["late_match_fatigue", "injury_prevention"] }, { "sourceDecision": "build_capacity", "domain": "authority", "direction": "mixed", "text": "专业部门获得独立报告权，风险更早暴露，也会与教练权威发生摩擦。", "canAffect": ["information_access", "coach_conflict"] }], "promisesAdd": [{ "id": "independent_review", "text": "医疗与数据部门可独立报告风险", "to": "专业部门", "due": "每次重大用人与伤病决定" }], "tagsAdd": ["能力建设"] },
             "aftermath": { "speaker": "孟书宁", "speakers": ["孟书宁", "韩立锋"], "title": "“先别买设备，先把谁能说不写清楚”", "body": ["“设备型号我都划掉了。第一页只留这一句：任何人不得要求医疗组修改伤情等级。我签了，你也签。”", "“医疗和数据可以否决风险，不能替我选首发。把这句也写进去。我签，但别把我的工作交给一张表。”"] },
             "receipt": { "happened": ["现金3600万降至2700万；康复、球探和数据岗位开始招聘。"], "promised": ["医疗与数据部门可独立报告风险，但不替教练决定首发。"], "seeded": ["已知付款后只剩200万；新增团队工资继续发生；短期阵容没有补强。"], "people": ["孟书宁会提前报告坏消息；韩立锋只提供训练结果，不主动分享判断过程。"] }
           }
@@ -543,6 +591,12 @@
       },
       "decision": {
         "prompt": "我现在要给教练组的，不是一套阵型。我要说一句在输球以后仍然算数的话。",
+        "brief": {
+          "goal": "确定球队比赛原则与主教练权力边界，并让训练承担兑现过程。",
+          "constraint": "现有中卫、轮换深度与体能储备有限；任何打法都必须由当前人员执行。",
+          "knownRisk": "中低位偏防守和短期稳定，但落后后提速困难；高位压迫偏进攻与成长，但消耗体能并暴露中卫身后空间。",
+          "unverified": "六周后的执行质量、伤病与赛果尚未发生；它们不能在签字时被写成已经取得的竞技提升。"
+        },
         "options": [
           { "id": "back_he", "label": "完整支持韩立锋的控制型足球", "line": "比赛模型由你决定。输球后我先问执行，不在记者面前替你换打法。", "action": "让主教练决定比赛模型；俱乐部用引援和评价标准配合他，不以场面舆论越级干预。", "advocate": "韩立锋。他要一个输球后仍然属于自己的方案。", "bet": "防守距离、教练权威和短期稳定，足以抵消先丢球后难以提速的上限。", "burden": "程野和进攻球员承担更少的冒险机会；你承担场面保守的外部压力。", "known": ["短期稳定，更衣室清楚谁负责", "进攻上限依赖少数球员，落后时选择有限"], "effects": { "operations": { "coachAuthority": 14, "dressingRoom": 7 }, "pitch": { "defense": 9, "cohesion": 8, "attack": -4 }, "characters": { "he": 14, "lin": 5 }, "characterStates": { "he": { "behavior": "open", "memories": ["玩家完整授权控制型足球"] }, "chen": { "behavior": "guarded", "memories": ["控制型足球压缩了他的立即出场路径"] } }, "causalAdd": [{ "sourceDecision": "back_he", "domain": "tactic", "direction": "mixed", "text": "球队采用中低位控制，防守距离更稳定，先丢球后主动提速更困难。", "canAffect": ["defensive_block", "set_piece", "chasing_game"] }], "promisesAdd": [{ "id": "protect_coach_model", "text": "不因短期舆论越级改变比赛模型", "to": "韩立锋与一线队", "due": "开局困难时" }], "tagsAdd": ["教练主导"] }, "aftermath": { "speaker": "韩立锋", "speakers": ["韩立锋", "程野"], "title": "“从今天起，错就错在我的方案里”", "body": ["“高位站位我擦掉了，只留这三条线。从今天起，错就错在我的方案里。”", "“我去替补组没问题。教练，你看着我跑一次——如果我追回来了，下次能不能让我继续往前？”"] }, "receipt": { "happened": ["韩立锋删除高位实验，训练只保留控制型站位与定位球方案。"], "promised": ["不因短期场面舆论越级改变主教练的比赛模型。"], "seeded": ["防守距离更稳定；落后时仍缺少可靠提速方法；程野进入替补组。"], "people": ["韩立锋会主动报告方案弱点；程野不再主动询问自己的出场次序。"] } },
           { "id": "pressing_identity", "label": "确立主动压迫的俱乐部模型", "line": "六周内允许身后出现代价。我们评估执行，不用一场比分撤回授权。", "action": "要求各级球队采用共同的高压原则；给韩立锋六周适应期，并承诺不以早期失误追责。", "advocate": "罗志衡、程野与高竞的方案。韩立锋只在条件写清时执行。", "bet": "更多前场夺回球权和青训衔接，能大于早期失误、体能与身后空间风险。", "burden": "现有后卫和更薄的替补席承担公开失误；韩立锋承担执行一套并非自己首选的方案。", "known": ["青训与一线队路径更连贯", "短期体能和防线风险明显，韩立锋的权威会被重新定义"], "effects": { "operations": { "coachAuthority": -7, "academyPathway": 10, "dressingRoom": -2 }, "pitch": { "attack": 10, "fitness": -5, "cohesion": -3 }, "characters": { "he": -9, "zhao": 9, "chen": 8 }, "characterStates": { "he": { "behavior": "oppositional", "memories": ["玩家要求韩立锋执行俱乐部高压模型"] }, "zhao": { "behavior": "open", "memories": ["青训与一线队获得共同比赛原则"] }, "chen": { "behavior": "open", "memories": ["主动压迫给了他真实战术位置"] } }, "causalAdd": [{ "sourceDecision": "pressing_identity", "domain": "tactic", "direction": "mixed", "text": "球队采用高位压迫，前场夺回球权机会增加，身后空间与后半场体能风险同时上升。", "canAffect": ["high_turnover", "space_behind", "late_match_fatigue"] }], "promisesAdd": [{ "id": "six_week_protection", "text": "为主动压迫提供六周免于结果追责的适应期", "to": "教练组与球员", "due": "联赛第六轮" }], "tagsAdd": ["俱乐部模型"] }, "aftermath": { "speaker": "韩立锋", "speakers": ["韩立锋", "程野"], "title": "“六周——我只听见了这两个字”", "body": ["“你说保护期，我听见的是最后期限。训练计划我今晚重写，也会抄送主席。第六周以后，别说我没留下记录。”", "“罗指导让我来旁听。我第一次在成年队战术板上看见自己的名字……教练，我该从哪一次逼抢开始？”"] }, "receipt": { "happened": ["U19教练进入一线队会议，韩立锋连夜重写训练计划。"], "promised": ["六周内不因早期失误撤回主动压迫授权。"], "seeded": ["前场夺回球权增加；身后空间、体能和轮换风险上升。"], "people": ["程野开始直接询问训练反馈；韩立锋把训练计划抄送主席，为可能的失败留档。"] } },

@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="一款关于足球俱乐部经营、承诺与后果的沉浸式叙事游戏。" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <title>岚城联：两年之约</title>
     <link rel="preload" as="image" href="assets/visuals/backgrounds/east-stand-rain-v2.webp" fetchpriority="high" />
     <link rel="preload" as="image" href="assets/visuals/characters/tang/guarded-v2.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css?v=two-year-13" />
+    <link rel="stylesheet" href="styles.css?v=two-year-16" />
   </head>
   <body>
     <main class="app-shell">
@@ -25,6 +26,7 @@
             <div><strong>延迟后果</strong><span>第一年的选择会进入第二年</span></div>
           </div>
           <blockquote>“你决定的不是一个数字怎么变，而是以后谁还愿意把坏消息告诉你。”</blockquote>
+          <p class="build-stamp">构建 <strong data-build-label>two-year-16</strong> · 存档架构 v3</p>
         </div>
 
         <form id="startForm" class="start-form">
@@ -43,6 +45,8 @@
           </label>
           <button id="startBtn" type="submit" disabled aria-busy="true">正在载入球队…</button>
           <p id="startStatus" class="start-status" role="status">正在读取这一季的第一场雨。</p>
+          <section id="saveSummary" class="save-summary hidden" aria-live="polite"></section>
+          <small id="newSeasonIdentityHint" class="new-season-identity-hint hidden"></small>
           <button type="button" id="resumeBtn" class="text-btn hidden">继续上次的赛季</button>
         </form>
       </section>
@@ -54,9 +58,13 @@
             <h1 id="clubTitle">岚城联</h1>
           </div>
           <div class="topbar-actions">
+            <details id="persistenceDetails" class="persistence-details">
+              <summary id="persistenceStatus" class="persistence-status" role="status">尚未保存</summary>
+              <small id="persistenceTechnical">构建 two-year-16 · 存档详情</small>
+            </details>
             <button id="clubPanelBtn" class="ghost-btn" type="button" aria-controls="clubDrawer" aria-expanded="false">俱乐部资料</button>
             <button id="historyPanelBtn" class="ghost-btn" type="button" aria-controls="historyDrawer" aria-expanded="false">人物与记录</button>
-            <button id="glossaryBtn" class="ghost-btn" type="button">足球词语</button>
+            <button id="glossaryBtn" class="ghost-btn" type="button" aria-controls="glossaryPanel" aria-expanded="false">帮助 / 足球词语</button>
             <button id="focusModeBtn" class="ghost-btn focus-mode-btn" type="button" aria-pressed="false">剧情聚焦</button>
           </div>
         </header>
@@ -78,10 +86,8 @@
           </button>
         </div>
 
-        <button id="freeAgentAlert" class="free-agent-alert hidden" type="button" aria-label="自由球员市场出现新机会">!</button>
-
         <div class="layout">
-          <aside id="clubDrawer" class="side-panel game-drawer club-drawer" aria-label="俱乐部经营信息" aria-hidden="true">
+          <aside id="clubDrawer" class="side-panel game-drawer club-drawer" aria-label="俱乐部经营信息" aria-hidden="true" hidden inert>
             <header class="drawer-heading">
               <div><span>CLUB DESK</span><strong>俱乐部资料</strong></div>
               <button class="drawer-close" type="button" data-close-drawer aria-label="关闭俱乐部资料">×</button>
@@ -171,8 +177,11 @@
                   </div>
                   <span id="sceneType" class="scene-type">现场</span>
                 </header>
-                <h2 id="eventTitle">—</h2>
+                <h2 id="eventTitle" tabindex="-1">—</h2>
                 <div id="eventScene" class="event-scene"></div>
+                <button id="freeAgentAlert" class="free-agent-alert inline-free-agent-alert hidden" type="button" aria-label="自由球员市场出现新机会">
+                  <strong>球员报价待答复</strong><span id="freeAgentDeadline">本场决定前截止</span><small>不消耗当前现场选择</small>
+                </button>
                 <div id="knowledgeCard" class="knowledge-card hidden"></div>
                 <div id="eventPrompt" class="event-prompt hidden"></div>
                 <p id="inquiryStatus" class="inquiry-status hidden"></p>
@@ -185,7 +194,7 @@
             <article id="matchReport" class="match-report hidden" aria-live="polite"></article>
           </section>
 
-          <aside id="historyDrawer" class="history-panel game-drawer history-drawer" aria-label="人物与任期记录" aria-hidden="true">
+          <aside id="historyDrawer" class="history-panel game-drawer history-drawer" aria-label="人物与任期记录" aria-hidden="true" hidden inert>
             <header class="drawer-heading">
               <div><span>MANAGER'S FILE</span><strong>人物与任期记录</strong></div>
               <button class="drawer-close" type="button" data-close-drawer aria-label="关闭人物与任期记录">×</button>
@@ -205,6 +214,10 @@
               <div id="characterList" class="character-list"></div>
             </section>
             <section class="panel history-card">
+              <div class="panel-title"><span>竞技变化台账</span></div>
+              <div id="pendingEffectList" class="pending-effect-list"></div>
+            </section>
+            <section class="panel history-card">
               <div class="panel-title"><span>任期记录</span></div>
               <div id="historyList" class="history-list"></div>
             </section>
@@ -214,7 +227,7 @@
             </section>
           </aside>
         </div>
-        <button id="drawerBackdrop" class="drawer-backdrop hidden" type="button" aria-label="关闭资料面板"></button>
+        <button id="drawerBackdrop" class="drawer-backdrop hidden" type="button" aria-label="关闭资料面板" hidden></button>
       </section>
 
       <section id="resultScreen" class="result-screen hidden">
@@ -276,7 +289,7 @@
       </section>
     </main>
 
-    <section id="glossaryPanel" class="glossary-panel hidden" role="dialog" aria-modal="true" aria-labelledby="glossaryTitle">
+    <section id="glossaryPanel" class="glossary-panel hidden" role="dialog" aria-modal="true" aria-labelledby="glossaryTitle" aria-hidden="true" hidden inert>
       <div class="glossary-dialog">
         <header>
           <div>
@@ -306,7 +319,23 @@
       </div>
     </section>
 
+    <section id="decisionConfirmModal" class="game-modal hidden" role="dialog" aria-modal="true" aria-labelledby="decisionConfirmTitle" aria-hidden="true" hidden inert>
+      <div class="game-modal-dialog decision-confirm-dialog">
+        <p class="eyebrow">FINAL CONFIRMATION</p>
+        <h2 id="decisionConfirmTitle">这句话会被公开记录</h2>
+        <strong id="decisionConfirmLabel"></strong>
+        <blockquote id="decisionConfirmLine"></blockquote>
+        <p id="decisionConfirmEvidence" class="decision-confirm-evidence"></p>
+        <ul id="decisionConfirmFacts" class="decision-confirm-facts" aria-label="签字前关键事实"></ul>
+        <p>确认后不能在本轮撤回；返回比较不会改变当前滚动位置或已核实信息。</p>
+        <div class="decision-confirm-actions">
+          <button id="decisionConfirmSubmit" class="primary-btn" type="button">确认公开</button>
+          <button id="decisionConfirmCancel" class="ghost-btn" type="button">返回比较</button>
+        </div>
+      </div>
+    </section>
+
     <noscript>这个游戏需要启用 JavaScript。</noscript>
-    <script src="app.js?v=two-year-13"></script>
+    <script src="app.js?v=two-year-16"></script>
   </body>
 </html>
